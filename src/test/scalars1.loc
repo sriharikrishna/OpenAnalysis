@@ -1,0 +1,18 @@
+// comments
+    
+PROCEDURE foo
+
+LocationIRDirect {
+  ProcHandle (1, "foo") => [
+    SymHandle (1, "x" ) => < NamedLoc, <SymHandle (1,"x"), local = true, 
+                                        fullOverlap = [ ], partOverlap = [ ] > >
+
+    SymHandle (2,"y") => < NamedLoc, <SymHandle (2,"y"), local = true, , > > 
+                                      fullOverlap = [ ], partOverlap = [ ] > >
+
+    SymHandle (3,"g") => < NamedLoc, <SymHandle (3,"g"), local = false, , > > 
+                                      fullOverlap = [ ], partOverlap = [ ] > >
+}
+
+END PROCEDURE foo
+

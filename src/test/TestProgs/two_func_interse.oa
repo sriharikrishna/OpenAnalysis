@@ -1,0 +1,424 @@
+// two_func_interse.oa
+// For testing interprocedural Side-Effect analysis
+
+PROCEDURE foo
+// void foo(int& y) { int x = y; y = x*2; }
+
+//-------------------------------------------------------------------
+CallGraphIRInterface {
+
+  ProcHandle (1, "foo(int& y)") => 
+  <
+    // SymHandle for Procedure
+    SymHandle(4, "foo"),
+
+    // statements and their callsites
+    Stmts = 
+      [ StmtHandle(1, "x = y" ) => 
+        < Callsites = [] >
+        StmtHandle(4, "y = x*2" ) => 
+        < Callsites = [] >
+      ],
+
+    // Information about callsites in current procedure
+    Callsites =
+      [ 
+        // ExprHandle() => < SymHandle() >
+      ]
+  >
+
+}
+
+
+//-------------------------------------------------------------------
+// Assuming that ExprHandle's and SymHandle's are unique accross 
+// entire program
+CallGraphDFProblemIRInterface {
+
+  ProcHandle (1, "foo(int y)") => 
+  <
+    // Formal parameters for the current procedure and whether they
+    // are reference parameters or not
+    Params = 
+      [ 
+        SymHandle(2, "y") => < refParam = true >
+      ],
+
+    // Information about callsites in current procedure
+    Callsites =
+      [ 
+        // ExprHandle() => < CallsiteParams = [ ] >
+      ],
+
+    // for each callsite parameter, need to know expression tree and
+    // what formal it maps to in called procedure
+    CallsiteParamInfo =
+      [
+        // ExprHandle() => 
+        //   < formal = SymHandle(), 
+        //     exprTree = OpNode, < OpHandle(), 
+        //                         children = [ MemRefNode, < MemRefHandle(), 
+        //                                                   children = []> 
+        //                                      ConstValNode, < ConstValHandle(),
+        //                                                     children = []> 
+        //                                    ]
+        //                       >
+        //   >
+      ],
+
+    Syms  = 
+      [
+        SymHandle (1, "x" ) =>  NamedLoc, <SymHandle (1,"x"), local = true, 
+                                 fullOverlap = [ ], partOverlap = [ ] > 
+
+        SymHandle (2,"y") =>  NamedLoc, <SymHandle (2,"y"), local = true, 
+                               fullOverlap = [ ], partOverlap = [ ] > 
+
+        SymHandle (3,"g") =>  NamedLoc, <SymHandle (3,"g"), local = false,
+                               fullOverlap = [ ], partOverlap = [ ] > 
+
+      ]
+  >
+
+}
+
+
+//-------------------------------------------------------------------
+SideEffectIRInterface {
+
+  ProcHandle (1, "foo(int y)") => 
+  <
+    Stmts = 
+      [ StmtHandle(1, "x = y" ) => 
+        < Uses = [ MemRefHandle(2,"y") ],
+          Defs = [ MemRefHandle(1,"x") ],
+          Callsites = []
+        >
+        StmtHandle(4, "y = x*2" ) => 
+        < Uses = [ MemRefHandle(7,"x") ],
+          Defs = [ MemRefHandle(8,"y") ],
+          Callsites = []
+        >
+      ]
+  >
+
+}
+
+
+//-------------------------------------------------------------------
+AliasIRInterface {
+
+  ProcHandle (1, "foo(int y)") => 
+  <
+    Syms  = 
+      [
+        SymHandle (1, "x" ) =>  NamedLoc, <SymHandle (1,"x"), local = true, 
+                                 fullOverlap = [ ], partOverlap = [ ] > 
+
+        SymHandle (2,"y") =>  NamedLoc, <SymHandle (2,"y"), local = true, 
+                               fullOverlap = [ ], partOverlap = [ ] > 
+
+        SymHandle (3,"g") =>  NamedLoc, <SymHandle (3,"g"), local = false,
+                               fullOverlap = [ ], partOverlap = [ ] > 
+
+      ],
+
+    Stmts = 
+      [ StmtHandle(1, "x = y" ) => < ANY_STMT,
+                                     [ MemRefHandle(1,"x") 
+                                       MemRefHandle(2,"y")
+                                     ]
+                                   >
+        StmtHandle(4, "y = x*2" ) => < ANY_STMT,
+                                     [ MemRefHandle(7,"x") 
+                                       MemRefHandle(8,"y")
+                                     ]
+                                     >
+      ],
+
+    MemRefs = 
+      [
+        MemRefHandle(1,"x") => 
+          [ NamedRef, < SymHandle (1, "x"), addressOf = false, 
+                                             fullAccuracy = true,
+                                             memRefType = DEF> ]
+        MemRefHandle(2,"y") => 
+          [ NamedRef, < SymHandle (2,"y"), addressOf = false, 
+                                            fullAccuracy = true,
+                                            memRefType = USE> ]
+        MemRefHandle(7,"x") => 
+          [ NamedRef, < SymHandle (1, "x"), addressOf = false, 
+                                             fullAccuracy = true,
+                                             memRefType = DEF> ]
+        MemRefHandle(8,"y") => 
+          [ NamedRef, < SymHandle (2,"y"), addressOf = false, 
+                                            fullAccuracy = true,
+                                            memRefType = USE> ]
+      ]
+  >
+}
+
+//-------------------------------------------------------------------
+AccessLocIRInterface {
+
+  ProcHandle (1, "foo(int y)") => 
+  <
+    // SymHandle for Procedure
+    SymHandle(4, "foo"),
+
+    // formal params
+    FormalParams = [ SymHandle(1, "y") ],
+    
+    // these are accessible symbols for this procedure and their 
+    // mapping to locations
+    AccessibleSyms  = 
+      [
+        SymHandle (1, "x" ) => NamedLoc, <SymHandle (1,"x"), local = true, 
+                                 fullOverlap = [ ], partOverlap = [ ] > 
+
+        SymHandle (2,"y") => NamedLoc, <SymHandle (2,"y"), local = true, 
+                               fullOverlap = [ ], partOverlap = [ ] > 
+
+        SymHandle (3,"g") => NamedLoc, <SymHandle (3,"g"), local = false,
+                               fullOverlap = [ ], partOverlap = [ ] > 
+
+      ],
+
+    // this procedure doesn't have any of these
+    UnnamedDynAllocStmts =
+      [
+      ],
+
+    PossMemRefExprs = 
+      [
+        SymHandle (1, "x" ) => 
+          [ NamedRef, < SymHandle (1, "x"), addressOf = false, 
+                                              fullAccuracy = true,
+                                              memRefType = USE> 
+          ]
+
+        SymHandle (2,"y") => 
+          [ NamedRef, < SymHandle (2,"y"), addressOf = false, 
+                                             fullAccuracy = true,
+                                             memRefType = USE>
+          ]
+
+        SymHandle (3,"g") => 
+          [ NamedRef, < SymHandle (3,"g"), addressOf = false, 
+                                             fullAccuracy = true,
+                                             memRefType = USE>
+          ]
+      ]
+  >
+}
+
+
+END PROCEDURE foo
+
+//**********************************************************************
+PROCEDURE bar
+// void bar() { int a, b;  a = b+g2; foo(g2); }
+
+//-------------------------------------------------------------------
+CallGraphIRInterface {
+
+  ProcHandle (2, "bar") => 
+  <
+    // SymHandle for Procedure
+    SymHandle(8, "bar"),
+
+    // statements and their callsites
+    Stmts = 
+      [ StmtHandle(2, "a = b + g2" ) => 
+        < Callsites = []
+        >
+        StmtHandle(3, "foo(g2)" ) => 
+        < Callsites = [ ExprHandle(1,"foo(g2)") ]
+        >
+      ],
+
+    // Information about callsites in current procedure
+    Callsites =
+      [ 
+        ExprHandle(1,"foo(g2)") => < SymHandle(4,"foo") >
+      ]
+  >
+
+}
+
+//-------------------------------------------------------------------
+CallGraphDFProblemIRInterface {
+
+  ProcHandle (2, "bar") => 
+  <
+    // Formal parameters for the current procedure and whether they
+    // are reference parameters or not
+    Params = [],
+
+    // Information about callsites in current procedure
+    Callsites =
+      [ 
+        ExprHandle(1,"foo(g2)") => < CallsiteParams = [ ExprHandle(2,"g2") ] >
+      ],
+
+    // for each callsite parameter, need to know expression tree and
+    // what formal it maps to in called procedure
+    CallsiteParamInfo =
+      [
+        ExprHandle(2,"g2") => 
+           < formal = SymHandle(2, "y"), 
+             exprTree = MemRefNode, < MemRefHandle(6, "g2"), children = [] >
+           >
+      ],
+
+    Syms  = 
+      [
+        SymHandle (1, "x" ) =>  NamedLoc, <SymHandle (1,"x"), local = true, 
+                                 fullOverlap = [ ], partOverlap = [ ] > 
+
+        SymHandle (2,"y") =>  NamedLoc, <SymHandle (2,"y"), local = true, 
+                               fullOverlap = [ ], partOverlap = [ ] > 
+
+        SymHandle (3,"g") =>  NamedLoc, <SymHandle (3,"g"), local = false,
+                               fullOverlap = [ ], partOverlap = [ ] > 
+
+      ]
+  >
+
+}
+
+
+//-------------------------------------------------------------------
+SideEffectIRInterface {
+
+  ProcHandle (2, "bar") => 
+  <
+    Stmts = 
+      [ StmtHandle(2, "a = b + g2" ) => 
+        < Uses = [ MemRefHandle(3,"b") 
+                    MemRefHandle(4,"g2") ],
+          Defs = [ MemRefHandle(5,"a") ],
+          Callsites = []
+        >
+        StmtHandle(3, "foo(g2)" ) => 
+        < Uses = [ MemRefHandle(6,"g2") ],
+          Defs = [ ],
+          Callsites = [ ExprHandle(1,"foo(g2)") ]
+        >
+      ]
+  >
+
+}
+
+
+//-------------------------------------------------------------------
+AliasIRInterface {
+
+  ProcHandle (2, "bar") => 
+  <
+    Syms  = 
+      [
+        SymHandle (5, "a" ) =>  NamedLoc, <SymHandle (5,"a"), local = true, 
+                                 fullOverlap = [ ], partOverlap = [ ] > 
+
+        SymHandle (6,"b") =>  NamedLoc, <SymHandle (6,"b"), local = true, 
+                               fullOverlap = [ ], partOverlap = [ ] > 
+
+        SymHandle (7,"g2") =>  NamedLoc, <SymHandle (7,"g2"), local = false,
+                               fullOverlap = [ ], partOverlap = [ ] > 
+
+      ],
+
+    Stmts = 
+      [ StmtHandle(2, "a = b + g2" ) 
+            => < ANY_STMT,
+                 [ MemRefHandle(3,"b") 
+                   MemRefHandle(4,"g2")
+                   MemRefHandle(5,"a")
+                 ]
+               >
+        StmtHandle(3, "foo(g2)" ) 
+            => < ANY_STMT,
+                 [ MemRefHandle(6,"g2") 
+                 ]
+               >
+      ],
+
+    MemRefs = 
+      [
+        MemRefHandle(3,"b") => 
+          [ NamedRef, < SymHandle (6, "b"), addressOf = false, 
+                                            fullAccuracy = true,
+                                            memRefType = USE> ]
+        MemRefHandle(4,"g2") => 
+          [ NamedRef, < SymHandle (7,"g2"), addressOf = false, 
+                                            fullAccuracy = true,
+                                            memRefType = USE> ]
+        MemRefHandle(5,"a") => 
+          [ NamedRef, < SymHandle (5,"a"), addressOf = false, 
+                                           fullAccuracy = true,
+                                           memRefType = DEF> ]
+        // FIXME?: this is somewhat awkward, seems like addressOf should 
+        // be true and it may or may not be DEFed or USEed within procedure
+        MemRefHandle(6,"g2") => 
+          [ NamedRef, < SymHandle (7,"g2"), addressOf = false, 
+                                            fullAccuracy = true,
+                                            memRefType = USE> ]
+      ]
+  >
+}
+
+AccessLocIRInterface {
+
+  ProcHandle (2, "bar") => 
+  <
+    // SymHandle for Procedure
+    SymHandle(8, "bar"),
+
+    // formal params
+    FormalParams = [ ],
+    
+    // these are accessible symbols for this procedure and their 
+    // mapping to locations
+    AccessibleSyms  = 
+      [
+        SymHandle (5, "a" ) => NamedLoc, <SymHandle (5,"a"), local = true, 
+                                 fullOverlap = [ ], partOverlap = [ ] > 
+
+        SymHandle (6,"b") => NamedLoc, <SymHandle (6,"b"), local = true, 
+                               fullOverlap = [ ], partOverlap = [ ] > 
+
+        SymHandle (7,"g2") => NamedLoc, <SymHandle (7,"g2"), local = false,
+                               fullOverlap = [ ], partOverlap = [ ] > 
+
+      ],
+
+    UnnamedDynAllocStmts =
+      [
+      ],
+
+    PossMemRefExprs = 
+      [
+        SymHandle (5, "a" ) => 
+          [ NamedRef, < SymHandle (5, "a"), addressOf = false, 
+                                              fullAccuracy = true,
+                                             memRefType = USE>
+          ]
+
+        SymHandle (6,"b") => 
+          [ NamedRef, < SymHandle (6,"b"), addressOf = false, 
+                                             fullAccuracy = true,
+                                             memRefType = USE>
+          ]
+
+        SymHandle (7,"g2") => 
+          [ NamedRef, < SymHandle (7,"g2"), addressOf = false, 
+                                            fullAccuracy = true,
+                                             memRefType = USE>
+          ]
+      ]
+  >
+}
+
+
+END PROCEDURE bar

@@ -1,0 +1,124 @@
+# -*-Mode: makefile;-*-
+# $Id: Makefile.quick,v 1.6 2005/03/11 18:42:01 ntallent Exp $
+#  Copyright ((c)) 2002, Rice University 
+#  All rights reserved.
+#  See Rice.copyright for details.
+
+#############################################################################
+# Makefile
+#############################################################################
+
+#############################################################################
+
+SHELL = /bin/sh
+WD := $(shell pwd)
+
+PLATFORM := $(shell cd $(WD)/config && ./hpcplatform)
+ifeq ($(PLATFORM),)
+  $(error "Unknown/unsupported platform") # unavailable in older gmakes
+  error "Unknown/unsupported platform"    # will certainly cause an error
+endif
+
+#############################################################################
+
+BUILDDIR   = $(WD)/build-$(PLATFORM)
+INSTALLDIR = $(WD)/$(PLATFORM)
+
+CONFIG_OPTS =
+
+# LIB option
+ifeq ($(LIB),native)
+  CONFIG_OPTS += --enable-libnative --disable-libcross
+endif
+ifeq ($(LIB),cross)
+  CONFIG_OPTS += --enable-libcross  --disable-libnative
+endif
+
+# DEVELOP option
+ifdef DEVELOP
+  CONFIG_OPTS += --enable-develop
+endif
+
+# used by configure (from GNU Autoconf)
+export CXX
+export CXXFLAGS
+
+#############################################################################
+
+define HELPCMDS
+echo "A wrapper for configuring, building and installing OpenAnalysis."
+echo "Targets:"
+echo "  all       - Configure, build and install, using the options below."
+echo ""
+echo "  configure - Configure and create makefiles, using the options below."
+echo "  build     - Build"
+echo "  install   - Install"
+echo ""
+echo "Options to 'all' and 'configure':"
+echo "  CXX=<C++-compiler>      - Set the C++ compiler"
+echo "  DEVELOP=1               - develop mode"
+echo "  LIB=native|cross        - build only libnative or libcross"
+echo ""
+echo "By default, makefiles are created in:"
+echo "  $(BUILDDIR)"
+echo "By default, the installation is performed in:"
+echo "  $(INSTALLDIR)"
+echo ""
+echo "For more complex actions, use the configure target above and then use"
+echo "the _resulting_ makefiles in the build directory; or use the typical"
+echo "Autoconf/Automake trio,"
+echo "  ./configure <options> ; make ; make install"
+endef
+
+help: 
+	@$(HELPCMDS)
+
+all: configure build install
+
+.PHONY : all help
+
+#############################################################################
+
+configure: check clean
+	@echo "*** Configuring ***"
+	$(WD)/config/hpcautotouch
+	-mkdir -p $(BUILDDIR)
+	cd $(BUILDDIR) && \
+	../configure $(CONFIG_OPTS) --prefix="$(INSTALLDIR)"
+
+build:
+	@echo "*** Building ***"
+	cd $(BUILDDIR) && $(MAKE)
+
+clean:
+	/bin/rm -f -r $(BUILDDIR)
+
+alldocs:
+	doxygen config.doxygen
+
+.PHONY : configure build clean alldocs
+
+############################################################
+
+install: uninstall
+	@echo "*** Installing ***"
+	cd $(BUILDDIR) && $(MAKE) install
+	@echo "*** Installed to: $(INSTALLDIR) ***"
+
+uninstall: 
+	/bin/rm -f -r $(INSTALLDIR)
+
+.PHONY : install uninstall
+
+#############################################################################
+
+check:
+# Note: this is actually useless since make gives CXX a default value
+	@if [ -z "$(CXX)" ]; then \
+	  echo "Please specify compiler with environment variable CXX."; \
+	  return 1; \
+	fi
+
+.PHONY : check
+
+#############################################################################

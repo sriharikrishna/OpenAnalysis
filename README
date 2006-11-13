@@ -1,0 +1,223 @@
+$Id: README,v 1.1.1.1 2004/04/02 21:27:58 mstrout Exp $
+
+=============================================================================
+==
+== README
+==
+== OpenAnalysis
+==
+=============================================================================
+
+This is the README for OpenAnalysis.
+
+Contents:
+  0. Overview of OpenAnalysis
+  1. Details of OpenAnalysis
+  2. For More Information
+
+=============================================================================
+
+0. Overview of OpenAnalysis:
+--------------------
+
+OpenAnalysis (OA) is an open source analysis engine for
+imperative/procedural languages such as a compiler's intermediate
+language.  OA defines a generic, abstract interface for representing
+constructs and information in the language.  When an OA user couples
+the abstract OA interface to a particular language, OA can perform
+certain interprocedural, control flow and data-flow analyses.  It is
+written in ANSI/ISO C++.
+
+Because OA was created by compiler researchers, the language it
+interfaces with is called an intermediate representation (IR), though
+it need not be a true IR.  As long as a user can couple the OA
+interface with a given language, OA can be reused without
+recompilation or relinking to perform any of these analyses.  Assuming
+the coupling process between the abstract interface and the actual
+language is relatively straightforward, the OA library benefits the
+user by performing common and useful analyses, potentially eliminating
+code duplication and (re)implementation time.  'Coupling' is defined
+and discussed below in section 1.2, IRInterface.
+
+Currently OA can perform the following analyses:
+  Interprocedural analysis:
+    * create a call graph for a program in the IR
+  Control flow and interval analysis:
+    * create a control flow graph for a procedure in the IR
+    * determine Tarjan intervals for a flow graph
+  Data flow analysis:
+    * create a single static assignment graph for a procedure in the IR
+
+Although OA it is particularly suited for the analysis of compiler
+IRs, it is not necessarily limited to this.  For example, we have used
+it in a binary analyzer to contruct control flow graphs from machine
+instructions -- the IR -- and perform Tarjan interval analysis to
+recover natual loops and loop nesting.  We are in the process of
+adapting OA to correctly analyze Open64's powerful intermediate
+language WHIRL.
+
+OpenAnalysis was created as an effort of the Center for High
+Performance Software Research (HiPerSoft) at Rice University.  It has
+been extended by ACTS... [FIXME]
+
+Development was supported in part though... [FIXME]
+
+=============================================================================
+
+1. Details of OpenAnalysis:
+--------------------
+
+OpenAnalysis can be broadly separated into three components: 1) a
+utility library; 2) an abstract IR interface that hides details about
+the underlying IR; and 3) a number of specific analysis engines that
+are built on the utility library and which interact with the IR
+exclusively through the abstract IR interface.
+
+
+1.1. Generic Utility Library
+----
+
+The utility library is located in:
+  src/OpenAnalysis/Utils
+
+This library implements several base classes used by the analysis engines. 
+
+First, the library contains classes implementing generic graphs that
+serve as base classes for most of the specific analyses.
+  - Graph: a general undirected graph 
+  - DGraph: a general directed graph
+They are both derived from the abstract base class BaseGraph.
+
+The library also contains a variable-degree tree class (Tree) designed
+to serve as a base class for more specific trees.
+
+The library implements one analysis, the Union-Find
+algorithm. (UnionFindUniverse)
+
+Finally, the utility library implements:
+  - an abstract base exception class (Exception)
+  - an abstract base iterator class (Iterator)
+
+
+1.2. IRInterface
+----
+
+The IRInterface is located in:
+  src/OpenAnalysis/Interface
+
+When an analysis is performed, the engine's only access to the
+underlying IR is through the IRInterface, an abstract base class that
+is designed to represent certain general concepts typical of
+imperative/procedural languages.  For example, the IRInterface assumes
+that the underlying IR (or a procedure in the IR) can be thought of as
+a collection of statements.  Each statement can be classified with
+respect to control flow into categories such as 'loop', 'jump',
+'twoway_conditional' and 'return'.  The control flow graph analysis
+engine can then use this information to create a control flow graph.
+All the details of the underlying IR are completely hidden.
+
+Following is a simple diagram showing the relation between the
+IRInterface, the underlying IR and OA analysis engines.
+
+                   [OpenAnalysis analysis clients]
+             CallGraph engine   CFG engine   SSA engine
+                       \          |          /
+                        ----------|----------
+                                  V
+                             IRInterface
+                                  |
+                        ----------|----------
+                       /          |          \
+                      V           V           V
+            MyIRInterface1  MyIRInterface2  MyIRInterface3
+         [Underlying IR -- abstract syntax trees, quads, etc.]
+
+
+Because the IRInterface is an abstract base class, the actual coupling
+between it and the underlying IR is accomplished by class inheritance.  
+Each of the derived classes provides the machinery that communicates with
+the underlying IR.  In this way, a client of the IRInterface is insulated
+from any of those details.  For example,
+
+  class MyIRInterface : public IRInterface { 
+    // IR-specific code that implements the abstract interface
+
+    // Below are sample overridden virtual functions for getting a 
+    // statement iterator and for classifying a statement by control flow.
+
+    // Given a ProcHandle, return an IRStmtIterator* for the procedure. 
+    IRStmtIterator* ProcBody(ProcHandle h) { /* ... */ }
+
+    // Given a statement, return its IRStmtType.
+    IRStmtType GetStmtType(StmtHandle h) { /* ... */ }
+  };
+
+There are several abstract iterators assocated with the abstract
+IRInterface that must also be made concrete during the coupling.  For
+example, the IR statement iterator must be derived from its abstract
+version:
+
+  class MyIRStmtIterator : public IRStmtIterator {
+    // IR-specific code to iterate over statements; returns StmtHandle
+  };
+
+
+These examples illustrate the basic concepts behind the IRInterface.
+Entities in the underlying IR such as procedures and statements are
+referred to using opaque handles such as ProcHandle and StmtHandle.  A
+StmtHandle in the IRInterface might actually be a pointer to an
+abstract syntax tree node for high/source-level representation or an
+index into an array of quads for a low-level/assembly language IR.
+C++ type casting moves from one representation to the other, but that
+is hidden in the IR-specific side of the interface.  
+
+To continue the above example, when the control flow graph engine is
+given a MyIRStmtIterator for a procedure, it would iterate over the
+IR's statements, referencing each statement by the opaque type
+StmtHandle.  The engine could then use its instance of the
+MyIRInterface to classify the statement with respect to control flow.
+Of course, all accesses to MyIRStmtIterator and MyIRInterface would be
+through the respective superclasses, IRStmtIterator and IRInterface.
+
+
+The IRInterface is one of the most important parts of OA.  Designing
+an interface that is both 1) sufficiently general to support to
+support a large number of real non-trivial languages and 2)
+appropriately specific to allow for good analysis and easy, efficient
+coupling with the underlying IR is a significant challenge.  Without a
+reasonable balance among these competing goals, OpenAnalysis ceases to
+be practically useful.  The IRInterface is evolving and expanding as
+it is used with different systems.
+
+[FIXME: do not actually need to define all iterators if they are not used]
+
+
+1.3. Specific Analyses
+----
+
+CallGraph: src/OpenAnalysis/CallGraph
+  Limitations: 
+    - temporary 'placeholder' implementation 
+
+CFG: src/OpenAnalysis/CFG
+  tarjan analysis: nested strongly connected regions
+  Limitations: 
+    - Cannot handle recursive functions (unless in the form of explicit
+      jumps/loops)
+    - Doesn't know about exceptions
+    - Doesn't know about special functions such as setjmp, longjmp
+
+SSA: src/OpenAnalysis/SSA
+  Limitations: 
+    - Cannot handle aliasing
+    - Cannot distinguish between, e.g., array references and a simple
+      scalar references.
+
+
+=============================================================================
+
+2. For More Information:
+--------------------
+
+...
+

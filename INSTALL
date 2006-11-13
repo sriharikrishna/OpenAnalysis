@@ -1,0 +1,17 @@
+Should work
+    % make -f Makefile.quick configure
+    % make -f Makefile.quick install
+
+Do the following to get installation help.
+
+    % make -f Makefile.quick
+
+Before doing a 'make -f Makefile.quick all' you can set the CXXFLAGS
+as well:
+
+    % setenv CXXFLAGS '-DDEBUG_ManagerActiveStandard'
+
+To recompile only the affected files after making some changes
+
+    % cd build-platform
+    % make install

@@ -1,0 +1,65 @@
+/*! \file
+  
+  \brief Concrete ExprTreeVisitor that determines which locations are
+         differentiable in an expression.  Basically all non-constants that
+         are not index expressions.
+  
+  \authors Michelle Strout
+  \version $Id: DifferentiableLocsVisitor.hpp,v 1.3 2005/03/17 21:47:45 mstrout Exp $
+
+  Copyright (c) 2002-2004, Rice University <br>
+  Copyright (c) 2004, University of Chicago <br>  
+  All rights reserved. <br>
+  See ../../../Copyright.txt for details. <br>
+
+*/
+
+#ifndef DifferentiableLocsVisitor_H
+#define DifferentiableLocsVisitor_H
+
+#include <OpenAnalysis/ExprTree/ExprTreeVisitor.hpp>
+#include <OpenAnalysis/Alias/Interface.hpp>
+
+namespace OA {
+
+//--------------------------------------------------------------------
+/*! 
+*/
+class DifferentiableLocsVisitor : public ExprTreeVisitor {
+public:
+  DifferentiableLocsVisitor(OA_ptr<Alias::Interface> alias);
+  ~DifferentiableLocsVisitor() {}
+
+  void visitExprTreeBefore(ExprTree&) 
+    { mDiffLocs = new LocSet; }
+  void visitExprTreeAfter(ExprTree&) { }
+
+  //---------------------------------------
+  // method for each ExprTree::Node subclass
+  //---------------------------------------
+  // default base class so that visitors can handle unknown
+  // node sub-classes in a generic fashion
+  void visitNode(ExprTree::Node&);
+
+  void visitOpNode(ExprTree::OpNode& n);
+  void visitCallNode(ExprTree::CallNode& n);
+  void visitMemRefNode(ExprTree::MemRefNode& n);
+  void visitConstSymNode(ExprTree::ConstSymNode& n);
+  void visitConstValNode(ExprTree::ConstValNode& n);
+
+  //! interface for results of visiting the expression tree
+  OA_ptr<LocIterator> getDiffLocsIterator()
+  { OA_ptr<LocIterator> retval;
+    retval = new LocSetIterator(mDiffLocs);
+    return retval;
+  }
+
+private:
+  OA_ptr<LocSet> mDiffLocs;
+  OA_ptr<Alias::Interface> mAlias;
+};
+
+
+} // end of OA namespace
+
+#endif

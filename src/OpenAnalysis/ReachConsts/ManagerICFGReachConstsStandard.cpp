@@ -1,0 +1,217 @@
+/*! \file
+  
+  \brief The AnnotationManager that generates InterVary using ICFGDFSolver..
+
+  \authors Michelle Strout
+  \version $Id: ManagerICFGReachConstsStandard.cpp,v 1.2 2005/06/10 02:32:04 mstrout Exp $
+
+  Copyright (c) 2002-2004, Rice University <br>
+  Copyright (c) 2004, University of Chicago <br>  
+  All rights reserved. <br>
+  See ../../../Copyright.txt for details. <br>
+
+*/
+
+#include "ManagerICFGVary.hpp"
+
+
+namespace OA {
+  namespace Activity {
+
+#if defined(DEBUG_ALL) || defined(DEBUG_ManagerICFGVary)
+static bool debug = true;
+#else
+static bool debug = false;
+#endif
+
+/*!
+*/
+ManagerICFGVary::ManagerICFGVary( OA_ptr<ActivityIRInterface> _ir) : mIR(_ir)
+{
+    mSolver = new DataFlow::ICFGDFSolver(DataFlow::ICFGDFSolver::Forward,*this);
+}
+
+OA_ptr<Activity::InterVary> 
+ManagerICFGVary::performAnalysis(
+        OA_ptr<ICFG::ICFGStandard> icfg,
+        OA_ptr<DataFlow::ParamBindings> paramBind,
+        OA_ptr<Alias::InterAliasInterface> interAlias,
+        OA_ptr<InterDep> interDep)
+{
+  // store results that will be needed in callbacks
+  mICFG = icfg;
+  mParamBind = paramBind;
+  mInterDep = interDep;
+  mInterAlias = interAlias;
+
+  // create an empty InterVary
+  mInterVary = new InterVary();
+
+  // call iterative data-flow solver for ICFG
+  mSolver->solve(icfg);
+    
+  // assign dep results for each procedure into InterVary
+  std::map<ProcHandle,OA_ptr<VaryStandard> >::iterator mapIter;
+  for (mapIter=mVaryMap.begin(); mapIter!=mVaryMap.end(); mapIter++) {
+    mInterVary->mapProcToVary(mapIter->first,mapIter->second);
+  }
+
+  return mInterVary;
+}
+
+//========================================================
+// implementation of ICFGDFProblem interface
+//========================================================
+//--------------------------------------------------------
+// initialization callbacks
+//--------------------------------------------------------
+
+/*!
+   Data-flow set passed around on the call graph is an
+   LocDFSet.  The top value for this is an empty set.
+*/
+OA_ptr<DataFlow::DataFlowSet> ManagerICFGVary::initializeTop()
+{
+    OA_ptr<DataFlow::LocDFSet> retval;
+    retval = new DataFlow::LocDFSet;
+    return retval;
+}
+
+OA_ptr<DataFlow::DataFlowSet> 
+ManagerICFGVary::initializeNodeIN(OA_ptr<ICFG::ICFGStandard::Node> n)
+{
+    OA_ptr<DataFlow::LocDFSet> retval;
+    retval = new DataFlow::LocDFSet;
+    
+    // if node is entry node for whole ICFG
+    if (n->isAnEntry()) {
+        // get iterator over indep  locations for procedure
+        OA_ptr<LocIterator> indepIter = mIR->getIndepLocIter(n->getProc());
+
+        for ( indepIter->reset(); indepIter->isValid(); (*indepIter)++ ) {
+            retval->insert(indepIter->current());
+        }
+        if (debug) {
+            std::cout << "\tManagerICFGVary, Indep locations: " << std::endl;
+            retval->dump(std::cout, mIR);
+            std::cout << "----" << std::endl;
+        }
+    }
+
+    return retval;
+}
+
+OA_ptr<DataFlow::DataFlowSet> 
+ManagerICFGVary::initializeNodeOUT(OA_ptr<ICFG::ICFGStandard::Node> n)
+{
+    OA_ptr<DataFlow::LocDFSet> retval;
+    retval = new DataFlow::LocDFSet;
+    
+    return retval;
+ }
+
+
+//--------------------------------------------------------
+// solver callbacks 
+//--------------------------------------------------------
+  
+//! OK to modify set1 and return it as result, because solver
+//! only passes a tempSet in as set1
+OA_ptr<DataFlow::DataFlowSet> 
+ManagerICFGVary::meet(OA_ptr<DataFlow::DataFlowSet> set1, 
+                      OA_ptr<DataFlow::DataFlowSet> set2)
+{
+    if (debug) {
+        std::cout << "ManagerICFGVary::meet" << std::endl;
+    }
+    OA_ptr<DataFlow::LocDFSet> remapSet1 = set1.convert<DataFlow::LocDFSet>();
+    OA_ptr<DataFlow::LocDFSet> remapSet2 = set2.convert<DataFlow::LocDFSet>();
+    if (debug) {
+        std::cout << "\tremapSet1 = ";
+        remapSet1->dump(std::cout, mIR);
+        std::cout << "\tremapSet2 = ";
+        remapSet2->dump(std::cout, mIR);
+    }
+
+    // making sure we don't trounce set1 just in case
+    OA_ptr<DataFlow::LocDFSet> retval;
+    OA_ptr<DataFlow::DataFlowSet> temp = remapSet1->clone();
+    retval = temp.convert<DataFlow::LocDFSet>();
+    *retval = retval->setUnion(*remapSet2);
+    if (debug) {
+        std::cout << "\tretval = ";
+        OA_ptr<DataFlow::LocDFSet> temp = retval.convert<DataFlow::LocDFSet>();
+        temp->dump(std::cout, mIR);
+    }
+    return retval;
+}
+
+//! OK to modify in set and return it again as result because
+//! solver clones the BB in sets
+OA_ptr<DataFlow::DataFlowSet> 
+ManagerICFGVary::transfer(ProcHandle proc,
+                          OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt)
+{    
+    // convert incoming set to more specific subclass
+    OA_ptr<DataFlow::LocDFSet> inRecast = in.convert<DataFlow::LocDFSet>();
+    OA_ptr<DataFlow::LocDFSet> outVary;
+    outVary = new DataFlow::LocDFSet;
+    if (debug) {
+        std::cout << "In transfer, stmt(hval=" << stmt.hval() << ")= ";
+        mIR->dump(stmt,std::cout);
+        std::cout << "\tinRecast = ";
+        inRecast->dump(std::cout,mIR);
+    }
+
+    // get dep results for this procedure
+    OA_ptr<DepStandard> dep = mInterDep->getDepResults(proc);
+
+    // use dep pairs to determine what locations should be in OutVary
+    DataFlow::LocDFSetIterator inLocIter(*inRecast);
+    for ( ; inLocIter.isValid(); ++inLocIter ) {
+      OA_ptr<Location> inLoc = inLocIter.current();
+      if (debug) {
+          std::cout << "\tinLoc = ";
+          inLoc->dump(std::cout, mIR);
+      }
+      OA_ptr<LocIterator> locIterPtr;
+      locIterPtr = dep->getMayDefIterator(stmt,inLoc);
+      for ( ; locIterPtr->isValid(); (*locIterPtr)++ ) {
+          outVary->insert(locIterPtr->current());
+      }
+    }
+    
+    // store outVary for stmt into procedure's Vary results
+    if (mVaryMap[proc].ptrEqual(0)) {
+        mVaryMap[proc] = new VaryStandard(proc);
+    }
+    mVaryMap[proc]->copyIntoOutVary(stmt,outVary);
+
+    if (debug) {
+        std::cout << "\toutVary = ";
+        outVary->dump(std::cout,mIR);
+    }
+
+    return outVary;
+}
+
+//! Propagate a data-flow set from caller to callee
+OA_ptr<DataFlow::DataFlowSet> 
+ManagerICFGVary::callerToCallee(ProcHandle caller,
+    OA_ptr<DataFlow::DataFlowSet> dfset, ExprHandle call, ProcHandle callee)
+{
+    OA_ptr<DataFlow::LocDFSet> inRecast = dfset.convert<DataFlow::LocDFSet>();
+    return inRecast->callerToCallee(call, caller, mInterAlias, mParamBind);
+}
+  
+//! Propagate a data-flow set from callee to caller
+OA_ptr<DataFlow::DataFlowSet> 
+ManagerICFGVary::calleeToCaller(ProcHandle callee,
+    OA_ptr<DataFlow::DataFlowSet> dfset, ExprHandle call, ProcHandle caller)
+{
+    OA_ptr<DataFlow::LocDFSet> inRecast = dfset.convert<DataFlow::LocDFSet>();
+    return inRecast->calleeToCaller(call, caller, mInterAlias, mParamBind);
+}
+
+  } // end of namespace Activity
+} // end of namespace OA

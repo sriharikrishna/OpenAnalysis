@@ -142,6 +142,37 @@ CallGraphStandard::dump (ostream& os, OA_ptr<IRHandlesIRInterface> ir)
 
 //--------------------------------------------------------------------
 void
+CallGraphStandard::dumpdot (ostream& os, OA_ptr<IRHandlesIRInterface> ir)
+{
+
+  os << "digraph OA_CallGraph {" << endl;
+  os << "node [shape=rectangle];" << endl;
+
+  // then output nodes and edges by procedure
+  OA_ptr<EdgesIterator> iter = getEdgesIterator();
+  for (; iter->isValid(); ++(*iter) ) {
+    OA_ptr<Edge> edge = iter->current();
+    OA_ptr<Node> srcNode  = edge->source();
+    OA_ptr<Node> sinkNode = edge->sink();
+
+    SymHandle srcSym  = srcNode->getProcSym();
+    SymHandle sinkSym = sinkNode->getProcSym();
+    
+    os << ir->toString(srcSym);
+    os << "->";
+    os << ir->toString(sinkSym);
+    os << ";" << std::endl;
+  }
+
+  os << "}" << endl;
+  os.flush();
+}
+//--------------------------------------------------------------------
+
+
+
+//--------------------------------------------------------------------
+void
 CallGraphStandard::Node::dump (ostream& os, OA_ptr<IRHandlesIRInterface> ir)
 {
   if (mSym.hval() == 0) {

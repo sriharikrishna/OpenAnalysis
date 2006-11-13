@@ -74,6 +74,7 @@ MYINSTALLEDHEADERS = \
   IRInterface/CFGIRInterface.hpp \
   IRInterface/CFGIRInterfaceDefault.hpp \
   IRInterface/ICFGIRInterface.hpp \
+  IRInterface/DUGIRInterface.hpp \
   IRInterface/ActivityIRInterface.hpp \
   IRInterface/EvalToConstVisitorIRInterface.hpp \
   IRInterface/ExprStmtPairIterator.hpp \
@@ -165,6 +166,11 @@ MYINSTALLEDHEADERS = \
   \
   ICFG/ICFGStandard.hpp \
   ICFG/ManagerICFGStandard.hpp \
+  \
+  DUG/DUGStandard.hpp \
+  DUG/ManagerDUGStandard.hpp \
+  \
+  duaa/ManagerDUActive.hpp \
   \
   Location/Location.hpp \
   Location/LocationVisitor.hpp \
@@ -289,6 +295,11 @@ MYSOURCES = \
   \
   ICFG/ICFGStandard.cpp \
   ICFG/ManagerICFGStandard.cpp \
+  \
+  DUG/DUGStandard.cpp \
+  DUG/ManagerDUGStandard.cpp \
+  \
+  duaa/ManagerDUActive.cpp \
   \
   Location/Location.cpp \
   \

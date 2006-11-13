@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 # -*-Mode: makefile;-*-
-# $Header: /Volumes/cvsrep/developer/OpenAnalysis/src/OpenAnalysis/Makefile.am,v 1.8 2005/07/01 02:49:56 mstrout Exp $
+# $Header: /Volumes/cvsrep/developer/OpenAnalysis/src/OpenAnalysis/Makefile.am,v 1.9 2005/10/17 21:21:40 garvin Exp $
 
 #############################################################################
 #
@@ -159,9 +159,10 @@ am__libOAsz64_a_SOURCES_DIST = OABase/Annotation.cpp \
 	DataFlow/ICFGDFSolver.cpp ExprTree/ExprTree.cpp \
 	ExprTree/DifferentiableLocsVisitor.cpp \
 	ExprTree/EvalToConstVisitor.cpp ICFG/ICFGStandard.cpp \
-	ICFG/ManagerICFGStandard.cpp Location/Location.cpp \
-	MemRefExpr/MemRefExpr.cpp MemRefExpr/MemRefExprBasic.cpp \
-	MemRefExpr/LocBlock.cpp \
+	ICFG/ManagerICFGStandard.cpp DUG/DUGStandard.cpp \
+	DUG/ManagerDUGStandard.cpp duaa/ManagerDUActive.cpp \
+	Location/Location.cpp MemRefExpr/MemRefExpr.cpp \
+	MemRefExpr/MemRefExprBasic.cpp MemRefExpr/LocBlock.cpp \
 	ReachConsts/ManagerReachConstsStandard.cpp \
 	ReachConsts/ReachConstsStandard.cpp \
 	ReachConsts/InterReachConsts.cpp \
@@ -235,6 +236,9 @@ am__objects_1 = libOAsz64_a-Annotation.$(OBJEXT) \
 	libOAsz64_a-EvalToConstVisitor.$(OBJEXT) \
 	libOAsz64_a-ICFGStandard.$(OBJEXT) \
 	libOAsz64_a-ManagerICFGStandard.$(OBJEXT) \
+	libOAsz64_a-DUGStandard.$(OBJEXT) \
+	libOAsz64_a-ManagerDUGStandard.$(OBJEXT) \
+	libOAsz64_a-ManagerDUActive.$(OBJEXT) \
 	libOAsz64_a-Location.$(OBJEXT) \
 	libOAsz64_a-MemRefExpr.$(OBJEXT) \
 	libOAsz64_a-MemRefExprBasic.$(OBJEXT) \
@@ -301,9 +305,10 @@ am__libOAul_a_SOURCES_DIST = OABase/Annotation.cpp \
 	DataFlow/ICFGDFSolver.cpp ExprTree/ExprTree.cpp \
 	ExprTree/DifferentiableLocsVisitor.cpp \
 	ExprTree/EvalToConstVisitor.cpp ICFG/ICFGStandard.cpp \
-	ICFG/ManagerICFGStandard.cpp Location/Location.cpp \
-	MemRefExpr/MemRefExpr.cpp MemRefExpr/MemRefExprBasic.cpp \
-	MemRefExpr/LocBlock.cpp \
+	ICFG/ManagerICFGStandard.cpp DUG/DUGStandard.cpp \
+	DUG/ManagerDUGStandard.cpp duaa/ManagerDUActive.cpp \
+	Location/Location.cpp MemRefExpr/MemRefExpr.cpp \
+	MemRefExpr/MemRefExprBasic.cpp MemRefExpr/LocBlock.cpp \
 	ReachConsts/ManagerReachConstsStandard.cpp \
 	ReachConsts/ReachConstsStandard.cpp \
 	ReachConsts/InterReachConsts.cpp \
@@ -373,6 +378,9 @@ am__objects_2 = libOAul_a-Annotation.$(OBJEXT) \
 	libOAul_a-EvalToConstVisitor.$(OBJEXT) \
 	libOAul_a-ICFGStandard.$(OBJEXT) \
 	libOAul_a-ManagerICFGStandard.$(OBJEXT) \
+	libOAul_a-DUGStandard.$(OBJEXT) \
+	libOAul_a-ManagerDUGStandard.$(OBJEXT) \
+	libOAul_a-ManagerDUActive.$(OBJEXT) \
 	libOAul_a-Location.$(OBJEXT) libOAul_a-MemRefExpr.$(OBJEXT) \
 	libOAul_a-MemRefExprBasic.$(OBJEXT) \
 	libOAul_a-LocBlock.$(OBJEXT) \
@@ -551,6 +559,7 @@ MYINSTALLEDHEADERS = \
   IRInterface/CFGIRInterface.hpp \
   IRInterface/CFGIRInterfaceDefault.hpp \
   IRInterface/ICFGIRInterface.hpp \
+  IRInterface/DUGIRInterface.hpp \
   IRInterface/ActivityIRInterface.hpp \
   IRInterface/EvalToConstVisitorIRInterface.hpp \
   IRInterface/ExprStmtPairIterator.hpp \
@@ -642,6 +651,11 @@ MYINSTALLEDHEADERS = \
   \
   ICFG/ICFGStandard.hpp \
   ICFG/ManagerICFGStandard.hpp \
+  \
+  DUG/DUGStandard.hpp \
+  DUG/ManagerDUGStandard.hpp \
+  \
+  duaa/ManagerDUActive.hpp \
   \
   Location/Location.hpp \
   Location/LocationVisitor.hpp \
@@ -766,6 +780,11 @@ MYSOURCES = \
   \
   ICFG/ICFGStandard.cpp \
   ICFG/ManagerICFGStandard.cpp \
+  \
+  DUG/DUGStandard.cpp \
+  DUG/ManagerDUGStandard.cpp \
+  \
+  duaa/ManagerDUActive.cpp \
   \
   Location/Location.cpp \
   \
@@ -943,6 +962,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-DGraphInterfaceIterators.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-DGraphIterativeDFP.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-DGraphStandard.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-DUGStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-DepDFSet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-DepStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-DifferentiableLocsVisitor.Po@am__quote@
@@ -968,6 +988,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerAliasMapXAIF.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerCFGStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerCallGraphStandard.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerDUActive.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerDUGStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerDepStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerEachActive.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerICFGActive.Po@am__quote@
@@ -1030,6 +1052,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-DGraphInterfaceIterators.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-DGraphIterativeDFP.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-DGraphStandard.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-DUGStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-DepDFSet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-DepStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-DifferentiableLocsVisitor.Po@am__quote@
@@ -1055,6 +1078,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerAliasMapXAIF.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerCFGStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerCallGraphStandard.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerDUActive.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerDUGStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerDepStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerEachActive.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerICFGActive.Po@am__quote@
@@ -1872,6 +1897,48 @@ libOAsz64_a-ManagerICFGStandard.obj: ICFG/ManagerICFGStandard.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ICFG/ManagerICFGStandard.cpp' object='libOAsz64_a-ManagerICFGStandard.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-ManagerICFGStandard.obj `if test -f 'ICFG/ManagerICFGStandard.cpp'; then $(CYGPATH_W) 'ICFG/ManagerICFGStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/ICFG/ManagerICFGStandard.cpp'; fi`
+
+libOAsz64_a-DUGStandard.o: DUG/DUGStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-DUGStandard.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-DUGStandard.Tpo" -c -o libOAsz64_a-DUGStandard.o `test -f 'DUG/DUGStandard.cpp' || echo '$(srcdir)/'`DUG/DUGStandard.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-DUGStandard.Tpo" "$(DEPDIR)/libOAsz64_a-DUGStandard.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-DUGStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DUG/DUGStandard.cpp' object='libOAsz64_a-DUGStandard.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-DUGStandard.o `test -f 'DUG/DUGStandard.cpp' || echo '$(srcdir)/'`DUG/DUGStandard.cpp
+
+libOAsz64_a-DUGStandard.obj: DUG/DUGStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-DUGStandard.obj -MD -MP -MF "$(DEPDIR)/libOAsz64_a-DUGStandard.Tpo" -c -o libOAsz64_a-DUGStandard.obj `if test -f 'DUG/DUGStandard.cpp'; then $(CYGPATH_W) 'DUG/DUGStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DUG/DUGStandard.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-DUGStandard.Tpo" "$(DEPDIR)/libOAsz64_a-DUGStandard.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-DUGStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DUG/DUGStandard.cpp' object='libOAsz64_a-DUGStandard.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-DUGStandard.obj `if test -f 'DUG/DUGStandard.cpp'; then $(CYGPATH_W) 'DUG/DUGStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DUG/DUGStandard.cpp'; fi`
+
+libOAsz64_a-ManagerDUGStandard.o: DUG/ManagerDUGStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-ManagerDUGStandard.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-ManagerDUGStandard.Tpo" -c -o libOAsz64_a-ManagerDUGStandard.o `test -f 'DUG/ManagerDUGStandard.cpp' || echo '$(srcdir)/'`DUG/ManagerDUGStandard.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-ManagerDUGStandard.Tpo" "$(DEPDIR)/libOAsz64_a-ManagerDUGStandard.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-ManagerDUGStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DUG/ManagerDUGStandard.cpp' object='libOAsz64_a-ManagerDUGStandard.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-ManagerDUGStandard.o `test -f 'DUG/ManagerDUGStandard.cpp' || echo '$(srcdir)/'`DUG/ManagerDUGStandard.cpp
+
+libOAsz64_a-ManagerDUGStandard.obj: DUG/ManagerDUGStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-ManagerDUGStandard.obj -MD -MP -MF "$(DEPDIR)/libOAsz64_a-ManagerDUGStandard.Tpo" -c -o libOAsz64_a-ManagerDUGStandard.obj `if test -f 'DUG/ManagerDUGStandard.cpp'; then $(CYGPATH_W) 'DUG/ManagerDUGStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DUG/ManagerDUGStandard.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-ManagerDUGStandard.Tpo" "$(DEPDIR)/libOAsz64_a-ManagerDUGStandard.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-ManagerDUGStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DUG/ManagerDUGStandard.cpp' object='libOAsz64_a-ManagerDUGStandard.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-ManagerDUGStandard.obj `if test -f 'DUG/ManagerDUGStandard.cpp'; then $(CYGPATH_W) 'DUG/ManagerDUGStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DUG/ManagerDUGStandard.cpp'; fi`
+
+libOAsz64_a-ManagerDUActive.o: duaa/ManagerDUActive.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-ManagerDUActive.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-ManagerDUActive.Tpo" -c -o libOAsz64_a-ManagerDUActive.o `test -f 'duaa/ManagerDUActive.cpp' || echo '$(srcdir)/'`duaa/ManagerDUActive.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-ManagerDUActive.Tpo" "$(DEPDIR)/libOAsz64_a-ManagerDUActive.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-ManagerDUActive.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='duaa/ManagerDUActive.cpp' object='libOAsz64_a-ManagerDUActive.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-ManagerDUActive.o `test -f 'duaa/ManagerDUActive.cpp' || echo '$(srcdir)/'`duaa/ManagerDUActive.cpp
+
+libOAsz64_a-ManagerDUActive.obj: duaa/ManagerDUActive.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-ManagerDUActive.obj -MD -MP -MF "$(DEPDIR)/libOAsz64_a-ManagerDUActive.Tpo" -c -o libOAsz64_a-ManagerDUActive.obj `if test -f 'duaa/ManagerDUActive.cpp'; then $(CYGPATH_W) 'duaa/ManagerDUActive.cpp'; else $(CYGPATH_W) '$(srcdir)/duaa/ManagerDUActive.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-ManagerDUActive.Tpo" "$(DEPDIR)/libOAsz64_a-ManagerDUActive.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-ManagerDUActive.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='duaa/ManagerDUActive.cpp' object='libOAsz64_a-ManagerDUActive.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-ManagerDUActive.obj `if test -f 'duaa/ManagerDUActive.cpp'; then $(CYGPATH_W) 'duaa/ManagerDUActive.cpp'; else $(CYGPATH_W) '$(srcdir)/duaa/ManagerDUActive.cpp'; fi`
 
 libOAsz64_a-Location.o: Location/Location.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-Location.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-Location.Tpo" -c -o libOAsz64_a-Location.o `test -f 'Location/Location.cpp' || echo '$(srcdir)/'`Location/Location.cpp; \
@@ -3091,6 +3158,48 @@ libOAul_a-ManagerICFGStandard.obj: ICFG/ManagerICFGStandard.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-ManagerICFGStandard.obj `if test -f 'ICFG/ManagerICFGStandard.cpp'; then $(CYGPATH_W) 'ICFG/ManagerICFGStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/ICFG/ManagerICFGStandard.cpp'; fi`
 
+libOAul_a-DUGStandard.o: DUG/DUGStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-DUGStandard.o -MD -MP -MF "$(DEPDIR)/libOAul_a-DUGStandard.Tpo" -c -o libOAul_a-DUGStandard.o `test -f 'DUG/DUGStandard.cpp' || echo '$(srcdir)/'`DUG/DUGStandard.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-DUGStandard.Tpo" "$(DEPDIR)/libOAul_a-DUGStandard.Po"; else rm -f "$(DEPDIR)/libOAul_a-DUGStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DUG/DUGStandard.cpp' object='libOAul_a-DUGStandard.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-DUGStandard.o `test -f 'DUG/DUGStandard.cpp' || echo '$(srcdir)/'`DUG/DUGStandard.cpp
+
+libOAul_a-DUGStandard.obj: DUG/DUGStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-DUGStandard.obj -MD -MP -MF "$(DEPDIR)/libOAul_a-DUGStandard.Tpo" -c -o libOAul_a-DUGStandard.obj `if test -f 'DUG/DUGStandard.cpp'; then $(CYGPATH_W) 'DUG/DUGStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DUG/DUGStandard.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-DUGStandard.Tpo" "$(DEPDIR)/libOAul_a-DUGStandard.Po"; else rm -f "$(DEPDIR)/libOAul_a-DUGStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DUG/DUGStandard.cpp' object='libOAul_a-DUGStandard.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-DUGStandard.obj `if test -f 'DUG/DUGStandard.cpp'; then $(CYGPATH_W) 'DUG/DUGStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DUG/DUGStandard.cpp'; fi`
+
+libOAul_a-ManagerDUGStandard.o: DUG/ManagerDUGStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-ManagerDUGStandard.o -MD -MP -MF "$(DEPDIR)/libOAul_a-ManagerDUGStandard.Tpo" -c -o libOAul_a-ManagerDUGStandard.o `test -f 'DUG/ManagerDUGStandard.cpp' || echo '$(srcdir)/'`DUG/ManagerDUGStandard.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-ManagerDUGStandard.Tpo" "$(DEPDIR)/libOAul_a-ManagerDUGStandard.Po"; else rm -f "$(DEPDIR)/libOAul_a-ManagerDUGStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DUG/ManagerDUGStandard.cpp' object='libOAul_a-ManagerDUGStandard.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-ManagerDUGStandard.o `test -f 'DUG/ManagerDUGStandard.cpp' || echo '$(srcdir)/'`DUG/ManagerDUGStandard.cpp
+
+libOAul_a-ManagerDUGStandard.obj: DUG/ManagerDUGStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-ManagerDUGStandard.obj -MD -MP -MF "$(DEPDIR)/libOAul_a-ManagerDUGStandard.Tpo" -c -o libOAul_a-ManagerDUGStandard.obj `if test -f 'DUG/ManagerDUGStandard.cpp'; then $(CYGPATH_W) 'DUG/ManagerDUGStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DUG/ManagerDUGStandard.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-ManagerDUGStandard.Tpo" "$(DEPDIR)/libOAul_a-ManagerDUGStandard.Po"; else rm -f "$(DEPDIR)/libOAul_a-ManagerDUGStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DUG/ManagerDUGStandard.cpp' object='libOAul_a-ManagerDUGStandard.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-ManagerDUGStandard.obj `if test -f 'DUG/ManagerDUGStandard.cpp'; then $(CYGPATH_W) 'DUG/ManagerDUGStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DUG/ManagerDUGStandard.cpp'; fi`
+
+libOAul_a-ManagerDUActive.o: duaa/ManagerDUActive.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-ManagerDUActive.o -MD -MP -MF "$(DEPDIR)/libOAul_a-ManagerDUActive.Tpo" -c -o libOAul_a-ManagerDUActive.o `test -f 'duaa/ManagerDUActive.cpp' || echo '$(srcdir)/'`duaa/ManagerDUActive.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-ManagerDUActive.Tpo" "$(DEPDIR)/libOAul_a-ManagerDUActive.Po"; else rm -f "$(DEPDIR)/libOAul_a-ManagerDUActive.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='duaa/ManagerDUActive.cpp' object='libOAul_a-ManagerDUActive.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-ManagerDUActive.o `test -f 'duaa/ManagerDUActive.cpp' || echo '$(srcdir)/'`duaa/ManagerDUActive.cpp
+
+libOAul_a-ManagerDUActive.obj: duaa/ManagerDUActive.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-ManagerDUActive.obj -MD -MP -MF "$(DEPDIR)/libOAul_a-ManagerDUActive.Tpo" -c -o libOAul_a-ManagerDUActive.obj `if test -f 'duaa/ManagerDUActive.cpp'; then $(CYGPATH_W) 'duaa/ManagerDUActive.cpp'; else $(CYGPATH_W) '$(srcdir)/duaa/ManagerDUActive.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-ManagerDUActive.Tpo" "$(DEPDIR)/libOAul_a-ManagerDUActive.Po"; else rm -f "$(DEPDIR)/libOAul_a-ManagerDUActive.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='duaa/ManagerDUActive.cpp' object='libOAul_a-ManagerDUActive.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-ManagerDUActive.obj `if test -f 'duaa/ManagerDUActive.cpp'; then $(CYGPATH_W) 'duaa/ManagerDUActive.cpp'; else $(CYGPATH_W) '$(srcdir)/duaa/ManagerDUActive.cpp'; fi`
+
 libOAul_a-Location.o: Location/Location.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-Location.o -MD -MP -MF "$(DEPDIR)/libOAul_a-Location.Tpo" -c -o libOAul_a-Location.o `test -f 'Location/Location.cpp' || echo '$(srcdir)/'`Location/Location.cpp; \
 @am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-Location.Tpo" "$(DEPDIR)/libOAul_a-Location.Po"; else rm -f "$(DEPDIR)/libOAul_a-Location.Tpo"; exit 1; fi
@@ -3650,7 +3759,7 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 
 distdir: $(DISTFILES)
-	$(mkdir_p) $(distdir)/../../src $(distdir)/AccessLoc $(distdir)/Activity $(distdir)/Alias $(distdir)/CFG $(distdir)/CallGraph $(distdir)/DataFlow $(distdir)/ExprTree $(distdir)/ICFG $(distdir)/IRInterface $(distdir)/Location $(distdir)/MemRefExpr $(distdir)/OABase $(distdir)/ReachConsts $(distdir)/ReachDefs $(distdir)/SSA $(distdir)/SideEffect $(distdir)/UDDUChains $(distdir)/Utils $(distdir)/Utils/DGraph $(distdir)/XAIF
+	$(mkdir_p) $(distdir)/../../src $(distdir)/AccessLoc $(distdir)/Activity $(distdir)/Alias $(distdir)/CFG $(distdir)/CallGraph $(distdir)/DUG $(distdir)/DataFlow $(distdir)/ExprTree $(distdir)/ICFG $(distdir)/IRInterface $(distdir)/Location $(distdir)/MemRefExpr $(distdir)/OABase $(distdir)/ReachConsts $(distdir)/ReachDefs $(distdir)/SSA $(distdir)/SideEffect $(distdir)/UDDUChains $(distdir)/Utils $(distdir)/Utils/DGraph $(distdir)/XAIF $(distdir)/duaa
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

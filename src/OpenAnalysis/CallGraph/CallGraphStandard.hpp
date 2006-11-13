@@ -251,6 +251,7 @@ public:
   typedef std::map<SymHandle, OA_ptr<Node> > SymToNodeMapType;
 
   void dump (std::ostream& os, OA_ptr<IRHandlesIRInterface> ir);
+  void dumpdot (std::ostream& os, OA_ptr<IRHandlesIRInterface> ir);
 
   //-------------------------------------
   // Iterators

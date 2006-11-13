@@ -199,9 +199,6 @@ DGraphStandard::ReversePostDFSIterator::reverse_postorder_recurse(
 DGraphStandard::PostDFSIterator::PostDFSIterator(
     DGraphStandard& g, DGraphEdgeDirection pOrient)
 {
-    // FIXME: need to put appropriate helper routines in
-    // DGraphInterfaceIterators.*pp, see commented out createNodeList
-    // below for how it should work
     assert(0);
 }
 /*!

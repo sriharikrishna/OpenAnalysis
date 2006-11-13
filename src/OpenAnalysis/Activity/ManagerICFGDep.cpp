@@ -157,12 +157,16 @@ ManagerICFGDep::transfer(ProcHandle proc,
             OA_ptr<LocIterator> locIterPtr = alias->getMustLocs(mref);
             for ( ; locIterPtr->isValid(); (*locIterPtr)++ ) {
                 mustDefSet.insert(locIterPtr->current());
+                mDep->mapLocToMemRefSet(locIterPtr->current(), mref);
+                mDep->mapLocToStmtSet(locIterPtr->current(), stmt);
             }
             // maylocs need to be used for Dep pairs so that we get
             // conservative activity results
             locIterPtr = alias->getMayLocs(mref);
             for ( ; locIterPtr->isValid(); (*locIterPtr)++ ) {
                 mayDefSet.insert(locIterPtr->current());
+                mDep->mapLocToMemRefSet(locIterPtr->current(), mref);
+                mDep->mapLocToStmtSet(locIterPtr->current(), stmt);
             }
         }
     
@@ -178,6 +182,8 @@ ManagerICFGDep::transfer(ProcHandle proc,
             OA_ptr<LocIterator> locIterPtr = alias->getMayLocs(mref);
             for ( ; locIterPtr->isValid(); (*locIterPtr)++ ) {
                 diffUseSet.insert(locIterPtr->current());
+                mDep->mapLocToMemRefSet(locIterPtr->current(), mref);
+                mDep->mapLocToStmtSet(locIterPtr->current(), stmt);
             }
         }
         mrIterPtr = mIR->getDefMemRefs(stmt);
@@ -186,10 +192,14 @@ ManagerICFGDep::transfer(ProcHandle proc,
             OA_ptr<LocIterator> locIterPtr = alias->getMustLocs(mref);
             for ( ; locIterPtr->isValid(); (*locIterPtr)++ ) {
                 mustDefSet.insert(locIterPtr->current());
+                mDep->mapLocToMemRefSet(locIterPtr->current(), mref);
+                mDep->mapLocToStmtSet(locIterPtr->current(), stmt);
             }
             locIterPtr = alias->getMayLocs(mref);
             for ( ; locIterPtr->isValid(); (*locIterPtr)++ ) {
                 mayDefSet.insert(locIterPtr->current());
+                mDep->mapLocToMemRefSet(locIterPtr->current(), mref);
+                mDep->mapLocToStmtSet(locIterPtr->current(), stmt);
             }
         }
     }
@@ -273,6 +283,9 @@ ManagerICFGDep::transfer(ProcHandle proc,
 
     // map stmtDepDFSet to stmt in depResults
     mDep->mapStmtToDeps(stmt, stmtDepDFSet);
+
+    // map ProcHandle to stmt in depResults
+    mDep->mapStmtToProc(stmt, proc);
 
     return in;
 }

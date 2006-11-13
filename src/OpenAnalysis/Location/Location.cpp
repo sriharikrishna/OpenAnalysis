@@ -402,23 +402,47 @@ void NamedLoc::dump(std::ostream& os)
     os << std::endl;
 }
 
+// void NamedLoc::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> pIR)
+// {
+//     // string for mSymHandle
+//     os << "NamedLoc(this=" << this << ", mSymHandle.hval()=" 
+//        << mSymHandle.hval() << ", mLocal=" << mLocal << "):";
+//     os << pIR->toString(mSymHandle);
+//     os << std::endl;
+// }
+
 void NamedLoc::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> pIR)
 {
-    // string for mSymHandle
-    os << "NamedLoc(this=" << this << ", mSymHandle.hval()=" 
-       << mSymHandle.hval() << ", mLocal=" << mLocal << "):";
-    os << pIR->toString(mSymHandle);
-    os << std::endl;
+  // string for mSymHandle
+//   os << "(" << this << ", ";
+  os << pIR->toString(mSymHandle);
 }
+
+// void NamedLoc::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> pIR)
+// {
+//   // string for mSymHandle
+//   os << "(" << this << ", " << mSymHandle.hval() << ", ";
+//   os << pIR->toString(mSymHandle) << ")";
+// }
 
 std::string NamedLoc::toString(OA_ptr<IRHandlesIRInterface> pIR)
 {
     std::ostringstream oss;
     // string for mSymHandle
-    oss << "NamedLoc(" << mSymHandle.hval() << "):" 
-        << pIR->toString(mSymHandle);
+    oss << pIR->toString(mSymHandle);
     return oss.str();
 }
+
+
+// std::string NamedLoc::toString(OA_ptr<IRHandlesIRInterface> pIR)
+// {
+//     std::ostringstream oss;
+//     // string for mSymHandle
+//     oss << "NamedLoc(" << mSymHandle.hval() << "):" 
+//         << pIR->toString(mSymHandle);
+//     return oss.str();
+// }
+
 
 //*****************************************************************
 // UnnamedLoc methods
@@ -1092,21 +1116,38 @@ void LocSubSet::dump(std::ostream& os)
 
 void LocSubSet::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> pIR)
 {
-    os << "LocSubSet(this=" << this << " ,mLoc=";
+//     os << "LocSubSet(" << this << ", ";
+//     os << this << "^";
     getLoc()->dump(os,pIR);
-    os << "\tisFull=" << isFull() << " )"; 
-    os << std::endl;
+//     os << ")"; 
 }
+
+// void LocSubSet::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> pIR)
+// {
+//     os << "LocSubSet(this=" << this << " ,mLoc=";
+//     getLoc()->dump(os,pIR);
+//     os << "\tisFull=" << isFull() << " )"; 
+//     os << std::endl;
+// }
 
 std::string LocSubSet::toString(OA_ptr<IRHandlesIRInterface> pIR)
 {
   std::ostringstream oss;
-    oss << "LocSubSet( mLoc = ";
     assert(!getLoc().ptrEqual(NULL));
     oss << getLoc()->toString(pIR);
-    oss << "\tisFull = " << isFull() << " )"; 
     return oss.str();
 }
+
+
+// std::string LocSubSet::toString(OA_ptr<IRHandlesIRInterface> pIR)
+// {
+//   std::ostringstream oss;
+//     oss << "LocSubSet( mLoc = ";
+//     assert(!getLoc().ptrEqual(NULL));
+//     oss << getLoc()->toString(pIR);
+//     oss << "\tisFull = " << isFull() << " )"; 
+//     return oss.str();
+// }
 
 
 //*****************************************************************

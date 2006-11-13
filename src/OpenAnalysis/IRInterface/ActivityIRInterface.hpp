@@ -92,6 +92,9 @@ class ActivityIRInterface : public virtual IRHandlesIRInterface {
   //! given a symbol return the size in bytes of that symbol
   virtual int getSizeInBytes(SymHandle h) = 0;
   
+  //! Given a function call return the callee symbol handle
+  virtual SymHandle getSymHandle(ExprHandle expr) = 0;
+  
 };  
 
   } // end of namespace Activity

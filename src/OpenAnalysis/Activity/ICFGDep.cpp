@@ -73,6 +73,24 @@ OA_ptr<LocIterator> ICFGDep::getMustDefIterator(StmtHandle stmt)
 }
 
 
+//! Return an iterator over all MemRefs that are mapped from
+//! the given Location
+OA_ptr<std::set<MemRefHandle> > 
+ICFGDep::getMemRefSet(OA_ptr<Location> loc)
+{
+  return mLocToMemRefSet[loc];
+}
+
+
+//! Return an iterator over all StmtHandles that are mapped from
+//! the given Location
+OA_ptr<std::set<StmtHandle> > 
+ICFGDep::getStmtSet(OA_ptr<Location> loc)
+{
+  return mLocToStmtSet[loc];
+}
+
+
 //*****************************************************************
 // Construction methods
 //*****************************************************************
@@ -96,12 +114,32 @@ void ICFGDep::insertDepForStmt(StmtHandle stmt,
 
 //! Insert must def location 
 void ICFGDep::insertMustDefForStmt(StmtHandle stmt, 
-                                       OA_ptr<Location> def)
+                                   OA_ptr<Location> def)
 {
     if (mMustDefMap[stmt].ptrEqual(0)) {
         mMustDefMap[stmt] = new LocSet;
     }
     mMustDefMap[stmt]->insert(def);
+ }
+ 
+
+//! map Location to MemRefHandle
+void ICFGDep::mapLocToMemRefSet(OA_ptr<Location> loc, MemRefHandle mref)
+{
+    if (mLocToMemRefSet[loc].ptrEqual(0)) {
+        mLocToMemRefSet[loc] = new std::set<MemRefHandle>;
+    }
+    mLocToMemRefSet[loc]->insert(mref);
+ }
+ 
+
+//! map Location to StmtHandle
+void ICFGDep::mapLocToStmtSet(OA_ptr<Location> loc, StmtHandle stmt)
+{
+    if (mLocToStmtSet[loc].ptrEqual(0)) {
+        mLocToStmtSet[loc] = new std::set<StmtHandle>;
+    }
+    mLocToStmtSet[loc]->insert(stmt);
  }
  
 //*****************************************************************

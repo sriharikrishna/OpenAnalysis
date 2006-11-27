@@ -39,28 +39,29 @@ namespace OA {
   namespace XAIF {
 
 
-/*! 
-   The AnnotationManager for UDDUChainsXAIF.
-   This class can build an UDDUChainsXAIF, 
-   (eventually) read one in from a file, and write one out to a file.
-*/
-class ManagerStandard { //??? eventually public OA::AnnotationManager
-
-public:
-  ManagerStandard(OA_ptr<XAIFIRInterface>);
-  ~ManagerStandard () {}
-
-  OA_ptr<UDDUChainsXAIF> performAnalysis(ProcHandle, 
-                                  OA_ptr<CFG::Interface> cfg,
-                                  OA_ptr<UDDUChains::Interface> udChains);
-
-private:
-  OA_ptr<XAIFIRInterface> mIR;    
-  std::map<StmtHandle,OA_ptr<CFG::Interface::Node> > mStmtToBBMap;
-  std::map<MemRefHandle,StmtHandle> mMemRefToStmt;
-
-};
-
+    /*! 
+      The AnnotationManager for UDDUChainsXAIF.
+      This class can build an UDDUChainsXAIF, 
+      (eventually) read one in from a file, and write one out to a file.
+    */
+    class ManagerStandard { //??? eventually public OA::AnnotationManager
+      
+    public:
+      ManagerStandard(OA_ptr<XAIFIRInterface>);
+      ~ManagerStandard () {}
+      
+      OA_ptr<UDDUChainsXAIF> performAnalysis(ProcHandle, 
+					     OA_ptr<CFG::Interface> cfg,
+					     OA_ptr<UDDUChains::Interface> udChains,
+					     bool donotfilterBB=false);
+      
+    private:
+      OA_ptr<XAIFIRInterface> mIR;    
+      std::map<StmtHandle,OA_ptr<CFG::Interface::Node> > mStmtToBBMap;
+      std::map<MemRefHandle,StmtHandle> mMemRefToStmt;
+      
+    };
+    
   } // end of XAIF namespace
 } // end of OA namespace
 

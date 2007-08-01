@@ -76,6 +76,7 @@ namespace OA {
       OA_ptr<UDDUChains::Interface::MemRefsWithUDChainIterator> useIterPtr; 
       useIterPtr = udChains->getMemRefsWithUDChainIterator();
       for (; useIterPtr->isValid(); ++(*useIterPtr)) {
+	bool insertedOutsideDefPlaceHolder=false; 
 	MemRefHandle use = useIterPtr->current();
 
 	if (debug) {
@@ -107,9 +108,10 @@ namespace OA {
 	    OA_ptr<OA::IRStmtIterator> stmtIterPtr = mIR->getStmtIterator(proc);
 	    for ( ; stmtIterPtr->isValid(); (*stmtIterPtr)++) {
 	      OA::StmtHandle stmt = stmtIterPtr->current();
-	      if (stmt == mMemRefToStmt[use]) {
+	      if (!insertedOutsideDefPlaceHolder && stmt == mMemRefToStmt[use]) {
 		if (debug) { std::cout << "Inserting StmtHandle(0)" << std::endl; }
 		subSet.insert(StmtHandle(0));
+		insertedOutsideDefPlaceHolder=true;
 		break;
 	      } 
 	      if (stmt == defStmt) {
@@ -130,7 +132,7 @@ namespace OA {
 	      // looping over statements in basic blocks
 	      for (; stmtIterPtr->isValid(); ++(*stmtIterPtr)) {
 		OA::StmtHandle stmt = stmtIterPtr->current();
-		if (stmt == mMemRefToStmt[use]) {
+		if (!insertedOutsideDefPlaceHolder && stmt == mMemRefToStmt[use]) {
 		  if (debug) { std::cout << "Inserting StmtHandle(0)" << std::endl; }
 		  subSet.insert(StmtHandle(0));
 		  break;
@@ -138,6 +140,7 @@ namespace OA {
 		if (stmt == defStmt) {
 		  if (debug) { std::cout << "Inserting def stmt" << std::endl; }
 		  subSet.insert(defStmt);
+		  insertedOutsideDefPlaceHolder=true;
 		  break;
 		} 
 	      }
@@ -165,6 +168,7 @@ namespace OA {
       OA_ptr<UDDUChains::Interface::MemRefsWithDUChainIterator> defIterPtr; 
       defIterPtr = udChains->getMemRefsWithDUChainIterator();
       for (; defIterPtr->isValid(); ++(*defIterPtr)) {
+	bool insertedOutsideUsePlaceHolder=false; 
 	MemRefHandle def = defIterPtr->current();
 	// BB for def
 	OA_ptr<CFG::Interface::Node> defBB = mStmtToBBMap[mMemRefToStmt[def]];
@@ -189,8 +193,9 @@ namespace OA {
 	    OA_ptr<OA::IRStmtIterator> stmtIterPtr = mIR->getStmtIterator(proc);
 	    for ( ; stmtIterPtr->isValid(); (*stmtIterPtr)++) {
 	      OA::StmtHandle stmt = stmtIterPtr->current();
-	      if (stmt == useStmt) {
+	      if (!insertedOutsideUsePlaceHolder && stmt == useStmt) {
 		subSet.insert(StmtHandle(0));
+		insertedOutsideUsePlaceHolder=true; 
 		break;
 	      } 
 	      if (stmt == mMemRefToStmt[def]) {
@@ -208,8 +213,9 @@ namespace OA {
 	      // looping over statements in basic blocks
 	      for (; stmtIterPtr->isValid(); ++(*stmtIterPtr)) {
 		OA::StmtHandle stmt = stmtIterPtr->current();
-		if (stmt == useStmt) {
+		if (!insertedOutsideUsePlaceHolder && stmt == useStmt) {
 		  subSet.insert(StmtHandle(0));
+		  insertedOutsideUsePlaceHolder=true;
 		  break;
 		} 
 		if (stmt == mMemRefToStmt[def]) {

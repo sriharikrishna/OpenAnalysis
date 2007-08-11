@@ -1,0 +1,4 @@
+syntax: glob
+x86-Linux*
+build-x86-Linux*
+*.orig

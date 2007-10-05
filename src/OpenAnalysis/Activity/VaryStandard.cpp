@@ -5,11 +5,11 @@
   \author Michelle Strout
   \version $Id: VaryStandard.cpp,v 1.5 2005/06/10 02:32:03 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "VaryStandard.hpp"

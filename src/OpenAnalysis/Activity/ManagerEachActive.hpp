@@ -6,11 +6,11 @@
   \authors Michelle Strout
   \version $Id: ManagerEachActive.hpp,v 1.2 2005/02/28 20:21:28 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef ManagerEachActive_h

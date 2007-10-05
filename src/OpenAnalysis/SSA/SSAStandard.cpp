@@ -5,8 +5,9 @@
   \authors Arun Chauhan (2001 as part of Mint), Nathan Tallent, Michelle Strout
   \version $Id: SSAStandard.cpp,v 1.5 2005/06/10 02:32:05 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -61,7 +62,7 @@ namespace OA {
 */
 SSAStandard::SSAStandard(const SymHandle name_,
 			 OA_ptr<SSAIRInterface> ir_,
-			 OA_ptr<CFG::Interface> cfg_)
+			 OA_ptr<CFG::CFGInterface> cfg_)
   : name(name_), cfg(cfg_), mIR(ir_)
 {
   DomTree dt(cfg);
@@ -75,8 +76,8 @@ SSAStandard::SSAStandard(const SymHandle name_,
   
   // insert Phi functions where needed
   OA_ptr<NonLocalsIterator> i_it = getNonLocalsIterator();
-  std::set<OA_ptr<CFG::Interface::Node> > work_list;
-  std::set<OA_ptr<CFG::Interface::Node> > blks_with_phi;
+  std::set<OA_ptr<CFG::NodeInterface> > work_list;
+  std::set<OA_ptr<CFG::NodeInterface> > blks_with_phi;
   for ( ; i_it->isValid(); ++(*i_it)) {
     work_list.clear();
     blks_with_phi.clear();
@@ -85,26 +86,26 @@ SSAStandard::SSAStandard(const SymHandle name_,
     for ( ; block_it->isValid(); ++(*block_it)) {
       work_list.insert(block_it->current());
     }
-    std::set<OA_ptr<CFG::Interface::Node> >::iterator b_it = work_list.begin();
+    std::set<OA_ptr<CFG::NodeInterface> >::iterator b_it = work_list.begin();
     for ( ; b_it != work_list.end(); ++b_it) {
-      OA_ptr<CFG::Interface::Node> cfgnode = (*b_it);
-      OA_ptr<DGraph::Interface::Node> n1 = 
-        cfgnode.convert<DGraph::Interface::Node>();
+      OA_ptr<CFG::NodeInterface> cfgnode = (*b_it);
+      OA_ptr<DGraph::NodeInterface> n1 = 
+        cfgnode.convert<DGraph::NodeInterface>();
       OA_ptr<DomTree::Node> n2 = dt.domtree_node(n1);
       
       OA_ptr<DomTree::DomFrontIterator> d_it = n2->getDomFrontIterator();
       for ( ; d_it->isValid(); ++(*d_it)) {
         OA_ptr<DomTree::Node> n = d_it->current();
-        OA_ptr<DGraph::Interface::Node> dnode = n->getGraphNode();
-        OA_ptr<CFG::Interface::Node> blk = 
-          dnode.convert<CFG::Interface::Node>();
+        OA_ptr<DGraph::NodeInterface> dnode = n->getGraphNode();
+        OA_ptr<CFG::NodeInterface> blk = 
+          dnode.convert<CFG::NodeInterface>();
 	if (blks_with_phi.find(blk) == blks_with_phi.end()) {
 	  OA_ptr<SSA::Phi> p; p = new SSA::Phi(var_name, cfg);
 	  phi_node_sets[blk].insert(p);
 	  cout << "inserted Phi node ";
 	  p->dump(cout);
 	  cout << " in node ";
-	  blk->dumpbase(cout);
+	  //blk->dumpbase(cout);
 	  cout << endl;
 	  if (work_list.find(blk) == work_list.end()) {
 	    work_list.insert(blk);
@@ -135,12 +136,13 @@ SSAStandard::compute_uses_sets()
 {
   std::set<SymHandle> kill_set;
   
-  OA_ptr<CFG::Interface::NodesIterator> nodes_iter = cfg->getNodesIterator();
+  OA_ptr<DGraph::NodesIteratorInterface> nodes_iter = cfg->getNodesIterator();
   for ( ; nodes_iter->isValid(); ++(*nodes_iter)) {
     kill_set.clear();
-    OA_ptr<CFG::Interface::Node> n = nodes_iter->current();
+    OA_ptr<DGraph::NodeInterface> dn = nodes_iter->current();
+    OA_ptr<CFG::Node> n = dn.convert<CFG::Node>();
     
-    OA_ptr<CFG::Interface::NodeStatementsIterator> s_iter = 
+    OA_ptr<CFG::NodeStatementsIteratorInterface> s_iter = 
       n->getNodeStatementsIterator();
     for ( ; s_iter->isValid(); ++(*s_iter)) {
       OA_ptr<IRUseDefIterator> use_it = mIR->getUses(s_iter->current());
@@ -178,9 +180,10 @@ SSAStandard::dump(ostream& os)
      << "--------------------" << endl;
   
   // dump each individual CFG node and the phi nodes associated with each node
-  OA_ptr<CFG::Interface::NodesIterator> cfgnode_it = cfg->getNodesIterator();
+  OA_ptr<DGraph::NodesIteratorInterface> cfgnode_it = cfg->getNodesIterator();
   for ( ; cfgnode_it->isValid(); ++(*cfgnode_it)) {
-    OA_ptr<CFG::Interface::Node> n = cfgnode_it->current();
+    OA_ptr<DGraph::NodeInterface> dn = cfgnode_it->current();
+    OA_ptr<CFG::Node> n = dn.convert<CFG::Node>();
     //n->longdump(cfg, os); //FIXME
 
     OA_ptr<PhiNodesIterator> phi_it = getPhiNodesIterator(n);

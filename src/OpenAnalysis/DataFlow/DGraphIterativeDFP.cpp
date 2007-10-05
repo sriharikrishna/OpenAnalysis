@@ -6,31 +6,31 @@
            adapted for OA by Michelle Strout (April 2004)
   \version $Id: DGraphIterativeDFP.cpp,v 1.22 2005/06/15 03:32:01 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
 
 #include "DGraphIterativeDFP.hpp"
+#include <Utils/Util.hpp>
 
 #include <iostream>
 
 namespace OA {
   namespace DataFlow {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_DGraphIterativeDFP)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
 
 //*********************************************************************
 // class DGraphIterativeDFP
 //*********************************************************************
 
 DGraphIterativeDFP::DGraphIterativeDFP()
-{ numIter = 0;
+{ 
+    OA_DEBUG_CTRL_MACRO("DEBUG_DGraphIterativeDFP:ALL", debug);
+    numIter = 0;
 }
 
 
@@ -42,7 +42,7 @@ DGraphIterativeDFP::~DGraphIterativeDFP()
 //-----------------------------------------------------------------------
 // general default solver 
 //-----------------------------------------------------------------------
-void DGraphIterativeDFP::solve(OA_ptr<DGraph::Interface> dg, 
+void DGraphIterativeDFP::solve(OA_ptr<DGraph::DGraphInterface> dg, 
                                DGraph::DGraphEdgeDirection alongFlow) 
 {
 
@@ -51,16 +51,29 @@ void DGraphIterativeDFP::solve(OA_ptr<DGraph::Interface> dg,
   //---------------------------------------------------------------
   initialize(dg);
 
+
   //---------------------------------------------------------------
   // Kildall style iterative solver: iterate until dataflow 
   // information at each node and edge stabilizes
   //---------------------------------------------------------------
   unsigned int changed;
-  OA_ptr<DGraph::Interface::Node> node;
+
+  /*! commented out by PLM 08/11/06
+  OA_ptr<DGraph::DGraphInterface::NodeInterface> node;
+  */
+
+  OA_ptr<DGraph::NodeInterface> node;
 
   // get iterator for desired direction
-  OA_ptr<DGraph::Interface::NodesIterator> nodeIterPtr 
+  /*! commented out by PLM 08/11/06
+  OA_ptr<DGraph::DGraphInterface::NodesIterator> nodeIterPtr 
     = dg->getReversePostDFSIterator(alongFlow);
+    */
+
+
+  
+  OA_ptr<DGraph::NodesIteratorInterface> nodeIterPtr
+     = dg->getReversePostDFSIterator(alongFlow);  
 
   // loop until there are no changes
   int iterCnt = 0;
@@ -91,15 +104,33 @@ void DGraphIterativeDFP::solve(OA_ptr<DGraph::Interface> dg,
       // compute dataflow information going out of the node
       // along dataflow direction
       //--------------------------------------------------
-      OA::OA_ptr<DGraph::Interface::EdgesIterator> edgeIterPtr;
+
+      /*! commented out by PLM 08/11/06
+      OA::OA_ptr<DGraph::DGraphInterface::EdgesIterator> edgeIterPtr;
+      */
+
+      OA_ptr<DGraph::EdgesIteratorInterface> edgeIterPtr;
       if (alongFlow==DGraph::DEdgeOrg) {  // follows original orientation of edges
-        OA_ptr<DGraph::Interface::OutgoingEdgesIterator> it = 
+
+        /*! commented out by PLM 08/11/06  
+        OA_ptr<DGraph::DGraphInterface::EdgesIterator> it = 
           node->getOutgoingEdgesIterator(); // Stupid Sun CC 5.4
-        edgeIterPtr = it.convert<DGraph::Interface::EdgesIterator>();
+        */
+
+        OA_ptr<DGraph::EdgesIteratorInterface> it = 
+          node->getOutgoingEdgesIterator();  
+        edgeIterPtr = it;
       } else {
-        OA_ptr<DGraph::Interface::IncomingEdgesIterator> it = 
+        
+       
+        /*! commented out by PLM 08/11/06  
+        OA_ptr<DGraph::DGraphInterface::EdgesIterator> it = 
           node->getIncomingEdgesIterator(); // Stupid Sun CC 5.4
-        edgeIterPtr = it.convert<DGraph::Interface::EdgesIterator>();
+        */
+          
+        OA_ptr<DGraph::EdgesIteratorInterface> it =
+          node->getIncomingEdgesIterator();  
+        edgeIterPtr = it;
       }
       for (; edgeIterPtr->isValid(); ++(*edgeIterPtr)) {
         changed |= atDGraphEdge(edgeIterPtr->current(), alongFlow);
@@ -119,16 +150,31 @@ void DGraphIterativeDFP::solve(OA_ptr<DGraph::Interface> dg,
     node = nodeIterPtr->current();
     finalizeNode(node);
 
+    /*! commented out by PLM 08/11/06
+    OA::OA_ptr<DGraph::DGraphInterface::EdgesIterator> edgeIterPtr;
+    */
 
-    OA::OA_ptr<DGraph::Interface::EdgesIterator> edgeIterPtr;
+    OA::OA_ptr<DGraph::EdgesIteratorInterface> edgeIterPtr;
     if (alongFlow==DGraph::DEdgeOrg) {  // follows original orientation of edges
-      OA_ptr<DGraph::Interface::OutgoingEdgesIterator> it = 
+
+      /*! commented out by PLM 08/11/06  
+      OA_ptr<DGraph::DGraphInterface::EdgesIterator> it = 
 	node->getOutgoingEdgesIterator(); // Stupid Sun CC 5.4
-      edgeIterPtr = it.convert<DGraph::Interface::EdgesIterator>();
+    */
+      
+        OA::OA_ptr<DGraph::EdgesIteratorInterface> it =
+            node->getOutgoingEdgesIterator();  
+      edgeIterPtr = it;
     } else {
-      OA_ptr<DGraph::Interface::IncomingEdgesIterator> it = 
+
+      /*! commented out by PLM 08/10/06  
+      OA_ptr<DGraph::DGraphInterface::EdgesIterator> it = 
 	node->getIncomingEdgesIterator(); // Stupid Sun CC 5.4
-      edgeIterPtr = it.convert<DGraph::Interface::EdgesIterator>();
+     */
+
+      OA_ptr<DGraph::EdgesIteratorInterface> it =
+          node->getIncomingEdgesIterator();
+      edgeIterPtr = it;
     }
     for (; edgeIterPtr->isValid(); ++(*edgeIterPtr)) {
       finalizeEdge(edgeIterPtr->current());
@@ -148,18 +194,35 @@ void DGraphIterativeDFP::solve(OA_ptr<DGraph::Interface> dg,
 //-----------------------------------------------------------------------
 // solver callbacks
 //-----------------------------------------------------------------------
+/*! commented out by PLM 08/11/06
 bool DGraphIterativeDFP::atDGraphNode
-    (OA_ptr<DGraph::Interface::Node>, DGraph::DGraphEdgeDirection)
+    (OA_ptr<DGraph::DGraphInterface::NodeInterface>, DGraph::DGraphEdgeDirection)
 {
   return false;
+}
+*/
+
+bool DGraphIterativeDFP::atDGraphNode
+     (OA_ptr<DGraph::NodeInterface>, DGraph::DGraphEdgeDirection)
+{
+    
+    return false;
 }
 
 
 
+/*! commented out by PLM 08/11/06  
 bool DGraphIterativeDFP::atDGraphEdge
-    (OA_ptr<DGraph::Interface::Edge>, DGraph::DGraphEdgeDirection)
+    (OA_ptr<DGraph::DGraphInterface::EdgeInterface>, DGraph::DGraphEdgeDirection)
 {
   return false;
+}
+*/
+
+bool DGraphIterativeDFP::atDGraphEdge
+     (OA_ptr<DGraph::EdgeInterface>, DGraph::DGraphEdgeDirection)
+{
+    return false;
 }
 
 
@@ -167,13 +230,30 @@ bool DGraphIterativeDFP::atDGraphEdge
 //-----------------------------------------------------------------------
 // finalization callbacks
 //-----------------------------------------------------------------------
-void DGraphIterativeDFP::finalizeEdge(OA_ptr<DGraph::Interface::Edge>)
+
+
+/*! commented out by PLM 08/11/06
+void DGraphIterativeDFP::finalizeEdge(OA_ptr<DGraph::DGraphInterface::EdgeInterface>)
+{
+}
+*/
+
+
+
+ void DGraphIterativeDFP::finalizeEdge(OA_ptr<DGraph::EdgeInterface>)
 {
 }
 
 
+/*! commented out by PLM 08/11/06
+void DGraphIterativeDFP::finalizeNode(OA_ptr<DGraph::DGraphInterface::NodeInterface>)
+{
+}
+*/
 
-void DGraphIterativeDFP::finalizeNode(OA_ptr<DGraph::Interface::Node>)
+ 
+
+ void DGraphIterativeDFP::finalizeNode(OA_ptr<DGraph::NodeInterface>)
 {
 }
 

@@ -4,10 +4,11 @@
          abstract IR interface for Alias analysis.  
   
   \authors Michelle Strout
-  \version $Id: AliasIRInterfaceDefault.hpp,v 1.10 2005/06/14 03:52:34 mstrout Exp $
+  \version $Id: AliasIRInterfaceDefault.hpp,v 1.10.6.1 2005/11/23 05:01:04 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -81,6 +82,7 @@ class AliasIRInterfaceDefault : public virtual AliasIRInterface {
   virtual std::string toString(const SymHandle h) = 0;
   virtual std::string toString(const ConstSymHandle h) = 0;
   virtual std::string toString(const ConstValHandle h) = 0;
+  virtual std::string toString(const CallHandle h) = 0;
 
 
   //! Given a statement, pretty-print it to the output stream os.

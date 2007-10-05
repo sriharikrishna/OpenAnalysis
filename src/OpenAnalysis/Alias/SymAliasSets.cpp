@@ -1,31 +1,35 @@
 /*! \file
   
+NOTE: deprecated!!  No longer being compiled.
+6/2/06, Removed ManagerInsNoPtrInterAliasMap because it is no longer
+valid.  It used the CallGraph data-flow analysis framework
+and dependended on the isRefParam() call, which has been deprecated.
+
   \brief Implementation of SymAliasSets and helper class
 
   \author Michelle Strout
   \version $Id: SymAliasSets.cpp,v 1.2 2005/06/10 02:32:03 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "SymAliasSets.hpp"
+#include <Utils/Util.hpp>
 
 namespace OA {
   namespace Alias {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_SymAliasSets)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
 
 //! copy constructor
 SymAliasSets::SymAliasSets(const SymAliasSets& other)
 {
+    OA_DEBUG_CTRL_MACRO("DEBUG_SymAliasSets:ALL", debug);
+
     mIdToSymSetMap = other.mIdToSymSetMap;
     mSymToIdMap = other.mSymToIdMap;
     mNextSetId = other.mNextSetId;

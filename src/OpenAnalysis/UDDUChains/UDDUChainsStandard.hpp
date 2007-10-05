@@ -5,8 +5,9 @@
   \authors Michelle Strout
   \version $Id: UDDUChainsStandard.hpp,v 1.13 2004/11/25 04:22:10 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -19,9 +20,14 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <list>
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
 #include <OpenAnalysis/IRInterface/IRHandles.hpp>
 #include <OpenAnalysis/UDDUChains/Interface.hpp>
+#include <OpenAnalysis/OABase/Annotation.hpp>
+#include <OpenAnalysis/Utils/GenOutputTool.hpp>
+
+
 
 namespace OA {
   namespace UDDUChains {
@@ -35,8 +41,10 @@ namespace OA {
   DU chains map each StmtHandle Y to the set of StmtHandle's that
   may include a use of a define in Y.
 */
-class UDDUChainsStandard : public virtual UDDUChains::Interface {
-  public:
+class UDDUChainsStandard : public virtual UDDUChains::Interface, public virtual Annotation
+{
+
+public:
     UDDUChainsStandard(ProcHandle p) 
         { mUDChainForStmt = new std::map<StmtHandle,OA_ptr<StmtSet> >;
           mDUChainForStmt = new std::map<StmtHandle,OA_ptr<StmtSet> >;
@@ -115,15 +123,20 @@ class UDDUChainsStandard : public virtual UDDUChains::Interface {
     // Output
     //*****************************************************************
 
+    //! will use OutputBuilder to generate output
+    void output(IRHandlesIRInterface& pIR);
+    
     void dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir);
 
   private:
     // data members
-    OA_ptr<std::map<StmtHandle,OA_ptr<StmtSet> > > mUDChainForStmt;
-    OA_ptr<std::map<StmtHandle,OA_ptr<StmtSet> > > mDUChainForStmt;
-    OA_ptr<std::map<MemRefHandle,OA_ptr<StmtSet> > > mUDChainForMemRef;
-    OA_ptr<std::map<MemRefHandle,OA_ptr<StmtSet> > > mDUChainForMemRef;
-    std::map<MemRefHandle,StmtHandle>  mMemRefToStmtMap;
+    OUTPUT
+    
+    GENOUT OA_ptr<std::map<StmtHandle,OA_ptr<StmtSet> > > mUDChainForStmt;
+    GENOUT OA_ptr<std::map<StmtHandle,OA_ptr<StmtSet> > > mDUChainForStmt;
+    GENOUT OA_ptr<std::map<MemRefHandle,OA_ptr<StmtSet> > > mUDChainForMemRef;
+    GENOUT OA_ptr<std::map<MemRefHandle,OA_ptr<StmtSet> > > mDUChainForMemRef;
+    GENOUT std::map<MemRefHandle,StmtHandle>  mMemRefToStmtMap;
 
   public:
 
@@ -187,6 +200,7 @@ class UDDUChainsStandard : public virtual UDDUChains::Interface {
         void reset() { mIter = mMap->begin(); }
 
       private:
+            
         OA_ptr<std::map<MemRefHandle,OA_ptr<StmtSet> > > mMap;
         std::map<MemRefHandle,OA_ptr<StmtSet> >::iterator mIter;
     };

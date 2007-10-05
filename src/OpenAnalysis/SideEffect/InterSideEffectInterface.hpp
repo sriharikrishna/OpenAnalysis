@@ -6,8 +6,9 @@
   \authors Michelle Strout
   \version $Id: InterSideEffectInterface.hpp,v 1.4 2005/03/17 21:47:46 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -17,7 +18,7 @@
 
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
 #include <OpenAnalysis/IRInterface/IRHandles.hpp>
-#include <OpenAnalysis/Location/Location.hpp>
+#include <OpenAnalysis/Location/Locations.hpp>
 #include <OpenAnalysis/Alias/Interface.hpp>
 #include <OpenAnalysis/SideEffect/SideEffectInterface.hpp>
 
@@ -43,46 +44,46 @@ class InterSideEffectInterface {
     //! modified locally within the called procedure.  
     //! Locations modified directly in the called procedure and not
     //! by a function call in the called procedure.
-    virtual OA_ptr<LocIterator> getLMODIterator(ExprHandle p) = 0;
+    virtual OA_ptr<LocIterator> getLMODIterator(CallHandle p) = 0;
 
     //! Return an iterator over all locations that are may be
     //! modified within the called procedure or within a procedure
     //! called by the called procedure.  
-    virtual OA_ptr<LocIterator> getMODIterator(ExprHandle p) = 0;
+    virtual OA_ptr<LocIterator> getMODIterator(CallHandle p) = 0;
 
     //! Return an iterator over all locations that are definitely
     //! modified locally within the called procedure.  
     //! Locations modified directly in the procedure and not
     //! by a function call in the procedure.
-    virtual OA_ptr<LocIterator> getLDEFIterator(ExprHandle p) = 0;
+    virtual OA_ptr<LocIterator> getLDEFIterator(CallHandle p) = 0;
 
     //! Return an iterator over all locations that are definitely
     //! modified within the called procedure or within a procedure
     //! called by the called procedure.  
-    virtual OA_ptr<LocIterator> getDEFIterator(ExprHandle p) = 0;
+    virtual OA_ptr<LocIterator> getDEFIterator(CallHandle p) = 0;
 
     //! Return an iterator over all locations that are 
     //! used locally within the called procedure before being
     //! definitely modified.  
     //! Locations used directly in the procedure and not
     //! by a function call in the procedure.
-    virtual OA_ptr<LocIterator> getLUSEIterator(ExprHandle p) = 0;
+    virtual OA_ptr<LocIterator> getLUSEIterator(CallHandle p) = 0;
 
     //! Return an iterator over all locations that may be 
     //! used before being defined within the called procedure or 
     //! within a procedure called by the called procedure.  
-    virtual OA_ptr<LocIterator> getUSEIterator(ExprHandle p) = 0;
+    virtual OA_ptr<LocIterator> getUSEIterator(CallHandle p) = 0;
 
     //! Return an iterator over all locations that are 
     //! used locally within the called procedure.
     //! Locations used directly in the procedure and not
     //! by a function call in the procedure.
-    virtual OA_ptr<LocIterator> getLREFIterator(ExprHandle p) = 0;
+    virtual OA_ptr<LocIterator> getLREFIterator(CallHandle p) = 0;
 
     //! Return an iterator over all locations that are 
     //! used within the called procedure or within a procedure
     //! called by the called procedure.  
-    virtual OA_ptr<LocIterator> getREFIterator(ExprHandle p) = 0;
+    virtual OA_ptr<LocIterator> getREFIterator(CallHandle p) = 0;
 
     //*************************************************************************
     

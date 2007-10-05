@@ -5,8 +5,9 @@
   \authors Arun Chauhan (2001 as part of Mint), Nathan Tallent, Michelle Strout
   \version $Id: Phi.cpp,v 1.2 2005/03/11 18:13:21 ntallent Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */

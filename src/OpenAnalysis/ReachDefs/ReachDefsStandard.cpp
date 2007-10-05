@@ -5,11 +5,11 @@
   \author Michelle Strout
   \version $Id: ReachDefsStandard.cpp,v 1.8 2004/12/21 21:15:19 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "ReachDefsStandard.hpp"
@@ -40,6 +40,54 @@ ReachDefsStandard::getExitReachDefsIterator()
     retval = new ReachDefsStandardReachDefsIterator(mExitReachDefs);
     return retval;
 }
+
+void ReachDefsStandard::output(IRHandlesIRInterface& ir)
+{    
+    sOutBuild->objStart("ReachDefsStandard");
+
+    sOutBuild->mapStart("mReachDefs", "StmtHandle", "OA_ptr<std::set<StmtHandle> >");
+    std::map<StmtHandle,OA_ptr<std::set<StmtHandle> > >::iterator mapIter;
+    for (mapIter = mReachDefs.begin(); mapIter != mReachDefs.end(); mapIter++) {
+        StmtHandle s = mapIter->first;
+        OA_ptr<std::set<StmtHandle> > rdset = mapIter->second;
+        if ( rdset.ptrEqual(0) ) continue;
+
+        sOutBuild->mapEntryStart();
+        sOutBuild->mapKeyStart();
+        sOutBuild->outputIRHandle(s, ir);
+        sOutBuild->mapKeyEnd();
+        sOutBuild->mapValueStart();
+
+        sOutBuild->listStart();
+        std::set<StmtHandle>::iterator setIter;
+        for (setIter=rdset->begin(); setIter!=rdset->end(); setIter++) {
+            sOutBuild->listItemStart();
+            sOutBuild->outputIRHandle(*setIter, ir);
+            sOutBuild->listItemEnd();
+        }
+        sOutBuild->listEnd();
+
+        sOutBuild->mapValueEnd();
+        sOutBuild->mapEntryEnd();
+    }
+    sOutBuild->mapEnd("mReachDefs");
+
+    sOutBuild->fieldStart("mExitReachDefs");
+    sOutBuild->listStart();
+    std::set<StmtHandle>::iterator setIter;
+    for (setIter=mExitReachDefs->begin(); 
+         setIter!=mExitReachDefs->end(); setIter++) 
+    {
+        sOutBuild->listItemStart();
+        sOutBuild->outputIRHandle(*setIter, ir);
+        sOutBuild->listItemEnd();
+    }
+    sOutBuild->listEnd();
+    sOutBuild->fieldEnd("mExitReachDefs");
+
+    sOutBuild->objEnd("ReachDefsStandard");
+}
+
 
 
 //! incomplete output of info for debugging, just lists stmts

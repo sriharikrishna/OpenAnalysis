@@ -5,8 +5,9 @@
   \authors Arun Chauhan (2001 as part of Mint), Nathan Tallent, Michelle Strout
   \version $Id: ManagerSSAStandard.hpp,v 1.1 2005/03/08 19:00:12 ntallent Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -53,7 +54,7 @@ public:
   //??? don't think this guy need AQM, but will eventually have
   //to have one so is standard with other AnnotationManagers
   virtual OA_ptr<SSA::SSAStandard> performAnalysis(ProcHandle,
-						   OA_ptr<CFG::Interface> cfg);
+						   OA_ptr<CFG::CFGInterface> cfg);
 
   //-------------------------------------
   // information access
@@ -74,7 +75,7 @@ private:
   //------------------------------------------------------------------
   // Methods that build SSAStandard
   //------------------------------------------------------------------
-  void build(OA_ptr<CFG::Interface> cfg);
+  void build(OA_ptr<CFG::CFGInterface> cfg);
 
 private:
   OA_ptr<SSAIRInterface> mIR;

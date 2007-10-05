@@ -5,11 +5,11 @@
   \authors Michelle Strout
   \version $Id: SideEffectIRInterface.hpp,v 1.7 2005/08/08 20:03:52 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef SideEffectIRInterface_h
@@ -20,6 +20,7 @@
 //#include <string>
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
 #include <OpenAnalysis/IRInterface/IRHandles.hpp>
+#include <OpenAnalysis/IRInterface/CalleeToCallerVisitorIRInterface.hpp>
 
 namespace OA {
   namespace SideEffect {
@@ -29,7 +30,8 @@ namespace OA {
 //! Analysis.
 //! This is the primary interface for SideEffect to the underlying
 //! intermediate representation.
-class SideEffectIRInterface : public virtual IRHandlesIRInterface {
+class SideEffectIRInterface : public virtual IRHandlesIRInterface, public virtual DataFlow::CalleeToCallerVisitorIRInterface 
+{
  public:
   SideEffectIRInterface() { }
   virtual ~SideEffectIRInterface() { }
@@ -48,10 +50,6 @@ class SideEffectIRInterface : public virtual IRHandlesIRInterface {
   
   //! Return an iterator over all of the callsites in a given stmt
   virtual OA_ptr<IRCallsiteIterator> getCallsites(StmtHandle h) = 0;
-
-  //! Given a subprogram return an IRSymIterator for all
-  //! symbols that are referenced in the subprogram
-  virtual OA_ptr<IRSymIterator> getRefSymIterator(ProcHandle h) = 0; 
 
   virtual SymHandle getProcSymHandle(ProcHandle h) = 0;
 };  

@@ -55,7 +55,7 @@
 #    - Sun|SGI|Compaq/Alpha, PGI, Intel
 # 2. GNU compiler
 
-define([HPC_CXX_LIST], [CC  cxx  pgCC  icpc ecpc icc ecc  g++ gcc c++])dnl
+define([HPC_CXX_LIST], [g++ gcc CC  cxx  pgCC  icpc ecpc icc ecc c++])dnl
 
 define([HPC_CC_LIST], [cc  pgcc  icc ecc  gcc])dnl
 

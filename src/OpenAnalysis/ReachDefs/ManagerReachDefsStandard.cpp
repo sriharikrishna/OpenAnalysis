@@ -7,11 +7,11 @@
   \authors Michelle Strout
   \version $Id: ManagerReachDefsStandard.cpp,v 1.32 2005/06/10 02:32:05 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "ManagerReachDefsStandard.hpp"
@@ -25,19 +25,20 @@ static bool debug = false;
 
 /*!
 */
-ManagerStandard::ManagerStandard(OA_ptr<ReachDefsIRInterface> _ir) 
-    : DataFlow::CFGDFProblem( DataFlow::Forward ), mIR(_ir)
+ManagerReachDefsStandard::ManagerReachDefsStandard(OA_ptr<ReachDefsIRInterface> _ir) 
+    : mIR(_ir)
 {
+   mSolver = new DataFlow::CFGDFSolver(DataFlow::CFGDFSolver::Forward,*this);
 }
 
-OA_ptr<DataFlow::DataFlowSet> ManagerStandard::initializeTop()
+OA_ptr<DataFlow::DataFlowSet> ManagerReachDefsStandard::initializeTop()
 {
     OA_ptr<DataFlow::IRHandleDataFlowSet<StmtHandle> >  retval;
     retval = new DataFlow::IRHandleDataFlowSet<StmtHandle>;
     return retval;
 }
 
-OA_ptr<DataFlow::DataFlowSet> ManagerStandard::initializeBottom()
+OA_ptr<DataFlow::DataFlowSet> ManagerReachDefsStandard::initializeBottom()
 {
     OA_ptr<DataFlow::IRHandleDataFlowSet<StmtHandle> >  retval;
     retval = new DataFlow::IRHandleDataFlowSet<StmtHandle>;
@@ -51,12 +52,13 @@ OA_ptr<DataFlow::DataFlowSet> ManagerStandard::initializeBottom()
     reaching definition sets for each basic block.  Then uses the 
     statement transfer function to get an In set for each stmt.
 */
-OA_ptr<ReachDefsStandard> ManagerStandard::performAnalysis(ProcHandle proc, 
-    OA_ptr<CFG::Interface> cfg, OA_ptr<Alias::Interface> alias,
-    OA_ptr<SideEffect::InterSideEffectInterface> interSE)
+OA_ptr<ReachDefsStandard> ManagerReachDefsStandard::performAnalysis(ProcHandle proc, 
+    OA_ptr<CFG::CFGInterface> cfg, OA_ptr<Alias::Interface> alias,
+    OA_ptr<SideEffect::InterSideEffectInterface> interSE,
+    DataFlow::DFPImplement algorithm)
 {
   if (debug) {
-    std::cout << "In ReachDefs::ManagerStandard::performAnalysis" << std::endl;
+    std::cout << "In ReachDefs::ManagerReachDefsStandard::performAnalysis" << std::endl;
   }
   mReachDefMap = new ReachDefsStandard(proc);
 
@@ -99,7 +101,7 @@ OA_ptr<ReachDefsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
     // must or may defines from procedure calls
     OA_ptr<IRCallsiteIterator> callsiteItPtr = mIR->getCallsites(stmt);
     for ( ; callsiteItPtr->isValid(); ++(*callsiteItPtr)) {
-      ExprHandle expr = callsiteItPtr->current();
+      CallHandle expr = callsiteItPtr->current();
 
       OA_ptr<LocIterator> locIterPtr;
       
@@ -121,12 +123,17 @@ OA_ptr<ReachDefsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
   } // loop over statements
 
   // use the dataflow solver to get the In and Out sets for the BBs
-  DataFlow::CFGDFProblem::solve(cfg);
+  //DataFlow::CFGDFProblem::solve(cfg);
+  //
+  mSolver->solve(cfg,algorithm);  
   
   // get exit node for CFG and determine what definitions reach that node
-  OA_ptr<CFG::Interface::Node> node = cfg->getExit();
+  OA_ptr<CFG::NodeInterface> node;
+  
+  node = cfg->getExit();
 
-  OA_ptr<DataFlow::DataFlowSet> x = mNodeInSetMap[node];
+  OA_ptr<DataFlow::DataFlowSet> x = mSolver->getOutSet(node);
+      //mNodeInSetMap[node];
   OA_ptr<DataFlow::IRHandleDataFlowSet<StmtHandle> > inSet 
     = x.convert<DataFlow::IRHandleDataFlowSet<StmtHandle> >();
 
@@ -142,14 +149,36 @@ OA_ptr<ReachDefsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
 //------------------------------------------------------------------
 // Implementing the callbacks for CFGDFProblem
 //------------------------------------------------------------------
-void ManagerStandard::initializeNode(OA_ptr<CFG::Interface::Node> n)
+/*void ManagerReachDefsStandard::initializeNode(OA_ptr<CFG::Interface::Node> n)
 {
     mNodeInSetMap[n] = new DataFlow::IRHandleDataFlowSet<StmtHandle>;
     mNodeOutSetMap[n] = new DataFlow::IRHandleDataFlowSet<StmtHandle>;
 }
+*/
+
+/*!
+ *  *    Not doing anything special at entries and exits.
+ *   *     */
+OA_ptr<DataFlow::DataFlowSet>
+ManagerReachDefsStandard::initializeNodeIN(OA_ptr<CFG::NodeInterface> n)
+{
+     OA_ptr<DataFlow::IRHandleDataFlowSet<StmtHandle> >  retval;
+     retval = new DataFlow::IRHandleDataFlowSet<StmtHandle>;
+     return retval;
+}
+
+OA_ptr<DataFlow::DataFlowSet>
+ManagerReachDefsStandard::initializeNodeOUT(OA_ptr<CFG::NodeInterface> n)
+{
+     OA_ptr<DataFlow::IRHandleDataFlowSet<StmtHandle> >  retval;
+     retval = new DataFlow::IRHandleDataFlowSet<StmtHandle>;
+     return retval;
+}
+
+
 
 OA_ptr<DataFlow::DataFlowSet> 
-ManagerStandard::meet (OA_ptr<DataFlow::DataFlowSet> set1orig, 
+ManagerReachDefsStandard::meet (OA_ptr<DataFlow::DataFlowSet> set1orig, 
                        OA_ptr<DataFlow::DataFlowSet> set2orig)
 {
     OA_ptr<DataFlow::IRHandleDataFlowSet<StmtHandle> > set1
@@ -184,7 +213,7 @@ ManagerStandard::meet (OA_ptr<DataFlow::DataFlowSet> set1orig,
 */
 
 OA_ptr<DataFlow::DataFlowSet> 
-ManagerStandard::transfer(OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt) 
+ManagerReachDefsStandard::transfer(OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt) 
 {
     OA_ptr<DataFlow::IRHandleDataFlowSet<StmtHandle> > inRecast 
         = in.convert<DataFlow::IRHandleDataFlowSet<StmtHandle> >();
@@ -200,7 +229,7 @@ ManagerStandard::transfer(OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt)
          
     // for each stmt that is a reaching definition
     DataFlow::IRHandleIterator<StmtHandle> inIter(inRecast);
-    for (; inIter.isValid(); ++inIter) {
+    for (; inIter.isValid(); ) {
         StmtHandle reachdef = inIter.current();
         if (debug) {
           std::cout << "\treachdef in Inset = ";
@@ -231,12 +260,15 @@ ManagerStandard::transfer(OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt)
         if ( !killLocSetPtr->empty() 
              && subSetOf(mStmtMayDefMap[reachdef],*killLocSetPtr) ) 
         {
-            // delete statement that is in the kill subset
-            inRecast->remove(reachdef);
+            ++inIter ;
             if (debug) {
               std::cout << "\tStmt in Kill set: ";
               mIR->dump(reachdef,std::cout);
             }
+            // delete statement that is in the kill subset
+            inRecast->remove(reachdef);
+        } else {
+            ++inIter;
         }
     }
 

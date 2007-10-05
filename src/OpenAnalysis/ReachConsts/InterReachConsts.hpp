@@ -6,24 +6,25 @@
   \authors Michelle Strout, Barbara Kreaseck
   \version $Id: InterReachConsts.hpp,v 1.2 2005/06/10 02:32:04 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef InterReachConsts_H
 #define InterReachConsts_H
 
 #include <OpenAnalysis/ReachConsts/Interface.hpp>
-#include "ReachConstsStandard.hpp"
+#include <OpenAnalysis/ReachConsts/ReachConstsStandard.hpp>
+#include <OpenAnalysis/OABase/Annotation.hpp>
 #include <map>
 
 namespace OA {
   namespace ReachConsts {
 
-class InterReachConsts {
+    class InterReachConsts : public virtual Annotation {
   public:
     InterReachConsts() {}
     virtual ~InterReachConsts() {}
@@ -31,6 +32,11 @@ class InterReachConsts {
     //! Returns ReachConsts results for the given procedure
     OA_ptr<ReachConsts::Interface> getReachConsts(ProcHandle proc);
         
+    //*****************************************************************
+    // Annotation Interface
+    //*****************************************************************
+    void output(OA::IRHandlesIRInterface& ir);
+
     //*****************************************************************
     // Output
     //*****************************************************************

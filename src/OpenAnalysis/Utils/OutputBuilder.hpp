@@ -2,11 +2,12 @@
   
   \brief The OutputBuilder abstract interface.
   
-  \authors Michelle Strout
+  \authors Michelle Strout, Andy Stone
   \version $Id: OutputBuilder.hpp,v 1.3 2005/01/18 21:13:16 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 
@@ -14,7 +15,6 @@
   implement the interface specified here.  All Annotation subclasses
   (analysis results) will make calls to this abstract interface in their
   output method.
-
 */
 
 #ifndef OutputBuilder_H
@@ -32,22 +32,26 @@ std::string bool2string(const bool& val);
 class OutputBuilder { 
   public:
     OutputBuilder() {}
+    virtual ~OutputBuilder() {}
     OutputBuilder(OutputBuilder& other) {}
     OutputBuilder(std::ostream&) {}
 
     //virtual void configStream(ostream&) = 0;
 
+    virtual void outputString(const std::string &str) = 0;
+
     //*****************************************************************
     // IRHandles
     //*****************************************************************
-    virtual void outputIRHandle(ProcHandle h, OA_ptr<IRHandlesIRInterface> pIR) = 0;
-    virtual void outputIRHandle(StmtHandle h, OA_ptr<IRHandlesIRInterface> pIR) = 0;
-    virtual void outputIRHandle(ExprHandle h, OA_ptr<IRHandlesIRInterface> pIR) = 0;
-    virtual void outputIRHandle(OpHandle h, OA_ptr<IRHandlesIRInterface> pIR) = 0;
-    virtual void outputIRHandle(MemRefHandle h, OA_ptr<IRHandlesIRInterface> pIR) = 0;
-    virtual void outputIRHandle(SymHandle h, OA_ptr<IRHandlesIRInterface> pIR) = 0;
-    virtual void outputIRHandle(ConstSymHandle h, OA_ptr<IRHandlesIRInterface> pIR) =0;
-    virtual void outputIRHandle(ConstValHandle h, OA_ptr<IRHandlesIRInterface> pIR) =0;
+    virtual void outputIRHandle(ProcHandle h, IRHandlesIRInterface& pIR) = 0;
+    virtual void outputIRHandle(StmtHandle h, IRHandlesIRInterface& pIR) = 0;
+    virtual void outputIRHandle(ExprHandle h, IRHandlesIRInterface& pIR) = 0;
+    virtual void outputIRHandle(CallHandle h, IRHandlesIRInterface& pIR) = 0;
+    virtual void outputIRHandle(OpHandle h, IRHandlesIRInterface& pIR) = 0;
+    virtual void outputIRHandle(MemRefHandle h, IRHandlesIRInterface& pIR) = 0;
+    virtual void outputIRHandle(SymHandle h, IRHandlesIRInterface& pIR) = 0;
+    virtual void outputIRHandle(ConstSymHandle h, IRHandlesIRInterface& pIR)=0;
+    virtual void outputIRHandle(ConstValHandle h, IRHandlesIRInterface& pIR)=0;
 
     //*****************************************************************
     // Object
@@ -101,19 +105,27 @@ class OutputBuilder {
     virtual void mapValueStart() = 0;
     virtual void mapValueEnd() = 0;
 
-
     //*****************************************************************
     // Graphs
     //*****************************************************************
-    //graphStart(label), graphEnd(label),
-    //      graphNode(id,value) // shorthand
-    //      graphNodeStart(id), graphNodeEnd(id) 
+    virtual void graphStart(const std::string &label) = 0;
+    virtual void graphEnd(const std::string &label) = 0;
+    virtual void graphSubStart(const std::string &label) = 0;
+    virtual void graphSubEnd(const std::string &label) = 0;
 
+    virtual void graphNodeStart(int id) = 0;
+    virtual void graphNodeLabel(const std::string &label) = 0;
+    virtual void graphNodeLabelStart() = 0;
+    virtual void graphNodeLabelEnd() = 0;
+    virtual void graphNodeEnd() = 0;
 
-    //virtual void newLine() = 0;
-
+    virtual void graphEdgeStart() =  0;
+    virtual void graphEdgeSourceNode(int id) = 0;
+    virtual void graphEdgeSinkNode(int id) = 0;
+    virtual void graphEdgeLabelStart() =  0;
+    virtual void graphEdgeLabelEnd() =  0;
+    virtual void graphEdgeEnd() = 0;
 };
-
 
 } // end of OA namespace
 

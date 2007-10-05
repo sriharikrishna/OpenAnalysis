@@ -1,5 +1,13 @@
-/* 
- */
+/*! \file
+  
+  \authors Michelle Strout
+
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
+  All rights reserved. <br>
+  See ../../../Copyright.txt for details. <br>
+*/
 
 #ifndef OAPTR_H
 #define OAPTR_H
@@ -7,12 +15,9 @@
 #include <iostream>
 #include <cassert>
 #include <set>
+#include "Util.hpp"
 
-#if defined(DEBUG_ALL) || defined(DEBUG_OA_ptr)
-static bool OA_ptr_debug = true;
-#else
 static bool OA_ptr_debug = false;
-#endif
 
 namespace OA {
 
@@ -176,27 +181,12 @@ class OA_ptr {
             dump(std::cout);
           }
 
-          // if want to compare to NULL ptr value use ptrEqual instead
-          assert(mPtr != NULL);
-          assert(other.mPtr != NULL);
-          
-          // efficiency shortcut if ptrs are equal
-          if (mPtr==other.mPtr) { 
-              if (OA_ptr_debug) {
-                std::cout << "\tOA_ptr::operator== returning true due to ptr"
-                          << std::endl;
-              }
-              retval = true; 
-          } else { 
-              if (OA_ptr_debug) {
-                std::cout << "\tOA_ptr::operator== returning result of operator== on *mPtr and *(other.mPtr)" << std::endl;
-                //std::cout << "\tmPtr = " << mPtr << ", other.mPtr = "
-                          //<< other.mPtr << std::endl;
-		     
-              }
-              retval = *mPtr==*(other.mPtr); 
-	      // below doesn't work if want to wrap STL stuff
-	      //retval = mPtr->operator==( *(other.mPtr) );
+          if (mPtr==other.mPtr) {
+            retval = true;
+          } else if (mPtr==0 || other.mPtr==0) {
+            retval = false;
+          } else {
+            retval = *mPtr==*(other.mPtr); 
           }
           if (OA_ptr_debug) {
             std::cout << "\nOA_ptr::operator== returning " << retval 
@@ -219,11 +209,13 @@ class OA_ptr {
             dump(std::cout);
           }
 
-          // if want to compare to NULL ptr value use ptrEqual instead
-          assert(mPtr != NULL);
-          assert(!other.ptrEqual(NULL));
-          
-          retval = *mPtr==*other; 
+          if (ptrEqual(0) && other.ptrEqual(0)) {
+            retval = true;
+          } else if (ptrEqual(0) || other.ptrEqual(0)) {
+            retval = false;
+          } else {
+            retval = *mPtr==*other; 
+          }
           if (OA_ptr_debug) {
             std::cout << "\tOA_ptr::operator== returning " << retval 
                       << std::endl;
@@ -234,23 +226,13 @@ class OA_ptr {
 
     bool operator!=(const OA_ptr<T>& other)  const 
         {
-          //std::cout << "In OA_ptr::operator!=" << std::endl; 
-          // if want to compare to NULL ptr value use ptrEqual instead
-          assert(mPtr != NULL);
-          assert(other.mPtr != NULL);
-
-          if (mPtr==other.mPtr) { return false; }
-          else { return ! (*mPtr==*(other.mPtr)); }
+          return ! (*this==other); 
         }
 
     template <class T2>
     bool operator!=(const OA_ptr<T2>& other) const 
         {
-          // if want to compare to NULL ptr value use ptrEqual instead
-          assert(mPtr != NULL);
-          assert(!other.ptrEqual(NULL));
-          
-          return ! (*mPtr==*other); 
+          return ! (*this==other); 
         }
 
 
@@ -272,10 +254,19 @@ class OA_ptr {
             std::cout << std::endl;
           }
 
-          assert(mPtr != NULL);
-          assert(other.mPtr != NULL);
           // if both objects are equal then return false
-          if ( mPtr==other.mPtr || *mPtr==*(other.mPtr) ) {
+          if ( mPtr==other.mPtr 
+               || other.mPtr == 0
+               || *mPtr==*(other.mPtr) ) 
+          {
+              retval = false;
+
+          // if the first one is null and other wasn't then less than
+          } else if ( mPtr==0 ) {
+              retval = true;
+
+          // if the second one is null and first one wasn't then greater
+          } else if ( mPtr==0 ) {
               retval = false;
 
           // if the objects are not equal then call operator< on them
@@ -292,9 +283,18 @@ class OA_ptr {
     template <class T2>
     bool operator<(const OA_ptr<T2>& other)  const 
         { 
-          assert(mPtr != NULL);
-          assert(!other.ptrEqual(NULL));
-          return *mPtr<*(other); 
+          bool retval;
+          if (ptrEqual(0) && other.ptrEqual(0)) {
+              retval = false;
+          // if the first one is null and other wasn't then less than
+          } else if (ptrEqual(0) ) {
+              retval = true;
+          // if the second one is null and first wasn't then greater than
+          } else if (other.ptrEqual(0) ) {
+              retval = false;
+
+          } else { retval = *mPtr<*(other); }
+          return retval;
         }
 
 

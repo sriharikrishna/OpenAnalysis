@@ -1,5 +1,4 @@
-# -*-Mode: autoconf;-*-
-# $Header: /Volumes/cvsrep/developer/OpenAnalysis/configure.ac,v 1.8 2005/03/14 17:51:54 ntallent Exp $
+# configure.ac
 
 ## * BeginRiceCopyright *****************************************************
 ## 
@@ -38,7 +37,7 @@
 #############################################################################
 #
 # File:
-#   $Source: /Volumes/cvsrep/developer/OpenAnalysis/configure.ac,v $
+#   OpenAnalysis/configure.ac
 #
 # Description:
 #   autoconf input file for OpenAnalysis package
@@ -49,7 +48,7 @@
 #
 #############################################################################
 
-include(config/hpc-cxxutils.m4)
+m4_include(config/hpc-cxxutils.m4)
 
 #----------------------------------------------------------------------------
 # Initialization: 
@@ -61,12 +60,13 @@ include(config/hpc-cxxutils.m4)
 #    correctly
 #----------------------------------------------------------------------------
 
-AC_INIT([OpenAnalysis], [0.97], [hpc@cs.rice.edu], [OpenAnalysis])
+AC_INIT([OpenAnalysis], [1.0], [openanalysis-dev@lists.berlios.de], [OpenAnalysis])
 AC_CONFIG_SRCDIR([src/OpenAnalysis/config.cpp])
 AC_CONFIG_AUX_DIR([config])
 
 AC_PREREQ(2.59)
-AM_INIT_AUTOMAKE(1.9.5)
+AM_INIT_AUTOMAKE
+#AM_INIT_AUTOMAKE(1.9.5)
 
 AC_CANONICAL_HOST
 
@@ -76,6 +76,11 @@ AC_MSG_NOTICE([INFO: On entry: CXX=${CXX} CXXFLAGS=${CXXFLAGS}])
 # Prerequisites: programs, libraries
 #----------------------------------------------------------------------------
 
+# AC_PROG_CXX will set CXXFLAGS to something like -g -O2 if not     
+# already defined. We do not want this!      
+HPC_ENSURE_DEFINED_CXXFLAGS      
+HPC_ENSURE_DEFINED_CFLAGS    
+     
 # Checks for programs.
 AC_PROG_CXX(HPC_CXX_LIST)
 AC_PROG_CXXCPP
@@ -209,10 +214,10 @@ case ${host} in
     ;;
 
   i386*-*-linux* | i686*-*-linux* | x86_64*-*-linux* | ia64*-*-linux*)
-    if HPCcxxcmp([icpc ecpc icc ecc]) ; then
-      # Intel compiler
-      :
-    fi
+  if HPCcxxcmp([g++ gcc]) ; then    
+      # GNU compiler         
+      :           
+    fi      
     ;;
 
   mips*-*-irix*)

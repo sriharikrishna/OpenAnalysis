@@ -5,17 +5,18 @@
   \authors Michelle Strout, Barbara Kreaseck
   \version $Id: MPICFGIRInterface.hpp,v 1.19 2005/03/17 21:47:46 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
+
 
   An MPICFG AnnotationManager generates an MPI-aware CFG representation of the
   program.  The analysis engine within the MPICFG AnnotationManager requires
   that the MPICFGIRInterface be implemented so that queries can be made to
   the Source IR relevant when constructing MPICFGs.  Some of the methods in
   this interface return ... ? 
-
 */
 
 #ifndef MPICFGIRInterface_h

@@ -2,11 +2,12 @@
   
   \brief Definition for MemRefExpr class hierarchy.  
 
-  \authors Michelle Strout
-  \version $Id: MemRefExpr.cpp,v 1.14 2005/06/10 02:32:04 mstrout Exp $
+  \authors Michelle Strout, Andy Stone
+  \version $Id: MemRefExpr.cpp,v 1.14.6.6 2005/11/04 16:24:12 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -24,51 +25,25 @@ namespace OA {
 //*****************************************************************
 
 /*!
-   Need consistent ordering.  Will order by adressTaken (true < false)
-   and then FullAccuracy (true < false).  
+   Need consistent ordering.  
 */
 bool MemRefExpr::operator<(MemRefExpr& other) 
 {
     bool retval = false;
-
-    // MemRefType doesn't affect ordering
-    if (hasAddressTaken()  == other.hasAddressTaken()) {
-        if (hasFullAccuracy()  == other.hasFullAccuracy()) {
-            retval = false;
-        } else if (hasFullAccuracy() && !other.hasFullAccuracy()) {
-            retval = true;
-        } else if (!hasFullAccuracy() && other.hasFullAccuracy()) {
-            retval = false;
-        }
-    } else if (hasAddressTaken() && !other.hasAddressTaken()) {
-        retval = true;
-    } else if (!hasAddressTaken() && other.hasAddressTaken()) {
-        retval = false;
-    }
-
+    if(getOrder() < other.getOrder()) { retval = true; }
     return retval;
 }
 
 bool MemRefExpr::operator==(MemRefExpr& other) 
 {
-    // must have same status for addressOf and accuracy
-    // but don't have to have the same MemRefType
-    bool retval = true;
-    if (hasAddressTaken() != other.hasAddressTaken()) {
-        retval = false;
-    }
-    if (hasFullAccuracy() != other.hasFullAccuracy()) {
-        retval = false;
-    }
-
+    bool retval = false;
+    if(getOrder() == other.getOrder()) { retval = true; }
     return retval;
 }
 
-void MemRefExpr::output(OA_ptr<IRHandlesIRInterface> pIR)
+void MemRefExpr::output(IRHandlesIRInterface& pIR)
 {
-    sOB->field("mAddressOf", bool2string(mAddressOf) );
-    sOB->field("mFullAccuracy", bool2string(mFullAccuracy) );
-    sOB->field("mMemRefType", toString(mMemRefType) );
+    sOutBuild->field("mMemRefType", toString(mMemRefType) );
 }
 
 void MemRefExpr::dump(std::ostream& os, IRHandlesIRInterface& pIR)
@@ -84,10 +59,8 @@ void MemRefExpr::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> pIR)
 
 void MemRefExpr::dump(std::ostream& os)
 {
-    // string for mSymHandle
-    os << "MemRefExpr(this=" << this << ", mAddressOf=" << mAddressOf
-                   <<  ", mFullAccuracy=" << mFullAccuracy 
-                   << ", type = " << toString(mMemRefType) << ")\t";
+    os << "MemRefExpr(this=" << this 
+       << ", type = " << toString(mMemRefType) << ")\t";
 }
 
 std::string MemRefExpr::toString(MemRefType type) 
@@ -111,77 +84,59 @@ void NamedRef::acceptVisitor(MemRefExprVisitor& pVisitor)
     pVisitor.visitNamedRef(*this);
 }
 
-class NamedRefLessThanVisitor : public virtual MemRefExprVisitor {
-  private:
-    NamedRef& mThisRef;
-  public:
-    bool mLessThan;
-    NamedRefLessThanVisitor(NamedRef& thisRef) 
-        : mThisRef(thisRef), mLessThan(false) {}
-    ~NamedRefLessThanVisitor() {}
-    void visitNamedRef(NamedRef& ref) 
-      { if (mThisRef.getSymHandle() < ref.getSymHandle()) 
-        { mLessThan = true; } else { mLessThan = false; }
-      }
-    void visitUnnamedRef(UnnamedRef& ref) { mLessThan = true; }
-    void visitUnknownRef(UnknownRef& ref) { mLessThan = true; }
-    void visitDeref(Deref& ref) { mLessThan = true; }
-    void visitSubSetRef(SubSetRef& ref) { mLessThan = true; }
-};
+OA_ptr<MemRefExpr>  NamedRef::clone()
+{
+    OA_ptr<MemRefExpr> retval;
+    retval = new NamedRef(*this);
+    return retval;
+}
 
 /*! 
-   References are ordered first between MemRefExpr subclasses in an
-   specific order: NamedRef < UnnamedRef < Deref
-   < SubSetRefs( IdxAccess < ... ) < UnknownRef.
+   References are ordered first between MemRefExpr subclasses 
+   based on their sOrder value.
    Then there is a consistent ordering within each subclass.
 
    For NamedRef's ordering is done by SymHandle.
 */
 bool NamedRef::operator<(MemRefExpr& other)
 {
-    // apply the visitor to the other reference and return result
-    NamedRefLessThanVisitor ltVisitor(*this);
-    other.acceptVisitor(ltVisitor);
-    return ltVisitor.mLessThan;
-} 
+    if(getOrder() < other.getOrder()) { return true; }
+    else if(getOrder() > other.getOrder()) { return false; }
 
-class NamedRefEqualVisitor : public virtual MemRefExprVisitor {
-  private:
-    NamedRef& mThisRef;
-  public:
-    bool mEqual;
-    NamedRefEqualVisitor(NamedRef& thisRef) 
-        : mThisRef(thisRef), mEqual(false) {}
-    ~NamedRefEqualVisitor() {}
-    void visitNamedRef(NamedRef& ref) 
-      { if (mThisRef.getSymHandle() == ref.getSymHandle()) 
-        { mEqual = true; } else { mEqual = false; }
-      }
-    void visitUnnamedRef(UnnamedRef& ref) { mEqual = false; }
-    void visitUnknownRef(UnknownRef& ref) { mEqual = false; }
-    void visitDeref(Deref& ref) { mEqual = false; }
-    void visitSubSetRef(SubSetRef& ref) { mEqual = false; }
-};
+    // execution will reach here of two NamedRef objects are being compared
+    NamedRef& ref = static_cast<NamedRef&>(other);
+
+    if( getSymHandle() < ref.getSymHandle() )
+    {
+        return true;
+    } else {
+        return false;
+    }
+} 
 
 bool NamedRef::operator==(MemRefExpr& other)
 {
-    // apply the visitor to the other reference and return result
-    NamedRefEqualVisitor ltVisitor(*this);
-    other.acceptVisitor(ltVisitor);
-    return ltVisitor.mEqual;
+    if(getOrder() != other.getOrder()) { return false; }
+
+    // execution reaches here if two NamedRef objects are being compared
+    NamedRef& ref = static_cast<NamedRef&>(other);
+
+    if( getSymHandle() == ref.getSymHandle() ) 
+    {
+        return true;
+    } else {
+        return false;
+    }
 } 
 
-void NamedRef::output(OA_ptr<IRHandlesIRInterface> pIR)
+void NamedRef::output(IRHandlesIRInterface& pIR)
 {
-    sOB->objStart("NamedRef");
-
+    sOutBuild->objStart("NamedRef");
     MemRefExpr::output(pIR);
-
-    sOB->fieldStart("mSymHandle");
-    sOB->outputIRHandle(mSymHandle,pIR);
-    sOB->fieldEnd("mSymHandle");
-
-    sOB->objEnd("NamedRef");
+    sOutBuild->fieldStart("mSymHandle");
+    sOutBuild->outputIRHandle(mSymHandle,pIR);
+    sOutBuild->fieldEnd("mSymHandle");
+    sOutBuild->objEnd("NamedRef");
 }
 
 void NamedRef::dump(std::ostream& os)
@@ -217,94 +172,86 @@ void UnnamedRef::acceptVisitor(MemRefExprVisitor& pVisitor)
     pVisitor.visitUnnamedRef(*this);
 }
 
-class UnnamedRefLessThanVisitor : public virtual MemRefExprVisitor {
-  private:
-    UnnamedRef& mThisRef;
-  public:
-    bool mLessThan;
-    UnnamedRefLessThanVisitor(UnnamedRef& thisRef) 
-        : mThisRef(thisRef), mLessThan(false) {}
-    ~UnnamedRefLessThanVisitor() {}
-    void visitNamedRef(NamedRef& ref)  { mLessThan = false; }
-    void visitUnnamedRef(UnnamedRef& ref) 
-      { if (mThisRef.getStmtHandle() < ref.getStmtHandle()) 
-        { mLessThan = true; } else { mLessThan = false; }
-      }
-    void visitUnknownRef(UnknownRef& ref) { mLessThan = true; }
-    void visitDeref(Deref& ref) { mLessThan = true; }
-    void visitSubSetRef(SubSetRef& ref) { mLessThan = true; }
-};
+OA_ptr<MemRefExpr>  UnnamedRef::clone()
+{
+    OA_ptr<MemRefExpr> retval;
+    retval = new UnnamedRef(*this);
+    return retval;
+}
 
 /*! 
-   References are ordered first between MemRefExpr subclasses in an
-   specific order: NamedRef < UnnamedRef < Deref
-   < SubSetRefs( IdxAccess < ... ) < UnknownRef.
+   References are ordered first between MemRefExpr subclasses 
+   based on their sOrder value.
    Then there is a consistent ordering within each subclass.
 
-   For UnnamedRef's ordering is done by StmtHandle.
+   For UnnamedRef's ordering is done by ExprHandle.
 */
 bool UnnamedRef::operator<(MemRefExpr& other)
 {
-    // apply the visitor to the other reference and return result
-    UnnamedRefLessThanVisitor ltVisitor(*this);
-    other.acceptVisitor(ltVisitor);
-    return ltVisitor.mLessThan;
-}  
+    if(getOrder() < other.getOrder()) { return true; }
+    else if(getOrder() > other.getOrder()) { return false; }
 
-class UnnamedRefEqualVisitor : public virtual MemRefExprVisitor {
-  private:
-    UnnamedRef& mThisRef;
-  public:
-    bool mEqual;
-    UnnamedRefEqualVisitor(UnnamedRef& thisRef) 
-        : mThisRef(thisRef), mEqual(false) {}
-    ~UnnamedRefEqualVisitor() {}
-    void visitNamedRef(NamedRef& ref) { mEqual = false; }
-    void visitUnnamedRef(UnnamedRef& ref) 
-      { if (mThisRef.getStmtHandle() == ref.getStmtHandle()) 
-        { mEqual = true; } else { mEqual = false; }
-      }
-    void visitUnknownRef(UnknownRef& ref) { mEqual = false; }
-    void visitDeref(Deref& ref) { mEqual = false; }
-    void visitSubSetRef(SubSetRef& ref) { mEqual = false; }
-};
+    // execution will reach here of two UnnamedRef objects are being compared
+    UnnamedRef& ref = static_cast<UnnamedRef&>(other);
+
+    if( getExprHandle() < ref.getExprHandle() )
+    {
+        return true;
+    } else {
+        return false;
+    }
+}  
 
 bool UnnamedRef::operator==(MemRefExpr& other)
 {
-    // apply the visitor to the other reference and return result
-    UnnamedRefEqualVisitor ltVisitor(*this);
-    other.acceptVisitor(ltVisitor);
-    return ltVisitor.mEqual;
+    if(getOrder() != other.getOrder()) { return false; }
+
+    // execution reaches here if two UnnamedRef objects are being compared
+    UnnamedRef& ref = static_cast<UnnamedRef&>(other);
+
+    if( getExprHandle() == ref.getExprHandle() ) 
+    {
+        return true;
+    } else {
+        return false;
+    }
 }   
 
-void UnnamedRef::output(OA_ptr<IRHandlesIRInterface> pIR)
+void UnnamedRef::output(IRHandlesIRInterface& pIR)
 {
-    sOB->objStart("UnnamedRef");
-
+    sOutBuild->objStart("UnnamedRef");
     MemRefExpr::output(pIR);
-
-    sOB->fieldStart("mStmtHandle");
-    sOB->outputIRHandle(mStmtHandle,pIR);
-    sOB->fieldEnd("mStmtHandle");
-
-    sOB->objEnd("UnnamedRef");
+    sOutBuild->fieldStart("mExprHandle");
+    sOutBuild->outputIRHandle(mExprHandle,pIR);
+    sOutBuild->fieldEnd("mExprHandle");
+    sOutBuild->field("mLocal", bool2string(mLocal));
+    if(isLocal() == true) {
+       sOutBuild->fieldStart("mProcHandle");
+       sOutBuild->outputIRHandle(mProcHandle,pIR);
+       sOutBuild->fieldEnd("mProcHandle");
+    }
+    sOutBuild->objEnd("UnnamedRef");
 }
 
 
 void UnnamedRef::dump(std::ostream& os)
 {
     MemRefExpr::dump(os);
-    os << "UnnamedRef(this=" << this << ", mStmtHandle.hval()="
-       << mStmtHandle.hval() << ")";
+    os << "UnnamedRef(this=" << this << ", mExprHandle.hval()="
+       << mExprHandle.hval() << ", mLocal=" << mLocal;
+    if( isLocal() == true) {
+        os << ", mProcHandle.hval()=" << mProcHandle.hval();
+    }
+    os << ")";
     os << std::endl;
 }
 
 void UnnamedRef::dump(std::ostream& os, IRHandlesIRInterface& pIR)
 {
     MemRefExpr::dump(os,pIR);
-    os << "UnnamedRef(this=" << this << ", mStmtHandle.hval()="
-       << mStmtHandle.hval() << "): "
-       << pIR.toString(mStmtHandle);
+    os << "UnnamedRef(this=" << this << ", mExprHandle.hval()="
+       << mExprHandle.hval() << "): "
+       << pIR.toString(mExprHandle);
     os << std::endl;
 }
 
@@ -322,30 +269,33 @@ void UnknownRef::acceptVisitor(MemRefExprVisitor& pVisitor)
     pVisitor.visitUnknownRef(*this);
 }
 
+OA_ptr<MemRefExpr>  UnknownRef::clone()
+{
+    OA_ptr<MemRefExpr> retval;
+    retval = new UnknownRef(*this);
+    return retval;
+}
+
 bool UnknownRef::operator<(MemRefExpr& other) 
 {
+    if(getOrder() < other.getOrder()) { return true; }
+    else if(getOrder() > other.getOrder()) { return false; }
+
+    // execution will reach here of two UnknownRef objects are being compared
     return false;
 }
     
 bool UnknownRef::operator==(MemRefExpr& other)
 {
-    bool retval = false;  
-
-    // we can only be equivalent to another unknown memory 
-    if (other.isaUnnamed()) {
-        retval = MemRefExpr::operator==(other);
-    }
-
-    return retval;
+    if(getOrder() != other.getOrder()) { return false; }
+    else { return true; }
 }
 
-void UnknownRef::output(OA_ptr<IRHandlesIRInterface> pIR)
+void UnknownRef::output(IRHandlesIRInterface& pIR)
 {
-    sOB->objStart("UnknownRef");
-
+    sOutBuild->objStart("UnknownRef");
     MemRefExpr::output(pIR);
-
-    sOB->objEnd("UnknownRef");
+    sOutBuild->objEnd("UnknownRef");
 }
 
 
@@ -386,14 +336,136 @@ SymHandle RefOp::getBaseSym()
     return namedRef->getSymHandle();
 }
 
-void RefOp::output(OA_ptr<IRHandlesIRInterface> ir)
+OA_ptr<MemRefExpr> RefOp::getBase() {
+    OA_ptr<MemRefExpr> m = mMRE; // Stupid Sun CC 5.4
+
+    // if our mre is another RefOp then call recursively
+    if (mMRE->isaRefOp()) {
+        OA_ptr<RefOp> refOp = m.convert<RefOp>();
+        return refOp->getBase();
+    }
+
+    // otherwise should be a named ref
+    assert(mMRE->isaNamed());
+    OA_ptr<NamedRef> namedRef = m.convert<NamedRef>();
+    return namedRef;
+}
+
+void RefOp::output(IRHandlesIRInterface& ir)
 {
     MemRefExpr::output(ir);
 
-    sOB->fieldStart("mMRE");
-    mMRE->output(ir);
-    sOB->fieldEnd("mMRE");
+    if (! mMRE.ptrEqual(0) ) {
+        sOutBuild->fieldStart("mMRE");
+        mMRE->output(ir);
+        sOutBuild->fieldEnd("mMRE");
+    } else {
+        sOutBuild->field("mMRE", "<null MRE>");
+    }
+        
 }
+
+
+//*****************************************************************
+// AddressOf methods
+//*****************************************************************
+
+void AddressOf::acceptVisitor(MemRefExprVisitor& pVisitor)
+{
+    pVisitor.visitAddressOf(*this);
+}
+
+OA_ptr<MemRefExpr> AddressOf::clone()
+{
+    OA_ptr<MemRefExpr> retval;
+    retval = new AddressOf(*this);
+    return retval;
+}
+
+bool AddressOf::operator<(MemRefExpr& other)
+{
+    if(getOrder() < other.getOrder()) { return true; }
+    else if(getOrder() > other.getOrder()) { return false; }
+
+    // execution will reach here of two AddressOf objects are being compared
+    AddressOf& ref = static_cast<AddressOf&>(other);
+
+    if( getMemRefExpr() < ref.getMemRefExpr() )
+    {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool AddressOf::operator==(MemRefExpr& other)
+{
+    if(getOrder() != other.getOrder()) { return false; }
+
+    // execution reaches here if two AddressOf objects are being compared
+    AddressOf& ref = static_cast<AddressOf&>(other);
+
+    if( getMemRefExpr() == ref.getMemRefExpr() )
+    {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+OA_ptr<MemRefExpr> AddressOf::composeWith(OA_ptr<MemRefExpr> mre)
+{
+    OA_ptr<MemRefExpr> retval;
+    OA_ptr<MemRefExpr> clone_mre ;
+    clone_mre = mre->clone();
+
+   if(clone_mre->isaRefOp()) {
+       
+     OA_ptr<RefOp> ref = clone_mre.convert<RefOp>();   
+     
+     if (ref->isaDeref()) {
+           OA_ptr<MemRefExpr> child_mre = ref->getMemRefExpr();
+           return child_mre;
+       }
+   }    
+
+   retval = new AddressOf(this->getMRType(), clone_mre);
+
+   return retval;
+}
+
+
+
+void AddressOf::output(IRHandlesIRInterface& pIR)
+{
+    sOutBuild->objStart("AddressOf");
+    RefOp::output(pIR);
+    sOutBuild->objEnd("AddressOf");
+}
+
+
+void AddressOf::dump(std::ostream& os)
+{
+    MemRefExpr::dump(os);
+    os << "AddressOf(this=" << this << ", mMemRefExpr=";
+    getMemRefExpr()->dump(os);
+    os << std::endl;
+}
+
+void AddressOf::dump(std::ostream& os, IRHandlesIRInterface& pIR)
+{
+    MemRefExpr::dump(os,pIR);
+    os << "AddressOf(this=" << this << ", mMemRefExpr=";
+    getMemRefExpr()->dump(os,pIR);
+    os << std::endl;
+}
+
+void AddressOf::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> pIR)
+{
+    dump(os,*pIR);
+}
+
 
 //*****************************************************************
 // Deref methods
@@ -404,29 +476,12 @@ void Deref::acceptVisitor(MemRefExprVisitor& pVisitor)
     pVisitor.visitDeref(*this);
 }
 
-class DerefLessThanVisitor : public virtual MemRefExprVisitor {
-  private:
-    Deref& mThisRef;
-  public:
-    bool mLessThan;
-    DerefLessThanVisitor(Deref& thisRef) 
-        : mThisRef(thisRef), mLessThan(false) {}
-    ~DerefLessThanVisitor() {}
-    void visitNamedRef(NamedRef& ref)  { mLessThan = false; }
-    void visitUnnamedRef(UnnamedRef& ref) { mLessThan = false; }
-    void visitUnknownRef(UnknownRef& ref) { mLessThan = true; }
-    // have to compare the MemRefExpr fields in the Deref instance
-    // because things like fullAccuracy can be different at each level
-    void visitDeref(Deref& ref)
-      { if ( mThisRef.MemRefExpr::operator<(ref) ||
-             (mThisRef.MemRefExpr::operator==(ref) &&
-              (mThisRef.getMemRefExpr() < ref.getMemRefExpr() ||
-               (mThisRef.getMemRefExpr() == ref.getMemRefExpr()
-                && mThisRef.getNumDerefs() < ref.getNumDerefs()) ) ) )
-        { mLessThan = true; } else { mLessThan = false; }
-      }
-    void visitSubSetRef(SubSetRef& ref) { mLessThan = true; }
-};
+OA_ptr<MemRefExpr>  Deref::clone()
+{
+    OA_ptr<MemRefExpr> retval;
+    retval = new Deref(*this);
+    return retval;
+}
 
 /*! 
    References are ordered first between MemRefExpr subclasses in an
@@ -439,56 +494,77 @@ class DerefLessThanVisitor : public virtual MemRefExprVisitor {
 */
 bool Deref::operator<(MemRefExpr& other)
 {
-    // apply the visitor to the other reference and return result
-    DerefLessThanVisitor ltVisitor(*this);
-    other.acceptVisitor(ltVisitor);
-    return ltVisitor.mLessThan;
-}   
+    if(getOrder() < other.getOrder()) { return true; }
+    else if(getOrder() > other.getOrder()) { return false; }
 
-class DerefEqualVisitor : public virtual MemRefExprVisitor {
-  private:
-    Deref& mThisRef;
-  public:
-    bool mEqual;
-    DerefEqualVisitor(Deref& thisRef) 
-        : mThisRef(thisRef), mEqual(false) {}
-    ~DerefEqualVisitor() {}
-    void visitNamedRef(NamedRef& ref) { mEqual = false; }
-    void visitUnnamedRef(UnnamedRef& ref) { mEqual = false; }
-    void visitUnknownRef(UnknownRef& ref) { mEqual = false; }
-    void visitDeref(Deref& ref) 
-      { // make sure these guys have valid memory references that
-        // they operate on
-        assert(!mThisRef.getMemRefExpr().ptrEqual(NULL));
-        assert(!ref.getMemRefExpr().ptrEqual(NULL));
-        // check if deref count is equal and underlying memref is equal
-        // have to check that our MemRefExpr fields like fullAccuracy are
-        // equal because accuracy can change at any level
-        if (mThisRef.MemRefExpr::operator==(ref)
-            && mThisRef.getNumDerefs() == ref.getNumDerefs()
-            && mThisRef.getMemRefExpr() == ref.getMemRefExpr() )
-        { mEqual = true; } else { mEqual = false; }
-      }
-    void visitSubSetRef(SubSetRef& ref) { mEqual = false; }
-};
+    // execution will reach here of two Deref objects are being compared
+    Deref& ref = static_cast<Deref&>(other);
+
+
+    if( (getMemRefExpr() < ref.getMemRefExpr() ||
+          (getMemRefExpr() == ref.getMemRefExpr()
+            && getNumDerefs() < ref.getNumDerefs()) ) )
+    {
+        return true;
+    } else { 
+        return false;
+    }
+}   
 
 bool Deref::operator==(MemRefExpr& other)
 {
-    // apply the visitor to the other reference and return result
-    DerefEqualVisitor ltVisitor(*this);
-    other.acceptVisitor(ltVisitor);
-    return ltVisitor.mEqual;
+    if(getOrder() != other.getOrder()) { return false; }
+
+    // execution reaches here if two Deref objects are being compared
+    Deref& ref = static_cast<Deref&>(other);
+
+
+    // check if deref count is equal and underlying memref is equal
+    // have to check that our MemRefExpr fields like fullAccuracy are
+    // equal because accuracy can change at any level
+    if( getNumDerefs() == ref.getNumDerefs()
+        && getMemRefExpr() == ref.getMemRefExpr() )
+    {
+        return true;
+    } else {
+        return false;
+    }
 }
 
-void Deref::output(OA_ptr<IRHandlesIRInterface> pIR)
+
+
+OA_ptr<MemRefExpr> Deref::composeWith(OA_ptr<MemRefExpr> mre)
 {
-    sOB->objStart("Deref");
+    OA_ptr<MemRefExpr> retval;
+    OA_ptr<MemRefExpr> clone_mre = mre->clone();      
 
+    if( clone_mre->isaRefOp() ) {
+      OA_ptr<RefOp> ref = clone_mre.convert<RefOp>();
+
+      if (ref->isaAddressOf()) {
+          OA_ptr<MemRefExpr> child_mre = ref->getMemRefExpr();
+          retval = child_mre;
+          return retval;
+      }
+    }   
+          
+         /* PLM 1/23/07 deprecated hasFullAccuracy 
+         retval = 
+             new Deref(this->hasFullAccuracy(), this->getMRType(), 
+             mre, this->getNumDerefs());
+         */
+
+    retval = new Deref(this->getMRType(), clone_mre, 1);
+
+    return retval;
+}
+
+void Deref::output(IRHandlesIRInterface& pIR)
+{
+    sOutBuild->objStart("Deref");
     RefOp::output(pIR);
-
-    sOB->field("mNumDeref", int2string(mNumDeref));
-
-    sOB->objEnd("Deref");
+    sOutBuild->field("mNumDeref", int2string(mNumDeref));
+    sOutBuild->objEnd("Deref");
 }
 
 
@@ -518,16 +594,91 @@ void Deref::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> pIR)
 //*****************************************************************
 // SubSetRef methods
 //*****************************************************************
+OA_ptr<MemRefExpr>  SubSetRef::clone()
+{
+    OA_ptr<MemRefExpr> retval;
+    retval = new SubSetRef(*this);
+    return retval;
+}
 
-// default visitor routine for all subclasses
 void SubSetRef::acceptVisitor(MemRefExprVisitor& pVisitor)
 {
     pVisitor.visitSubSetRef(*this);
 }
 
-void SubSetRef::output(OA_ptr<IRHandlesIRInterface> ir)
+
+OA_ptr<MemRefExpr> SubSetRef::composeWith(OA_ptr<MemRefExpr> mre)
 {
-    RefOp::output(ir);
+  //    assert(! mre->isaAddressOf() );
+    OA_ptr<MemRefExpr> clone_mre = mre->clone();
+    OA_ptr<MemRefExpr> retval;     
+    if(mre->isaSubSetRef()){
+        OA_ptr<RefOp> refOp = mre.convert<RefOp>();
+        return refOp->getMemRefExpr();
+    } 
+    retval = new SubSetRef(clone_mre->getMRType(), clone_mre);
+    return retval;
+}
+
+
+void SubSetRef::output(IRHandlesIRInterface& pIR)
+{
+    sOutBuild->objStart("SubSetRef");
+    RefOp::output(pIR);
+    sOutBuild->objEnd("SubSetRef");
+}
+
+
+
+bool SubSetRef::operator<(MemRefExpr& other)
+{
+   if(getOrder() < other.getOrder()) { return true; }
+   else if(getOrder() > other.getOrder()) { return false; }
+   SubSetRef& ref = static_cast<SubSetRef&>(other);
+   if( getMemRefExpr() < ref.getMemRefExpr() ) 
+   {
+       return true;
+   } else {
+       return false;
+   }
+}
+
+
+bool SubSetRef::operator==(MemRefExpr& other)
+{
+    if(getOrder() != other.getOrder()) { return false; }
+    // execution reaches here if two Deref objects are being compared
+    SubSetRef& ref = static_cast<SubSetRef&>(other);
+    if( getMemRefExpr() == ref.getMemRefExpr() )
+    {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+void SubSetRef::dump(std::ostream& os)
+{
+    MemRefExpr::dump(os);
+    os << "SubSetRef(this=" << this << ", mMemRefExpr=";
+    getMemRefExpr()->dump(os);
+    os << " )";
+    os << std::endl;
+}
+
+void SubSetRef::dump(std::ostream& os, IRHandlesIRInterface& pIR)
+{
+    MemRefExpr::dump(os,pIR);
+    os << "SubSetRef(this=" << this << ", mMemRefExpr=";
+    getMemRefExpr()->dump(os,pIR);
+    os << " )";
+    os << std::endl;
+}
+
+void SubSetRef::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> pIR)
+{
+    dump(os,*pIR);
 }
 
 //*****************************************************************
@@ -539,28 +690,12 @@ void IdxAccess::acceptVisitor(MemRefExprVisitor& pVisitor)
     pVisitor.visitIdxAccess(*this);
 }
 
-class IdxAccessLessThanVisitor : public virtual MemRefExprVisitor {
-  private:
-    IdxAccess& mThisRef;
-  public:
-    bool mLessThan;
-    IdxAccessLessThanVisitor(IdxAccess& thisRef) 
-        : mThisRef(thisRef), mLessThan(false) {}
-    ~IdxAccessLessThanVisitor() {}
-    void visitNamedRef(NamedRef& ref)  { mLessThan = false; }
-    void visitUnnamedRef(UnnamedRef& ref) { mLessThan = false; }
-    void visitUnknownRef(UnknownRef& ref) { mLessThan = true; }
-    void visitDeref(Deref& ref) { mLessThan = false; }
-    void visitSubSetRef(SubSetRef& ref) { mLessThan = true; }
-    void visitIdxAccess(IdxAccess& ref) 
-      { if ( mThisRef.MemRefExpr::operator<(ref) ||
-             (mThisRef.MemRefExpr::operator==(ref) &&
-              (mThisRef.getMemRefExpr() < ref.getMemRefExpr() ||
-               (mThisRef.getMemRefExpr() == ref.getMemRefExpr()
-                && mThisRef.getIdx() < ref.getIdx()) ) ) )
-        { mLessThan = true; } else { mLessThan = false; }
-      }
-};
+OA_ptr<MemRefExpr>  IdxAccess::clone()
+{
+    OA_ptr<MemRefExpr> retval;
+    retval = new IdxAccess(*this);
+    return retval;
+}
 
 /*! 
    References are ordered first between MemRefExpr subclasses in an
@@ -577,51 +712,45 @@ class IdxAccessLessThanVisitor : public virtual MemRefExprVisitor {
 */
 bool IdxAccess::operator<(MemRefExpr& other)
 {
-    // apply the visitor to the other ref and return result
-    IdxAccessLessThanVisitor ltVisitor(*this);
-    other.acceptVisitor(ltVisitor);
-    return ltVisitor.mLessThan;
-}  
+    if(getOrder() < other.getOrder()) { return true; }
+    else if(getOrder() > other.getOrder()) { return false; }
 
-class IdxAccessEqualVisitor : public virtual MemRefExprVisitor {
-  private:
-    IdxAccess& mThisRef;
-  public:
-    bool mEqual;
-    IdxAccessEqualVisitor(IdxAccess& thisRef) 
-        : mThisRef(thisRef), mEqual(false) {}
-    ~IdxAccessEqualVisitor() {}
-    void visitNamedRef(NamedRef& ref) { mEqual = false; }
-    void visitUnnamedRef(UnnamedRef& ref) { mEqual = false; }
-    void visitUnknownRef(UnknownRef& ref) { mEqual = false; }
-    void visitDeref(Deref& ref) { mEqual = false; }
-    void visitSubSetRef(SubSetRef& ref) { mEqual = false; }
-    void visitIdxAccess(IdxAccess& ref) 
-      { if ( mThisRef.MemRefExpr::operator==(ref) 
-             && mThisRef.getMemRefExpr() == ref.getMemRefExpr()
-             && mThisRef.getIdx() == ref.getIdx() )
-        { mEqual = true; } else { mEqual = false; }
-      }
-};
+    // execution will reach here of two IdxAccess objects are being compared
+    IdxAccess& ref = static_cast<IdxAccess&>(other);
+
+    if( getMemRefExpr() < ref.getMemRefExpr() ||
+          (getMemRefExpr() == ref.getMemRefExpr()
+            && getIdx() < ref.getIdx()) )
+    {
+        return true;
+    } else {
+        return false;
+    }
+}  
 
 bool IdxAccess::operator==(MemRefExpr& other)
 {
-    // apply the visitor to the other reference and return result
-    IdxAccessEqualVisitor ltVisitor(*this);
-    other.acceptVisitor(ltVisitor);
+    if(getOrder() != other.getOrder()) { return false; }
 
-    return ltVisitor.mEqual;
+    // execution reaches here if two IdxAccess objects are being compared
+    IdxAccess& ref = static_cast<IdxAccess&>(other);
+
+
+    if( getMemRefExpr() == ref.getMemRefExpr()
+         && getIdx() == ref.getIdx() )
+    {
+        return true;
+    } else {
+        return false;
+    }
 }
 
-void IdxAccess::output(OA_ptr<IRHandlesIRInterface> pIR)
+void IdxAccess::output(IRHandlesIRInterface& pIR)
 {
-    sOB->objStart("IdxAccess");
-
+    sOutBuild->objStart("IdxAccess");
     RefOp::output(pIR);
-
-    sOB->field("mIdx", int2string(mIdx));
-
-    sOB->objEnd("IdxAccess");
+    sOutBuild->field("mIdx", int2string(mIdx));
+    sOutBuild->objEnd("IdxAccess");
 }
 
 
@@ -644,6 +773,183 @@ void IdxAccess::dump(std::ostream& os, IRHandlesIRInterface& pIR)
 }
 
 void IdxAccess::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> pIR)
+{
+    dump(os,*pIR);
+}
+
+
+//*****************************************************************
+// IdxExprAccess methods
+//*****************************************************************
+void IdxExprAccess::acceptVisitor(MemRefExprVisitor& pVisitor) {
+    pVisitor.visitIdxExprAccess(*this);
+}
+
+OA_ptr<MemRefExpr> IdxExprAccess::clone() {
+    OA_ptr<MemRefExpr> retval;
+    retval = new IdxExprAccess(*this);
+    return retval;
+}
+
+/*! 
+*/
+bool IdxExprAccess::operator<(MemRefExpr & other) {
+    if(getOrder() < other.getOrder()) { return true; }
+    else if(getOrder() > other.getOrder()) { return false; }
+
+    // execution will reach here of two FieldAccess objects are being compared
+    IdxExprAccess& ref = static_cast<IdxExprAccess&>(other);
+
+    if( (getMemRefExpr() < ref.getMemRefExpr()) ||
+            (getMemRefExpr() == ref.getMemRefExpr()
+             && getExpr() < ref.getExpr()) )
+    {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool IdxExprAccess::operator==(MemRefExpr& other) {
+    if(getOrder() != other.getOrder()) { return false; }
+
+    // execution reaches here if two IdxExprAccess objects are being compared
+    IdxExprAccess& ref = static_cast<IdxExprAccess&>(other);
+
+
+    if( getMemRefExpr() == ref.getMemRefExpr() 
+         && getExpr() == ref.getExpr() )
+    {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void IdxExprAccess::output(IRHandlesIRInterface& ir) {
+    sOutBuild->objStart("IdxExprAccess");
+    RefOp::output(ir);
+    sOutBuild->outputIRHandle(mhExpr, ir);
+    sOutBuild->objEnd("IdxExprAccess");
+}
+
+void IdxExprAccess::dump(std::ostream& os)
+{
+    MemRefExpr::dump(os);
+    os << "IdxExprAccess(this=" << this << ", mMemRefExpr=";
+    getMemRefExpr()->dump(os);
+    os << "\tmhExpr=" << mhExpr.hval () << " )";
+    os << std::endl;
+}
+
+void IdxExprAccess::dump(std::ostream& os, IRHandlesIRInterface& pIR)
+{
+    MemRefExpr::dump(os,pIR);
+    os << "IdxExprAccess(this=" << this << ", mMemRefExpr="; 
+    getMemRefExpr()->dump(os,pIR);
+    os << "\tmhExpr=" << mhExpr.hval() << " ) ";
+    os << std::endl;
+}
+
+void IdxExprAccess::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> pIR) 
+{
+    dump(os,*pIR);
+}
+
+
+//*****************************************************************
+// FieldAccess methods
+//*****************************************************************
+
+void FieldAccess::acceptVisitor(MemRefExprVisitor& pVisitor)
+{
+    pVisitor.visitFieldAccess(*this);
+}
+
+OA_ptr<MemRefExpr>  FieldAccess::clone()
+{
+    OA_ptr<MemRefExpr> retval;
+    retval = new FieldAccess(*this);
+    return retval;
+}
+
+/*! 
+   For FieldAccess ordering is done by underlying reference and then
+   then by FieldName.
+   
+   Any subclasses to SubSetRef that are added later must handle 
+   FieldName (and IdxAccess) specifically,
+   otherwise there will be inconsistent ordering.
+*/
+bool FieldAccess::operator<(MemRefExpr& other)
+{
+    if(getOrder() < other.getOrder()) { return true; }
+    else if(getOrder() > other.getOrder()) { return false; }
+
+    // execution will reach here of two FieldAccess objects are being compared
+    FieldAccess& ref = static_cast<FieldAccess&>(other);
+
+    if( getMemRefExpr() < ref.getMemRefExpr() ||
+         (getMemRefExpr() == ref.getMemRefExpr()
+            && getFieldName() < ref.getFieldName()) ) 
+    {
+        return true;
+    } else {
+        return false;
+    }
+}  
+
+bool FieldAccess::operator==(MemRefExpr& other)
+{
+    if(getOrder() != other.getOrder()) { return false; }
+
+    // execution reaches here if two FieldAccess objects are being compared
+    FieldAccess& ref = static_cast<FieldAccess&>(other);
+
+    if( getMemRefExpr() == ref.getMemRefExpr()
+         && getFieldName() == ref.getFieldName() )
+    {
+        return true;
+    } else {
+        return false;
+    }
+}
+ 
+void FieldAccess::output(IRHandlesIRInterface& pIR)
+{
+    sOutBuild->objStart("FieldAccess");
+
+    RefOp::output(pIR);
+
+    //    sOutBuild->fieldStart("mFieldName");
+    //    sOutBuild->outputIRHandle(mFieldName,pIR);
+    //    sOutBuild->fieldEnd("mFieldName");
+    sOutBuild->field("mFieldName",mFieldName);
+
+    sOutBuild->objEnd("FieldAccess");
+}
+
+void FieldAccess::dump(std::ostream& os)
+{
+    MemRefExpr::dump(os);
+    os << "FieldAccess(this=" << this << ", mMemRefExpr=";
+    getMemRefExpr()->dump(os);
+    //    os << "\tmFieldName.hval()=" << mFieldName.hval() << " )"; 
+    os << "\tmFieldName=" << mFieldName << " )"; 
+    os << std::endl;
+}
+
+void FieldAccess::dump(std::ostream& os, IRHandlesIRInterface& pIR)
+{
+    MemRefExpr::dump(os,pIR);
+    os << "FieldAccess(this=" << this << ", mMemRefExpr=";
+    getMemRefExpr()->dump(os,pIR);
+    //    os << "\tmFieldName()=" << mFieldName.hval() << " ): " << pIR.toString(mFieldName); 
+    os << "\tmFieldName()=" << mFieldName << " ) ";
+    os << std::endl;
+}
+
+void FieldAccess::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> pIR)
 {
     dump(os,*pIR);
 }

@@ -3,13 +3,13 @@
   \brief All analysis results have this as their base class.
 
   \authors Michelle Strout
-  \version $Id: Annotation.hpp,v 1.1 2005/01/18 21:13:16 mstrout Exp $
+  \version $Id: Annotation.hpp,v 1.1.10.1 2005/09/14 16:53:40 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef Annotation_H
@@ -25,11 +25,11 @@ namespace OA {
 class Annotation {
   protected:
     // output builder for all annotations
-    static OA_ptr<OutputBuilder> sOB;
+    static OA_ptr<OutputBuilder> sOutBuild;
 
   public:
     Annotation() 
-      { if (sOB.ptrEqual(0)) sOB = new OutputBuilderText; }
+      { if (sOutBuild.ptrEqual(0)) sOutBuild = new OutputBuilderText; }
       // FIXME: this could lead to performance problems but it
       // seems the only other option is to have some kind of
       // initialization method called before calling any output
@@ -37,10 +37,10 @@ class Annotation {
 
     virtual ~Annotation() {}
 
-    static void configOutput(OA_ptr<OutputBuilder> ob) { sOB = ob; }
+    static void configOutput(OA_ptr<OutputBuilder> ob) { sOutBuild = ob; }
 
     // methods all annotations must provide
-    virtual void output(OA_ptr<IRHandlesIRInterface> ir) = 0;
+    virtual void output(IRHandlesIRInterface& ir) = 0;
 };
 
 } // end of OA namespace

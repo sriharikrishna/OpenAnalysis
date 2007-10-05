@@ -5,8 +5,9 @@
   \authors Michelle Strout 
   \version $Id: ICFGDFProblem.hpp,v 1.2 2005/06/10 02:32:04 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -16,7 +17,7 @@
 
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
 #include <OpenAnalysis/DataFlow/DataFlowSet.hpp>
-#include <OpenAnalysis/ICFG/ICFGStandard.hpp>
+#include <OpenAnalysis/ICFG/ICFGInterface.hpp>
 //#include <OpenAnalysis/IRInterface/CFGIRInterface.hpp>
 
 namespace OA {
@@ -25,7 +26,6 @@ namespace OA {
 //*********************************************************************
 // class ICFGDFProblem
 //*********************************************************************
-//template <class DataFlowSet>
 class ICFGDFProblem  {
 public:
   //--------------------------------------------------------
@@ -46,9 +46,9 @@ public:
 
   //! Should generate an in and out DataFlowSet for node
   virtual OA_ptr<DataFlowSet> 
-      initializeNodeIN(OA_ptr<ICFG::ICFGStandard::Node> n)  = 0;
+      initializeNodeIN(OA_ptr<ICFG::NodeInterface> n)  = 0;
   virtual OA_ptr<DataFlowSet> 
-      initializeNodeOUT(OA_ptr<ICFG::ICFGStandard::Node> n)  = 0;
+      initializeNodeOUT(OA_ptr<ICFG::NodeInterface> n)  = 0;
   //virtual void initializeEdge(DGraph::Interface::Edge *e)  = 0;
 
   //--------------------------------------------------------
@@ -81,11 +81,16 @@ public:
 
   //! Propagate a data-flow set from caller to callee
   virtual OA_ptr<DataFlowSet> callerToCallee(ProcHandle caller,
-    OA_ptr<DataFlowSet> dfset, ExprHandle call, ProcHandle callee) = 0;
+    OA_ptr<DataFlowSet> dfset, CallHandle call, ProcHandle callee) = 0;
   
   //! Propagate a data-flow set from callee to caller
   virtual OA_ptr<DataFlowSet> calleeToCaller(ProcHandle callee,
-    OA_ptr<DataFlowSet> dfset, ExprHandle call, ProcHandle caller) = 0;
+    OA_ptr<DataFlowSet> dfset, CallHandle call, ProcHandle caller) = 0;
+
+  // MMA
+  //! Propagate a data-flow set from call node to return node
+  virtual OA_ptr<DataFlowSet> callToReturn(ProcHandle caller,
+    OA_ptr<DataFlowSet> dfset, CallHandle call, ProcHandle callee) = 0;
 
 };
                             

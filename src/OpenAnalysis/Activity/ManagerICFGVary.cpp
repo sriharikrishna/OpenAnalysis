@@ -5,38 +5,37 @@
   \authors Michelle Strout
   \version $Id: ManagerICFGVary.cpp,v 1.2 2005/06/10 02:32:02 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "ManagerICFGVary.hpp"
+#include <Utils/Util.hpp>
 
 
 namespace OA {
   namespace Activity {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_ManagerICFGVary)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
 
 /*!
 */
 ManagerICFGVary::ManagerICFGVary( OA_ptr<ActivityIRInterface> _ir) : mIR(_ir)
 {
+    OA_DEBUG_CTRL_MACRO("DEBUG_ManagerICFGVary:ALL", debug);
     mSolver = new DataFlow::ICFGDFSolver(DataFlow::ICFGDFSolver::Forward,*this);
 }
 
 OA_ptr<Activity::InterVary> 
 ManagerICFGVary::performAnalysis(
-        OA_ptr<ICFG::ICFGStandard> icfg,
+        OA_ptr<ICFG::ICFGInterface> icfg,
         OA_ptr<DataFlow::ParamBindings> paramBind,
         OA_ptr<Alias::InterAliasInterface> interAlias,
-        OA_ptr<ICFGDep> icfgDep)
+        OA_ptr<ICFGDep> icfgDep,
+        DataFlow::DFPImplement algorithm)
 {
   // store results that will be needed in callbacks
   mICFG = icfg;
@@ -48,7 +47,7 @@ ManagerICFGVary::performAnalysis(
   mInterVary = new InterVary();
 
   // call iterative data-flow solver for ICFG
-  mSolver->solve(icfg);
+  mSolver->solve(icfg,algorithm);
 
   mInterVary->setNumIter(mSolver->getNumIter());
     
@@ -86,7 +85,7 @@ OA_ptr<DataFlow::DataFlowSet> ManagerICFGVary::initializeTop()
 }
 
 OA_ptr<DataFlow::DataFlowSet> 
-ManagerICFGVary::initializeNodeIN(OA_ptr<ICFG::ICFGStandard::Node> n)
+ManagerICFGVary::initializeNodeIN(OA_ptr<ICFG::NodeInterface> n)
 {
     OA_ptr<DataFlow::LocDFSet> retval;
     retval = new DataFlow::LocDFSet;
@@ -95,7 +94,7 @@ ManagerICFGVary::initializeNodeIN(OA_ptr<ICFG::ICFGStandard::Node> n)
 }
 
 OA_ptr<DataFlow::DataFlowSet> 
-ManagerICFGVary::initializeNodeOUT(OA_ptr<ICFG::ICFGStandard::Node> n)
+ManagerICFGVary::initializeNodeOUT(OA_ptr<ICFG::NodeInterface> n)
 {
     OA_ptr<DataFlow::LocDFSet> retval;
     retval = new DataFlow::LocDFSet;
@@ -197,15 +196,23 @@ ManagerICFGVary::entryTransfer(ProcHandle proc, OA_ptr<DataFlow::DataFlowSet> in
     OA_ptr<DataFlow::LocDFSet> inRecast = in.convert<DataFlow::LocDFSet>();
     retval = new DataFlow::LocDFSet(*inRecast);
 
-    // get iterator over indep  locations for procedure
-    OA_ptr<LocIterator> indepIter = mIR->getIndepLocIter(proc);
+    // get iterator over indep MemRefExpr for procedure
+    OA_ptr<MemRefExprIterator> indepIter = mIR->getIndepMemRefExprIter(proc);
+    // get alias results for this procedure
+    OA_ptr<Alias::Interface> alias = mInterAlias->getAliasResults(proc);
 
     if (mVaryMap[proc].ptrEqual(0)) {
         mVaryMap[proc] = new VaryStandard(proc);
     }
     for ( indepIter->reset(); indepIter->isValid(); (*indepIter)++ ) {
-        retval->insert(indepIter->current());
-        mVaryMap[proc]->insertIndepLoc(indepIter->current());
+      OA_ptr<MemRefExpr> memref = indepIter->current();
+
+      // get may locs for memref
+      OA_ptr<LocIterator> locIter = alias->getMayLocs(*memref,proc);
+      for (locIter->reset(); locIter->isValid(); (*locIter)++ ) {
+        retval->insert(locIter->current());
+        mVaryMap[proc]->insertIndepLoc(locIter->current());
+      }
     }
     if (debug) {
         std::cout << "\tManagerICFGVary, Indep locations for proc "
@@ -232,19 +239,21 @@ ManagerICFGVary::exitTransfer(ProcHandle proc, OA_ptr<DataFlow::DataFlowSet> out
 //! Propagate a data-flow set from caller to callee
 OA_ptr<DataFlow::DataFlowSet> 
 ManagerICFGVary::callerToCallee(ProcHandle caller,
-    OA_ptr<DataFlow::DataFlowSet> dfset, ExprHandle call, ProcHandle callee)
+    OA_ptr<DataFlow::DataFlowSet> dfset, CallHandle call, ProcHandle callee)
 {
     OA_ptr<DataFlow::LocDFSet> inRecast = dfset.convert<DataFlow::LocDFSet>();
-    return inRecast->callerToCallee(call, caller, mInterAlias, mParamBind);
+    return inRecast->callerToCallee(caller,call,callee,mInterAlias,
+                                    mParamBind,mIR);
 }
   
 //! Propagate a data-flow set from callee to caller
 OA_ptr<DataFlow::DataFlowSet> 
 ManagerICFGVary::calleeToCaller(ProcHandle callee,
-    OA_ptr<DataFlow::DataFlowSet> dfset, ExprHandle call, ProcHandle caller)
+    OA_ptr<DataFlow::DataFlowSet> dfset, CallHandle call, ProcHandle caller)
 {
     OA_ptr<DataFlow::LocDFSet> inRecast = dfset.convert<DataFlow::LocDFSet>();
-    return inRecast->calleeToCaller(call, caller, mInterAlias, mParamBind);
+    return inRecast->calleeToCaller(callee,call,caller,mInterAlias,
+                                    mParamBind,mIR);
 }
 
   } // end of namespace Activity

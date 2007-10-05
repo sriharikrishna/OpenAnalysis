@@ -5,8 +5,9 @@
   \author Michelle Strout
   \version $Id: SideEffectStandard.cpp,v 1.9 2005/03/17 21:47:46 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -22,6 +23,17 @@ static bool debug = false;
 // Interface Implementation
 //*****************************************************************
 
+
+SideEffectStandard::SideEffectStandard()
+        { OA_DEBUG_CTRL_MACRO("DEBUG_SideEffectStandard:ALL", debug);
+
+          mUnknownLocSet = new LocSet;
+          OA_ptr<Location> uLoc; 
+          //uLoc = dynamic_cast<Location*>(new UnknownLoc());
+          //MMS, even the SGI compiler shouldn't need the above
+          uLoc = new UnknownLoc();
+          mUnknownLocSet->insert(uLoc);
+        }
 
 OA_ptr<LocIterator> SideEffectStandard::getLMODIterator()
 { 
@@ -271,7 +283,13 @@ void SideEffectStandard::insertLUSE(OA_ptr<Location> loc)
     if (mLUSESet.ptrEqual(0)) {
         mLUSESet = new LocSet;
     }
-    mLUSESet->insert(loc);
+   if (debug) {
+        std::cout << "LUseLocation insert = ";
+        loc->dump(std::cout);
+   }
+                    
+   mLUSESet->insert(loc);
+
 }
     
 //! Insert a location into the USE set 
@@ -280,7 +298,23 @@ void SideEffectStandard::insertUSE(OA_ptr<Location> loc)
     if (mUSESet.ptrEqual(0)) {
         mUSESet = new LocSet;
     }
+    if (debug) {
+        std::cout << "UseLocation insert = ";
+	    loc->dump(std::cout);
+    }
+     
     mUSESet->insert(loc);
+
+    if(debug)
+    {
+      LocSetIterator USElocIter(mUSESet);
+      for (; USElocIter.isValid(); ++USElocIter) {
+              OA_ptr<Location> loc = USElocIter.current();
+              std::cout << "UseLocCompare";
+              loc->dump(std::cout);   
+              std::cout << std::endl;
+      }
+    }
 }
     
 //! Insert a location into the LREF set 
@@ -353,6 +387,8 @@ void SideEffectStandard::emptyREF()
 //*****************************************************************
 // Output
 //*****************************************************************
+
+
 void SideEffectStandard::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir)
 {
     std::cout << "====================== SideEffect" << std::endl;

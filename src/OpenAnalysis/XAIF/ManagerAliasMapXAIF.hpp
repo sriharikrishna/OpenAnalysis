@@ -8,10 +8,12 @@
   \authors Michelle Strout
   \version $Id: ManagerAliasMapXAIF.hpp,v 1.6 2004/11/24 16:49:32 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
+
 
   Special things about AliasMap:
   - Only mappings for top memory reference handles to AliasMap sets are
@@ -30,7 +32,7 @@
 // OpenAnalysis headers
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
 #include <OpenAnalysis/UDDUChains/Interface.hpp>
-#include <OpenAnalysis/CFG/Interface.hpp>
+#include <OpenAnalysis/CFG/CFGInterface.hpp>
 #include <OpenAnalysis/XAIF/AliasMapXAIF.hpp>
 #include <OpenAnalysis/IRInterface/XAIFIRInterface.hpp>
 

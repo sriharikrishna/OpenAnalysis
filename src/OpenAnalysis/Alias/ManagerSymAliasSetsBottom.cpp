@@ -1,27 +1,32 @@
 /*! \file
   
+NOTE: deprecated!!  No longer being compiled.
+6/2/06, Removed ManagerInsNoPtrInterAliasMap because it is no longer
+valid.  It used the CallGraph data-flow analysis framework
+and dependended on the isRefParam() call, which has been deprecated.
+
   \brief The AnnotationManager that generates SymAliasSets bottom
 
-  \authors Michelle Strout
-  \version $Id: ManagerSymAliasSetsBottom.cpp,v 1.2 2005/06/10 02:32:03 mstrout Exp $
+  BROKEN!!! Not sure it needs fixed.  Can we get rid of it?
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  \authors Michelle Strout
+  \version $Id: ManagerSymAliasSetsBottom.cpp,v 1.2.6.1 2005/09/22 04:49:16 mstrout Exp $
+
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
 
 #include "ManagerSymAliasSetsBottom.hpp"
+#include <Utils/Util.hpp>
 
 
 namespace OA {
   namespace Alias {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_ManagerSymAliasSetsBottom)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
 
 // Visitor to collect SymHandle's from MemRefExpr's
 class SymHandleCollector : public virtual MemRefExprVisitor {
@@ -48,6 +53,7 @@ class SymHandleCollector : public virtual MemRefExprVisitor {
 OA_ptr<Alias::SymAliasSets> 
 ManagerSymAliasSetsBottom::performAnalysis(ProcHandle proc) 
 {
+    OA_DEBUG_CTRL_MACRO("DEBUG_ManagerSymAliasSetsBottom:ALL", debug);
    
   // create a SymHandleCollector
   SymHandleCollector symCollector;
@@ -111,7 +117,9 @@ ManagerSymAliasSetsBottom::performAnalysis(ProcHandle proc)
       }
 
       // determine if we need to map the symbol to the big group
-      if (mIR->isRefParam(sym) || !loc->isLocal()) {
+//      if (mIR->isRefParam(sym) || !loc->isLocal()) {
+//    BROKEN, don't want to use isRefParam anymore
+      if ( !loc->isLocal()) {
           
           // if the lastSym is something other than SymHandle(0)
           // merge the symbols containing those symbols

@@ -5,11 +5,11 @@
   \authors Michelle Strout
   \version $Id: ManagerICFGDep.hpp,v 1.2 2005/06/10 02:32:02 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef ManagerICFGDep_H
@@ -22,7 +22,6 @@
 #include <OpenAnalysis/IRInterface/ActivityIRInterface.hpp>
 #include <OpenAnalysis/ExprTree/DifferentiableLocsVisitor.hpp>
 #include <OpenAnalysis/ExprTree/EvalToMemRefVisitor.hpp>
-
 #include <OpenAnalysis/DataFlow/ICFGDFProblem.hpp>
 #include <OpenAnalysis/DataFlow/ICFGDFSolver.hpp>
 #include <OpenAnalysis/DataFlow/ParamBindings.hpp>
@@ -49,9 +48,10 @@ public:
   ~ManagerICFGDep () {}
 
   OA_ptr<ICFGDep> 
-  performAnalysis(OA_ptr<ICFG::ICFGStandard> icfg,
+  performAnalysis(OA_ptr<ICFG::ICFGInterface> icfg,
                   OA_ptr<DataFlow::ParamBindings> paramBind,
-                  OA_ptr<Alias::InterAliasInterface> interAlias);
+                  OA_ptr<Alias::InterAliasInterface> interAlias,
+                  DataFlow::DFPImplement algorithm);
 private:
   //========================================================
   // implementation of ICFGDFProblem interface
@@ -65,9 +65,9 @@ private:
   
   //! Should generate an in and out DataFlowSet for node
   OA_ptr<DataFlow::DataFlowSet> 
-      initializeNodeIN(OA_ptr<ICFG::ICFGStandard::Node> n);
+      initializeNodeIN(OA_ptr<ICFG::NodeInterface> n);
   OA_ptr<DataFlow::DataFlowSet> 
-      initializeNodeOUT(OA_ptr<ICFG::ICFGStandard::Node> n); 
+      initializeNodeOUT(OA_ptr<ICFG::NodeInterface> n); 
  
   //--------------------------------------------------------
   // solver callbacks 
@@ -100,12 +100,17 @@ private:
 
   //! Propagate a data-flow set from caller to callee
   OA_ptr<DataFlow::DataFlowSet> callerToCallee(ProcHandle caller,
-    OA_ptr<DataFlow::DataFlowSet> dfset, ExprHandle call, ProcHandle callee)
+    OA_ptr<DataFlow::DataFlowSet> dfset, CallHandle call, ProcHandle callee)
         { return initializeTop(); }
   
   //! Propagate a data-flow set from callee to caller
   OA_ptr<DataFlow::DataFlowSet> calleeToCaller(ProcHandle callee,
-    OA_ptr<DataFlow::DataFlowSet> dfset, ExprHandle call, ProcHandle caller)
+    OA_ptr<DataFlow::DataFlowSet> dfset, CallHandle call, ProcHandle caller)
+        { return initializeTop(); }
+
+ //! Propagate a data-flow set from call node to return node
+ OA_ptr<DataFlow::DataFlowSet> callToReturn(ProcHandle caller,
+    OA_ptr<DataFlow::DataFlowSet> dfset, CallHandle call, ProcHandle callee)
         { return initializeTop(); }
 
 private: // member variables
@@ -115,7 +120,7 @@ private: // member variables
   OA_ptr<Alias::InterAliasInterface> mInterAlias;
   OA_ptr<DataFlow::ParamBindings> mParamBind;
   OA_ptr<DataFlow::ICFGDFSolver> mSolver;
-  OA_ptr<ICFG::ICFGStandard> mICFG;
+  OA_ptr<ICFG::ICFGInterface> mICFG;
 
 };
 

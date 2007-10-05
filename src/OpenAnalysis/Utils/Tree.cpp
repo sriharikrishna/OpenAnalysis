@@ -5,15 +5,16 @@
   \authors Arun Chauhan (2001 was part of Mint)
   \version $Id: Tree.cpp,v 1.10 2005/03/08 18:55:56 ntallent Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
+
 
   Tree is the base class of a general tree where each node can have a
   variable number of child nodes.  All algorithms that operate on
   abstract trees should use this base class for maximum portability.
-
 */
 
 

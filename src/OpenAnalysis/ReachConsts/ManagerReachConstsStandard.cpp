@@ -5,16 +5,17 @@
          that reach that statement.
 
   \authors Michelle Strout, Barbara Kreaseck
-  \version $Id: ManagerReachConstsStandard.cpp,v 1.15 2005/06/10 02:32:04 mstrout Exp $
+  \version $Id: ManagerReachConstsStandard.cpp,v 1.15.6.1 2005/08/23 18:19:14 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "ManagerReachConstsStandard.hpp"
+#include <Utils/Util.hpp>
 
 
 namespace OA {
@@ -34,12 +35,14 @@ static bool transfer_debug = false;
 
 /*!
 */
-ManagerStandard::ManagerStandard(OA_ptr<ReachConstsIRInterface> _ir) 
-    : DataFlow::CFGDFProblem(DataFlow::Forward), mIR(_ir) 
+ManagerReachConstsStandard::ManagerReachConstsStandard(OA_ptr<ReachConstsIRInterface> _ir) 
+    : mIR(_ir) 
 {
+    OA_DEBUG_CTRL_MACRO("DEBUG_ManagerReachConstsStandard:ALL", debug);
+    mSolver = new DataFlow::CFGDFSolver(DataFlow::CFGDFSolver::Forward,*this);
 }
 
-void ManagerStandard::initializeTopAndBottom() 
+void ManagerReachConstsStandard::initializeTopAndBottom() 
 {
     if (debug) { 
         std::cout << "In ManagerReachConsts::initializeTopAndBottom";
@@ -91,7 +94,7 @@ void ManagerStandard::initializeTopAndBottom()
     }
 }
 
-OA_ptr<DataFlow::DataFlowSet> ManagerStandard::initializeTop()
+OA_ptr<DataFlow::DataFlowSet> ManagerReachConstsStandard::initializeTop()
 {
     if (mAllTop.ptrEqual(NULL)) {
       initializeTopAndBottom();
@@ -103,7 +106,7 @@ OA_ptr<DataFlow::DataFlowSet> ManagerStandard::initializeTop()
     return mAllTop;
 }
 
-OA_ptr<DataFlow::DataFlowSet> ManagerStandard::initializeBottom()
+OA_ptr<DataFlow::DataFlowSet> ManagerReachConstsStandard::initializeBottom()
 {
     if (mAllBottom.ptrEqual(NULL)) {
       initializeTopAndBottom();
@@ -120,9 +123,10 @@ OA_ptr<DataFlow::DataFlowSet> ManagerStandard::initializeBottom()
     constant definition sets for each basic block.  Then uses the 
     statement transfer function to get an In set for each stmt.
 */
-OA_ptr<ReachConstsStandard> ManagerStandard::performAnalysis(ProcHandle proc, 
-    OA_ptr<CFG::Interface> cfg, OA_ptr<Alias::Interface> alias,
-    OA_ptr<SideEffect::InterSideEffectInterface> interSE)
+OA_ptr<ReachConstsStandard> ManagerReachConstsStandard::performAnalysis(ProcHandle proc, 
+    OA_ptr<CFG::CFGInterface> cfg, OA_ptr<Alias::Interface> alias,
+    OA_ptr<SideEffect::InterSideEffectInterface> interSE,
+    DataFlow::DFPImplement algorithm)
 {
   mProc = proc;
 
@@ -141,20 +145,33 @@ OA_ptr<ReachConstsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
   // use the dataflow solver to get 
   //    - the In and Out sets for the BBs
   //    - the relationship of memref->reachingConstant (set inside solve)
-  DataFlow::CFGDFProblem::solve(cfg);
+  //DataFlow::CFGDFProblem::solve(cfg);
+  mSolver->solve(cfg,algorithm);
+
   
+/*  OA_ptr<CFG::CFGInterface::NodesIterator> nIter
+             = cfg->getNodesIterator();
+ 
+  for ( ; nIter->isValid(); ++(*nIter)) {
+ 
+        OA_ptr<CFG::CFGInterface::Node> node = nIter->current();
+        OA_ptr<DataFlow::DataFlowSet> dfset = mSolver->getInSet(node); */
+
   // iterate over BBs:  using In sets and transfer function, 
   //    - create relationship of stmt->reachingConstDefSet
-  std::map<OA_ptr<CFG::Interface::Node>,
+ /* std::map<OA_ptr<CFG::CFGInterface::Node>,
            OA_ptr<DataFlow::DataFlowSet> >::iterator mapIter;
-  for (mapIter=mNodeInSetMap.begin(); mapIter!=mNodeInSetMap.end();
+  for (mapIter=mSolver->mNodeInSetMap.begin(); mapIter!=mSolver->mNodeInSetMap.end();
        mapIter++)
   {
       // CFG node
-      OA_ptr<CFG::Interface::Node> node = mapIter->first;
+      OA_ptr<CFG::CFGInterface::Node> node = mapIter->first;
 
       // In set
       OA_ptr<DataFlow::DataFlowSet> dfset = mapIter->second;
+
+
+      
       OA_ptr<ReachConsts::ConstDefSet> inSet 
           = dfset.convert<ReachConsts::ConstDefSet>();
       if (debug) { 
@@ -172,7 +189,7 @@ OA_ptr<ReachConstsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
 
       // for each BB, iterate over the statements and find the 
       // ConstDefs for the statement
-      OA_ptr<CFG::Interface::NodeStatementsIterator> stmtIterPtr 
+      OA_ptr<CFG::CFGInterface::NodeStatementsIterator> stmtIterPtr 
           = node->getNodeStatementsIterator();
       for (; stmtIterPtr->isValid(); ++(*stmtIterPtr)) { 
         StmtHandle s = stmtIterPtr->current();
@@ -183,6 +200,7 @@ OA_ptr<ReachConstsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
           mRCS->insertConstDef(s,constDef);
         }
 
+        // What is the use of temp ??? 
         // apply transfer function to temp set
         OA_ptr<DataFlow::DataFlowSet> tempdfset = transfer(temp,s);
         temp = tempdfset.convert<ReachConsts::ConstDefSet>();
@@ -192,29 +210,84 @@ OA_ptr<ReachConstsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
                     << mIR->toString(s) << std::endl;
           std::cout << "    temp = ";
           temp->dump(std::cout,mIR); 
-        }
+        } 
       }
-  } 
+  } */    
   return mRCS;
 }
 
 //------------------------------------------------------------------
 // Implementing the callbacks for CFGDFProblem
 //------------------------------------------------------------------
-void ManagerStandard::initializeNode(OA_ptr<CFG::Interface::Node> n)
+/*void ManagerReachConstsStandard::initializeNode(OA_ptr<CFG::CFGInterface::Node> n)
 {
   if (n.ptrEqual(mCFG->getEntry())) {
-    mNodeInSetMap[n]=mAllBottom->clone(); // from ManagerStandard
+    mNodeInSetMap[n]=mAllBottom->clone(); // from ManagerReachConstsStandard
     mNodeOutSetMap[n]=mAllBottom->clone();
   } else {
     mNodeInSetMap[n] = new ConstDefSet;
-    mNodeOutSetMap[n]=mAllTop->clone(); // from ManagerStandard
+    mNodeOutSetMap[n]=mAllTop->clone(); // from ManagerReachConstsStandard
   }
+}*/
+
+
+OA_ptr<DataFlow::DataFlowSet>
+ManagerReachConstsStandard::initializeNodeIN(OA_ptr<CFG::NodeInterface> n)
+{
+  if (mAllTop.ptrEqual(NULL)) {
+    initializeTopAndBottom();
+  }
+  if (n.ptrEqual(mCFG->getEntry())) {
+    return mAllBottom->clone();
+  }
+  OA_ptr<ConstDefSet> retval;
+  retval = new ConstDefSet();
+  return retval;
 }
+
+OA_ptr<DataFlow::DataFlowSet>
+ManagerReachConstsStandard::initializeNodeOUT(OA_ptr<CFG::NodeInterface> n)
+{
+  if (mAllTop.ptrEqual(NULL)) {
+    initializeTopAndBottom();
+  }
+  if (n.ptrEqual(mCFG->getEntry())) {
+    return mAllBottom->clone();
+  }
+  return mAllTop->clone();
+}
+
+/*******************  First Attempt, didn't quite work
+OA_ptr<DataFlow::DataFlowSet>
+ManagerReachConstsStandard::initializeNodeIN(OA_ptr<CFG::CFGInterface::Node> n)
+{
+     if (mAllTop.ptrEqual(NULL)) {
+          initializeTopAndBottom();
+     }
+     if (debug) {
+          std::cout << "mAllTop = ";
+          mAllTop->dump(std::cout,mIR);
+     }
+     return mAllTop;
+}
+
+OA_ptr<DataFlow::DataFlowSet>
+ManagerReachConstsStandard::initializeNodeOUT(OA_ptr<CFG::CFGInterface::Node> n)
+{
+     if (mAllTop.ptrEqual(NULL)) {
+           initializeTopAndBottom();
+     }
+     if (debug) {
+           std::cout << "mAllTop = ";
+           mAllTop->dump(std::cout,mIR);
+     }
+     return mAllTop;
+}
+***********************/
 
 //! meet routine for ReachConsts
 OA_ptr<DataFlow::DataFlowSet> 
-ManagerStandard::meet (OA_ptr<DataFlow::DataFlowSet> set1orig, 
+ManagerReachConstsStandard::meet (OA_ptr<DataFlow::DataFlowSet> set1orig, 
                        OA_ptr<DataFlow::DataFlowSet> set2orig)
 {
   // can change set1orig if wanted:  Usage in CFGDFProblem::atDGraphNode()
@@ -271,7 +344,7 @@ ManagerStandard::meet (OA_ptr<DataFlow::DataFlowSet> set1orig,
                     << " vs. " << constDef2->toString(mIR) << std::endl;
         }
         
-        ManagerStandard::MeetOp op = NOTHING;
+        ManagerReachConstsStandard::MeetOp op = NOTHING;
         // if Loc1 mustOverlap Loc2,
         if (cdLocPtr1->mustOverlap(*cdLocPtr2)) {
           if (meet_debug) {std::cout << "\tmustOp=";}
@@ -429,7 +502,7 @@ ManagerStandard::meet (OA_ptr<DataFlow::DataFlowSet> set1orig,
 // 4) Update mRCS mapping for all def memrefs for this statement
 //-----------------------------------------------------------------------
 OA_ptr<DataFlow::DataFlowSet> 
-ManagerStandard::transfer(OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt) 
+ManagerReachConstsStandard::transfer(OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt) 
 {
   ConstDefSet killSet;
   ConstDefSet replaceSet;
@@ -440,6 +513,17 @@ ManagerStandard::transfer(OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt)
   inclone = in->clone();  // need this or get segfault
   OA_ptr<ConstDefSet> inRecastCopy = inclone.convert<ConstDefSet>();
 
+  /*  Added this for loop by PLM 07/27/06. It is moved out of performAnalysis.
+   *  This loop will add Constant Definitions for every statment 
+  */ 
+ 
+  ConstDefSetIterator cdIter(*inRecast);
+  for (; cdIter.isValid(); ++(cdIter)) {
+         OA_ptr<ConstDef> constDef = cdIter.current();
+         mRCS->insertConstDef(stmt,constDef);
+  }
+             
+  
   if (transfer_debug) {
     std::cout << "--- --- --- --- --- Top of Transfer " << std::endl;
     //std::cout << "--- inRecastSet = ";
@@ -448,9 +532,6 @@ ManagerStandard::transfer(OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt)
 
   // 1) Update mapping for all use memrefs for this statement
   setUseMemRef2Const(stmt, *inRecast);
-
-  // 2) Generate/apply KILL SET 
-  OA::ReachConsts::IRStmtType sType = mIR->getReachConstsStmtType(stmt);
 
   if (debug) {
       std::cout << "------------------------------------------------"
@@ -503,7 +584,7 @@ ManagerStandard::transfer(OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt)
     // loop through all func calls in this statement and what they MOD
     OA_ptr<IRCallsiteIterator> callsiteItPtr = mIR->getCallsites(stmt);
     for ( ; callsiteItPtr->isValid(); ++(*callsiteItPtr)) {
-      ExprHandle expr = callsiteItPtr->current();
+      CallHandle expr = callsiteItPtr->current();
 
       OA_ptr<LocIterator> locIterPtr;
       // MOD
@@ -532,29 +613,19 @@ ManagerStandard::transfer(OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt)
   } // end of KILLSET creation/application 
 
 
-  // 3) Generate GEN set
-  switch (sType) {
+  // GENSET construction/application algorithm for EXPR_STMT
+  //--------------------------------
+  // for each  AssignPair -- <MemRefHandle,ExprTree> -- for this stmt:
+  //   get ExprConst from ExprTree if it exists
+  //   if ExprConst exists:
+  //     for each MustLoc of the MemRefHandle
+  //       replace any ConstDef(MustLoc) in inSet with
+  //                   ConstDef(MustLoc,ExprConst,VALUE)
+  //--------------------------------
 
-  case ANY_STMT:
-    break; // ANY_STMT does not define constants, so cannot gen here
-
-  case EXPR_STMT:
-    // GENSET construction/application algorithm for EXPR_STMT
-    //--------------------------------
-    // for each ExprStmtPair -- <MemRefHandle,ExprTree> -- for this stmt:
-    //   get ExprConst from ExprTree if it exists
-    //   if ExprConst exists:
-    //     for each MustLoc of the MemRefHandle
-    //       replace any ConstDef(MustLoc) in inSet with
-    //                   ConstDef(MustLoc,ExprConst,VALUE)
-    //--------------------------------
-
- 
-    { // beginning of GENSET creation for EXPR_STMT
-      mIR->currentProc(mProc);
-      OA_ptr<ExprStmtPairIterator> espIterPtr 
-          = mIR->getExprStmtPairIterator(stmt);
-      for ( ; espIterPtr->isValid(); (*espIterPtr)++) {
+  OA_ptr<AssignPairIterator> espIterPtr 
+         = mIR->getAssignPairIterator(stmt);
+  for ( ; espIterPtr->isValid(); (*espIterPtr)++) {
         // unbundle pair
         MemRefHandle mref = espIterPtr->currentTarget();
         ExprHandle expr = espIterPtr->currentSource();
@@ -585,13 +656,9 @@ ManagerStandard::transfer(OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt)
             inRecast->replace(lPtr,cvbiPtr,VALUE);
           }
         } // end of "if we have a usable const val"
-      } // end of loop over ExprStmtPairList
-    } // end of GENSET creation/application for EXPR_STMT
-    break;
-  case NONE:
-    break; // should not get here
-  }
-  
+  } // end of loop over AssignPairList
+ 
+    
   // 4) update mRCS for all mayLocs(???) of the DefMemRefs(stmt)
   setDefMemRef2Const(stmt, *inRecast);
   
@@ -599,19 +666,19 @@ ManagerStandard::transfer(OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt)
     std::cout << "\tConstDefsOut: ";
     inRecast->dump(std::cout,mIR);
   }
-  
+ 
   return inRecast;
 }
 
 //! Decides meet operation for two ConstDefs that are mustLocs
-ManagerStandard::MeetOp 
-ManagerStandard::getMustMeetOp(OA_ptr<ConstDef> cd1, OA_ptr<ConstDef> cd2) 
+ManagerReachConstsStandard::MeetOp 
+ManagerReachConstsStandard::getMustMeetOp(OA_ptr<ConstDef> cd1, OA_ptr<ConstDef> cd2) 
 {
   ConstDefType cdType1 = cd1->getConstDefType();
   OA_ptr<ConstValBasicInterface> cdConstPtr1 = cd1->getConstPtr();
   ConstDefType cdType2 = cd2->getConstDefType();
   OA_ptr<ConstValBasicInterface> cdConstPtr2 = cd2->getConstPtr();
-  ManagerStandard::MeetOp retval = NOTHING;
+  ManagerReachConstsStandard::MeetOp retval = NOTHING;
 
   // apply MustOverlap MEET rules
   switch (cdType1) {
@@ -667,12 +734,12 @@ ManagerStandard::getMustMeetOp(OA_ptr<ConstDef> cd1, OA_ptr<ConstDef> cd2)
 }
 
 //! Decides meet operation for two ConstDefs that are may(not must)Locs
-ManagerStandard::MeetOp 
-ManagerStandard::getMayOnlyMeetOp(OA_ptr<ConstDef> cd1, OA_ptr<ConstDef> cd2) 
+ManagerReachConstsStandard::MeetOp 
+ManagerReachConstsStandard::getMayOnlyMeetOp(OA_ptr<ConstDef> cd1, OA_ptr<ConstDef> cd2) 
 {
   ConstDefType cdType1 = cd1->getConstDefType();
   ConstDefType cdType2 = cd2->getConstDefType();
-  ManagerStandard::MeetOp retval = NOTHING;
+  ManagerReachConstsStandard::MeetOp retval = NOTHING;
 
   // apply (mayOverlap && !MustOverlap) MEET rules
   switch (cdType1) {
@@ -725,7 +792,7 @@ ManagerStandard::getMayOnlyMeetOp(OA_ptr<ConstDef> cd1, OA_ptr<ConstDef> cd2)
 //! Sets mMemRef2ReachConst[useMemRef] for useMemRefs in given statement
 //! ConstDefSet, in, should not be changed
 void 
-ManagerStandard::setUseMemRef2Const(StmtHandle stmt, const ConstDefSet& in) {
+ManagerReachConstsStandard::setUseMemRef2Const(StmtHandle stmt, const ConstDefSet& in) {
 
   // for each use mem ref in this statement
   OA_ptr<MemRefHandleIterator> useIterPtr = mIR->getUseMemRefs(stmt);
@@ -799,7 +866,7 @@ ManagerStandard::setUseMemRef2Const(StmtHandle stmt, const ConstDefSet& in) {
 //! Sets mMemRef2ReachConst[defMemRef] for defMemRefs in given statement
 //! ConstDefSet, in, should not be changed
 void 
-ManagerStandard::setDefMemRef2Const(StmtHandle stmt, const ConstDefSet& in) {
+ManagerReachConstsStandard::setDefMemRef2Const(StmtHandle stmt, const ConstDefSet& in) {
 
   // update mRCS for all mayLocs(???) of the DefMemRefs(stmt)
   OA_ptr<MemRefHandleIterator> defIterPtr = mIR->getDefMemRefs(stmt);

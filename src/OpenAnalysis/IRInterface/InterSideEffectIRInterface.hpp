@@ -5,11 +5,11 @@
   \authors Michelle Strout
   \version $Id: InterSideEffectIRInterface.hpp,v 1.8 2005/02/18 16:15:51 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef InterSideEffectIRInterface_h

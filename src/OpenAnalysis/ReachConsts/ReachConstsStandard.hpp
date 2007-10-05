@@ -6,8 +6,9 @@
   \authors Michelle Strout, Barbara Kreaseck
   \version $Id: ReachConstsStandard.hpp,v 1.9 2005/06/10 02:32:05 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -26,7 +27,10 @@
 #include <OpenAnalysis/ReachConsts/Interface.hpp>
 #include <OpenAnalysis/IRInterface/ReachConstsIRInterface.hpp>
 #include <OpenAnalysis/IRInterface/ConstValBasicInterface.hpp>
-#include <OpenAnalysis/Location/Location.hpp>
+#include <OpenAnalysis/Location/Locations.hpp>
+#include <OpenAnalysis/OABase/Annotation.hpp>
+#include <OpenAnalysis/Utils/GenOutputTool.hpp>
+
 
 namespace OA {
   namespace ReachConsts {
@@ -49,7 +53,8 @@ enum ConstDefType {TOP, VALUE, BOTTOM};
 //  if constValBasic should be Bottom, constValBasic pointer is null (i.e. 0)
 //  if constValBasic should be Top, then Location pointer is not in ConstDefSet
 // Added a tag field: TOP,BOTTOM,VALUE
-class ConstDef {
+class ConstDef : public virtual Annotation
+{
 public:
   // constructors
   ConstDef(OA_ptr<Location> locP, 
@@ -78,6 +83,9 @@ public:
         return retval;
       }
 
+  void output(IRHandlesIRInterface& pIR);
+   
+
   //! operator== just compares content of locPtr 
   bool operator== (const ConstDef &other) const ;
   //! method equiv compares all parts of ConstDef as appropriate
@@ -95,11 +103,14 @@ public:
 
   // debugging
   std::string toString(OA_ptr<IRHandlesIRInterface> pIR);
+  
   void dump(std::ostream &os, OA_ptr<IRHandlesIRInterface> pIR) {
     os << toString(pIR) << std::endl;
   }
   
 private:
+
+  
   OA_ptr<Location> mLocPtr;
   OA_ptr<ConstValBasicInterface> mConstPtr;
   ConstDefType mCDType;
@@ -107,13 +118,22 @@ private:
 
 //! Set of ConstDef* (intended for use with CFGDFProblem, core data
 // members of ReachConstsStandard
-class ConstDefSet  : public virtual DataFlow::DataFlowSet {
+class ConstDefSet  : public virtual DataFlow::DataFlowSet,
+                     public virtual Annotation
+{
 public:
   // construction
-  ConstDefSet() { mSet = new std::set<OA_ptr<ConstDef> >; }
-  ConstDefSet(const ConstDefSet& other) : mSet(other.mSet) {}
+  //ConstDefSet() { mSet = new std::set<OA_ptr<ConstDef> >; }
+  //ConstDefSet(const ConstDefSet& other) : mSet(other.mSet) {}
+  ConstDefSet() : mDefaultType(TOP) { mSet = new std::set<OA_ptr<ConstDef> >; }
+  ConstDefSet(ConstDefType defaultType) : mDefaultType(defaultType) 
+    { mSet = new std::set<OA_ptr<ConstDef> >; }
+  ConstDefSet(const ConstDefSet& other) 
+      : mDefaultType(other.mDefaultType),mSet(other.mSet) {}
   ~ConstDefSet() { }
 
+
+  void output(IRHandlesIRInterface& ir);
   
   /*! After the assignment operation, the lhs ConstDefSet will point
       to the same instances of ConstDef's that the rhs points to.  Use
@@ -121,12 +141,13 @@ public:
   */
   ConstDefSet& operator= (const ConstDefSet& other) 
       {
-        mSet = other.mSet; 
+        mSet = other.mSet;
+        mDefaultType = other.mDefaultType;
         return *this;
       }
   OA_ptr<DataFlow::DataFlowSet> clone()
       { OA_ptr<ConstDefSet> retval;
-        retval = new ConstDefSet(); 
+        retval = new ConstDefSet(mDefaultType);
         std::set<OA_ptr<ConstDef> >::iterator defIter;
         for (defIter=mSet->begin(); defIter!=mSet->end(); defIter++) {
           OA_ptr<ConstDef> def = *defIter;
@@ -176,7 +197,17 @@ public:
 
   void dump(std::ostream &os) {}
 
+  //! DefaultConstDef is used for ManagerICFGReachConst
+  ConstDefType getDefaultConstDef() const { return mDefaultType; }
+  //! For construction purposes only, DefaultConstType only TOP or BOTTOM
+  void setDefaultConstDef(ConstDefType cdt) 
+  { assert(cdt!=VALUE); mDefaultType = cdt; }
+
+private:
+  ConstDefType mDefaultType;  // TOP or BOTTOM
+
 protected:
+  
   OA_ptr<std::set<OA_ptr<ConstDef> > > mSet;
 
   friend class ConstDefSetIterator;
@@ -204,7 +235,9 @@ private:
   std::set<OA_ptr<ConstDef> >::iterator mCDIter;
 };
 
-class ReachConstsStandard : public virtual Interface {
+class ReachConstsStandard : public virtual Interface, 
+                            public virtual Annotation
+{
   public:
     ReachConstsStandard(ProcHandle p) {}
     ~ReachConstsStandard() {}
@@ -226,19 +259,27 @@ class ReachConstsStandard : public virtual Interface {
       { retval= mMemRef2ReachConst[h];}  
       return retval; 
     }
-  
+
+    void output(IRHandlesIRInterface& ir);
+
     //*****************************************************************
     // Construction methods 
     //*****************************************************************
 
     //! insert a reaching const def into the given stmt's const def set
-    void insertConstDef(StmtHandle s, OA_ptr<ConstDef> cd)
+    void insertConstDef(StmtHandle s, OA_ptr<ConstDef> cd, ConstDefType t=TOP)
     { if (mReachConsts[s].ptrEqual(NULL)) {
-        mReachConsts[s] = new ConstDefSet;
+        mReachConsts[s] = new ConstDefSet(t);
       }
       // have to call replace because only compare ConstsDefs by loc
       mReachConsts[s]->replace(cd);  
     }
+
+    //! reset a statement's const def set to null
+    //! needed because no access to final NodeIn sets in CFGDFSolver 
+    //! forces us to save a statement's const def set during every transfer
+    void resetConstDefSet(StmtHandle s, ConstDefType t=TOP)
+    { mReachConsts[s] = new ConstDefSet(t); }
 
     //! change reaching constant for a given memory reference
     void updateReachConst(MemRefHandle ref, 
@@ -266,6 +307,7 @@ class ReachConstsStandard : public virtual Interface {
     std::string getMemRefConstInfo();
 
   private:
+    
     // data members
     std::map<StmtHandle, OA_ptr<ConstDefSet> > mReachConsts;
     std::map<MemRefHandle,OA_ptr<ConstValBasicInterface> > mMemRef2ReachConst;

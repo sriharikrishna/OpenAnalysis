@@ -12,8 +12,9 @@
              Tallent (merged RIFG and OARIFG)
   \version $Id: RIFG.cpp,v 1.5 2005/06/10 02:32:05 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -34,7 +35,7 @@
 //*************************** User Include Files ****************************
 
 #include <OpenAnalysis/Utils/RIFG.hpp>
-#include <OpenAnalysis/CFG/Interface.hpp>
+#include <OpenAnalysis/CFG/CFGInterface.hpp>
 
 //*************************** Forward Declarations **************************
 
@@ -48,9 +49,9 @@ namespace OA {
 
 unsigned int RIFG::NIL = 0;
 
-RIFG::RIFG(OA_ptr<DGraph::Interface> graph_, 
-	   OA_ptr<DGraph::Interface::Node> source,
-	   OA_ptr<DGraph::Interface::Node> sink)
+RIFG::RIFG(OA_ptr<DGraph::DGraphInterface> graph_, 
+	   OA_ptr<DGraph::NodeInterface> source,
+	   OA_ptr<DGraph::NodeInterface> sink)
   : graph(graph_), mSource(source), mSink(sink)
 {
   // Sanity check
@@ -59,20 +60,20 @@ RIFG::RIFG(OA_ptr<DGraph::Interface> graph_,
   
   // Initialize the node-id to node map: ids are 1...num_nodes
   highWaterMarkNodeId = graph->getNumNodes();
-  OA::OA_ptr<OA::DGraph::Interface::NodesIterator> it1 = 
+  OA::OA_ptr<OA::DGraph::NodesIteratorInterface> it1 = 
     graph->getNodesIterator();
   for (NodeId i = 1; it1->isValid(); ++(*it1), ++i) {
-    OA::OA_ptr<OA::DGraph::Interface::Node> node = it1->current();
+    OA::OA_ptr<OA::DGraph::NodeInterface> node = it1->current();
     node_to_id_map[node] = i;
     id_to_node_map[i] = node;
   }
   
   // Initialize the edge-id to edge map: ids are 1...num_edges
   highWaterMarkEdgeId = graph->getNumEdges();
-  OA::OA_ptr<OA::DGraph::Interface::EdgesIterator> it2 = 
+  OA::OA_ptr<OA::DGraph::EdgesIteratorInterface> it2 = 
     graph->getEdgesIterator();
   for (NodeId i = 1; it2->isValid(); ++(*it2), ++i) {
-    OA::OA_ptr<OA::DGraph::Interface::Edge> edge = it2->current();
+    OA::OA_ptr<OA::DGraph::EdgeInterface> edge = it2->current();
     edge_to_id_map[edge] = i;
     id_to_edge_map[i] = edge;
   }
@@ -111,8 +112,8 @@ RIFG::getSink() const
 RIFG::NodeId 
 RIFG::getEdgeSrc(RIFG::EdgeId eid) const
 {
-  OA::OA_ptr<OA::DGraph::Interface::Edge> e = getEdge(eid);
-  OA::OA_ptr<OA::DGraph::Interface::Node> n = e->source();
+  OA::OA_ptr<OA::DGraph::EdgeInterface> e = getEdge(eid);
+  OA::OA_ptr<OA::DGraph::NodeInterface> n = e->getSource();
   return (getNodeId(n));
 }
 
@@ -120,8 +121,8 @@ RIFG::getEdgeSrc(RIFG::EdgeId eid) const
 RIFG::NodeId 
 RIFG::getEdgeSink(RIFG::EdgeId eid) const
 {
-  OA::OA_ptr<OA::DGraph::Interface::Edge> e = getEdge(eid);
-  OA::OA_ptr<OA::DGraph::Interface::Node> n = e->sink();
+  OA::OA_ptr<OA::DGraph::EdgeInterface> e = getEdge(eid);
+  OA::OA_ptr<OA::DGraph::NodeInterface> n = e->getSink();
   return (getNodeId(n));
 }
 
@@ -164,36 +165,36 @@ RIFG::dumpNode(std::ostream& os, RIFG::NodeId nid)
 // 
 //***************************************************************************
 
-OA_ptr<DGraph::Interface::Node> 
-RIFG::getSourceNode(OA_ptr<DGraph::Interface> graph)
+OA_ptr<DGraph::NodeInterface> 
+RIFG::getSourceNode(OA_ptr<DGraph::DGraphInterface> graph)
 {
-  if (graph.isa<OA::CFG::Interface>()) {
-    OA_ptr<OA::CFG::Interface> g = graph.convert<OA::CFG::Interface>();
-    OA_ptr<OA::CFG::Interface::Node> n = g->getEntry();
+  if (graph.isa<OA::CFG::CFGInterface>()) {
+    OA_ptr<OA::CFG::CFGInterface> g = graph.convert<OA::CFG::CFGInterface>();
+    OA_ptr<OA::CFG::NodeInterface> n = g->getEntry();
     return n;
   }
   else {
-    OA_ptr<DGraph::Interface::NodesIterator> it = 
+    OA_ptr<DGraph::NodesIteratorInterface> it = 
       graph->getEntryNodesIterator();
     assert(it->isValid());
-    OA_ptr<DGraph::Interface::Node> n = it->current();
+    OA_ptr<DGraph::NodeInterface> n = it->current();
     return n;
   }
 }
 
-OA_ptr<DGraph::Interface::Node> 
-RIFG::getSinkNode(OA_ptr<DGraph::Interface> graph)
+OA_ptr<DGraph::NodeInterface> 
+RIFG::getSinkNode(OA_ptr<DGraph::DGraphInterface> graph)
 {
-  if (graph.isa<OA::CFG::Interface>()) {
-    OA_ptr<OA::CFG::Interface> g = graph.convert<OA::CFG::Interface>();
-    OA_ptr<OA::CFG::Interface::Node> n = g->getExit();
+  if (graph.isa<OA::CFG::CFGInterface>()) {
+    OA_ptr<OA::CFG::CFGInterface> g = graph.convert<OA::CFG::CFGInterface>();
+    OA_ptr<OA::CFG::NodeInterface> n = g->getExit();
     return n;
   }
   else {
-    OA_ptr<DGraph::Interface::NodesIterator> it = 
+    OA_ptr<DGraph::NodesIteratorInterface> it = 
       graph->getExitNodesIterator();
     assert(it->isValid());
-    OA_ptr<DGraph::Interface::Node> n = it->current();
+    OA_ptr<DGraph::NodeInterface> n = it->current();
     return n;
   }
 }

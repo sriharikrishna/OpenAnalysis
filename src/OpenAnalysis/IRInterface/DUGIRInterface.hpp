@@ -22,10 +22,11 @@
 
 #include <iostream>
 
-#include <OpenAnalysis/Location/Location.hpp>
+#include <OpenAnalysis/Location/Locations.hpp>
 #include <OpenAnalysis/ExprTree/ExprTree.hpp>
 #include "IRHandles.hpp"
-#include "ExprStmtPairIterator.hpp"
+//#include "ExprStmtPairIterator.hpp"
+//#include <OpenAnalysis/IRInterface/AssignPairIterator.hpp>
 
 namespace OA {
 
@@ -43,11 +44,17 @@ class DUGIRInterface : public virtual IRHandlesIRInterface {
   
   //! Return and iterator over all independent locations for given proc
   //! if not known then must return iterator over set with UnknownLoc
-  virtual OA_ptr<LocIterator> getIndepLocIter(ProcHandle h) = 0;
+//  virtual OA_ptr<LocIterator> getIndepLocIter(ProcHandle h) = 0;
   
   //! Return and iterator over all dependent locations for given proc
   //! if not known then must return iterator over set with UnknownLoc
-  virtual OA_ptr<LocIterator> getDepLocIter(ProcHandle h) = 0;
+//  virtual OA_ptr<LocIterator> getDepLocIter(ProcHandle h) = 0;
+
+  //! Return an iterator over all independent MemRefExpr for given proc
+  virtual OA_ptr<MemRefExprIterator> getIndepMemRefExprIter(ProcHandle h) = 0;
+
+  //! Return and iterator over all dependent locations for given proc
+  virtual OA_ptr<MemRefExprIterator> getDepMemRefExprIter(ProcHandle h) = 0;
   
   //! Given a subprogram return an IRStmtIterator* for the entire
   //! subprogram
@@ -60,13 +67,13 @@ class DUGIRInterface : public virtual IRHandlesIRInterface {
   //! Get IRCallsiteParamIterator for a callsite.
   //! Iterator visits actual parameters in called order.
   virtual OA::OA_ptr<OA::IRCallsiteParamIterator> 
-    getCallsiteParams(OA::ExprHandle h) = 0;
+    getCallsiteParams(OA::CallHandle h) = 0;
 
   //! Given an ExprHandle, return an ExprTree 
   virtual OA_ptr<ExprTree> getExprTree(ExprHandle h) = 0;
   
   //! Given a function call return the callee symbol handle
-  virtual SymHandle getSymHandle(ExprHandle expr) = 0;
+  virtual SymHandle getSymHandle(CallHandle expr) = 0;
   
   //! Given the callee symbol returns the callee proc handle
   virtual ProcHandle getProcHandle(SymHandle sym) = 0;
@@ -96,8 +103,11 @@ class DUGIRInterface : public virtual IRHandlesIRInterface {
   //! in the given statement.  Order that memory references are iterated
   //! over can be arbitrary.
   virtual OA_ptr<MemRefHandleIterator> getAllMemRefs(StmtHandle stmt) = 0;
-};
 
+  virtual OA::OA_ptr<OA::MemRefExpr> 
+      convertSymToMemRefExpr(OA::SymHandle sym) = 0;
+
+};
 
   } // end of namespace DUG
 } // end of namespace OA

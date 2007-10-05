@@ -5,26 +5,25 @@
   \author Michelle Strout
   \version $Id: DepDFSet.cpp,v 1.2 2005/06/10 02:32:01 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
 
 #include "DepDFSet.hpp"
+#include <Utils/Util.hpp>
 
 namespace OA {
   namespace Activity {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_DepDFSet)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
 
 //! default constructor
 DepDFSet::DepDFSet() //: mMakeImplicitExplicitMemoized(false)
 {
+    OA_DEBUG_CTRL_MACRO("DEBUG_DepDFSet:ALL", debug);
     mImplicitRemoves = new DataFlow::LocDFSet;
     mUses = new DataFlow::LocDFSet;
     mDefs = new DataFlow::LocDFSet;
@@ -254,7 +253,7 @@ OA_ptr<LocIterator> DepDFSet::getUsesIterator(OA_ptr<Location> def) const
 {
     OA_ptr<DataFlow::LocDFSet> retSet;
     retSet = new DataFlow::LocDFSet();
-    
+
     // get iterator over uses the given location overlaps with
     OA_ptr<LocIterator> defOverlapIter
         = mDefs->getOverlapLocIterator(def);
@@ -274,7 +273,6 @@ OA_ptr<LocIterator> DepDFSet::getUsesIterator(OA_ptr<Location> def) const
             }
         }
     }
-
 
     /*
     LocToLocDFSetMap::const_iterator mapIter;
@@ -691,6 +689,65 @@ void DepDFSet::dump(std::ostream &os, OA_ptr<IRHandlesIRInterface> ir)
     mDefs->dump(os,ir);
 
 }
+
+void DepDFSet::output(OA::IRHandlesIRInterface& ir) {
+    
+    // iterate over all uses
+    sOutBuild->mapStart("mUseToDefsMap","UseLoc","DefLocSet");
+    std::map<OA_ptr<Location>,OA_ptr<DataFlow::LocDFSet> >::const_iterator mapIter;
+    for (mapIter=mUseToDefsMap.begin();
+         mapIter!=mUseToDefsMap.end(); mapIter++ )
+    {
+        OA_ptr<Location> use = mapIter->first;
+        OA_ptr<DataFlow::LocDFSet> locset = mapIter->second;
+        sOutBuild->mapEntryStart();
+          sOutBuild->mapKeyStart();
+            use->output(ir);
+          sOutBuild->mapKeyEnd();
+          sOutBuild->mapValueStart();
+            locset->output(ir);
+          sOutBuild->mapValueEnd();
+        sOutBuild->mapEntryEnd();
+    }
+    sOutBuild->mapEnd("mUseToDefsMap");
+    
+    // iterate over all defs
+    sOutBuild->mapStart("mDefToUsesMap","DefLoc","UseLocSet");
+    for (mapIter=mDefToUsesMap.begin();
+         mapIter!=mDefToUsesMap.end(); mapIter++ )
+    {
+        OA_ptr<Location> def = mapIter->first;
+        OA_ptr<DataFlow::LocDFSet> locset = mapIter->second;
+        sOutBuild->mapEntryStart();
+          sOutBuild->mapKeyStart();
+            def->output(ir);
+          sOutBuild->mapKeyEnd();
+          sOutBuild->mapValueStart();
+            locset->output(ir);
+          sOutBuild->mapValueEnd();
+        sOutBuild->mapEntryEnd();
+    }
+    sOutBuild->mapEnd("mDefToUsesMap");
+
+    
+    // dump implicitRemoves
+    std::ostringstream label1;
+    label1 << indt << "ImplicitRemoves:";
+    sOutBuild->outputString( label1.str() );
+    mImplicitRemoves->output(ir); 
+
+    std::ostringstream label2;
+    label2 << indt << "Uses:";
+    sOutBuild->outputString( label2.str() );
+    mUses->output(ir); 
+
+    std::ostringstream label3;
+    label3 << indt << "Defs:";
+    sOutBuild->outputString( label3.str() );
+    mDefs->output(ir); 
+    
+}
+
 
 //*****************************************************************
 // Construction

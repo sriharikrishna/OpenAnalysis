@@ -1,17 +1,54 @@
-# -*-Mode: makefile;-*-
-# $Id: Makefile.quick,v 1.6 2005/03/11 18:42:01 ntallent Exp $
+# Makefile.quick
 #  Copyright ((c)) 2002, Rice University 
 #  All rights reserved.
 #  See Rice.copyright for details.
+#
+# (07/28/06) AIS - added code to construct build.log
 
 #############################################################################
 # Makefile
 #############################################################################
 
 #############################################################################
+# Set variables from the configure script
 
 SHELL = /bin/sh
 WD := $(shell pwd)
+
+# please be careful to make sure that no spaces follow the variables
+# defined below.  When extra spaces are added this will be reflected
+# in the build log and cause issues when other scripts (like the
+# benchmarking scripts) process it.
+ifndef OA_OADIR
+  OADIR:=$(WD)
+else
+  OADIR:=$(OA_OADIR)
+endif
+ifndef OA_CXXFLAGS
+  CXXFLAGS:=$(CXXFLAGS)
+else
+  CXXFLAGS:=$(OA_CXXFLAGS)
+endif
+ifndef OA_CCFLAGS
+  CCFLAGS:=$(CCFLAGS)
+else
+  CCFLAGS:=$(OA_CCFLAGS)
+endif
+ifndef OA_CXX
+  CXX:=$(CXX)
+else
+  CXX:=$(OA_CXX)
+endif
+ifndef OA_CC
+  CC:=$(CC)
+else
+  CC:=$(OA_CC)
+endif
+ifndef OA_CXXLD
+  CXXLD:=$(CXXLD)
+else
+  CCLD:=$(OA_CCLD)
+endif
 
 PLATFORM := $(shell cd $(WD)/config && ./hpcplatform)
 ifeq ($(PLATFORM),)
@@ -38,10 +75,6 @@ endif
 ifdef DEVELOP
   CONFIG_OPTS += --enable-develop
 endif
-
-# used by configure (from GNU Autoconf)
-export CXX
-export CXXFLAGS
 
 #############################################################################
 
@@ -100,7 +133,9 @@ alldocs:
 
 ############################################################
 
-install: uninstall
+install: build_log installStep2 mark_compile_successful
+
+installStep2:
 	@echo "*** Installing ***"
 	cd $(BUILDDIR) && $(MAKE) install
 	@echo "*** Installed to: $(INSTALLDIR) ***"
@@ -108,7 +143,7 @@ install: uninstall
 uninstall: 
 	/bin/rm -f -r $(INSTALLDIR)
 
-.PHONY : install uninstall
+.PHONY : install installStep2 uninstall
 
 #############################################################################
 
@@ -119,6 +154,28 @@ check:
 	  return 1; \
 	fi
 
-.PHONY : check
+.PHONY : build_log mark_compile_successful clean_log 
+
+# added by AIS (07/28/06)
+build_log:
+	@echo -e "\033[32mOutputing flags to build.log\033[0m" 
+	@date +"Compiling OpenAnalysis on %D at %r %Z" > build.log 
+	@echo "Compile started by" `whoami` >> build.log 
+	@echo "OADIR:='$(OADIR)'"  >> build.log 
+	@echo "CXXFLAGS:='$(CXXFLAGS)'"  >> build.log 
+	@echo "CCFLAGS:='$(CCFLAGS)'"  >> build.log 
+	@echo "CXX:='$(CXX)'"  >> build.log 
+	@echo "CC:='$(CC)'"  >> build.log 
+	@echo "CXXLD:='$(CXXLD)'"  >> build.log 
+	@echo "CCLD:='$(CCLD)'"  >> build.log
+	@echo "PLATFORM:='$(PLATFORM)'"  >> build.log
+	@echo "CXX version => '$(shell $(CXX) --version)'"  >> build.log
+
+mark_compile_successful:
+	@echo "COMPILE_SUCCESFUL='yes'" >> build.log
+	@date +"Compilation finished on %D at %r %Z" >> build.log
+
+clean_log:
+	@echo "Project cleaned" > build.log
 
 #############################################################################

@@ -5,8 +5,9 @@
   \authors Michelle Strout
   \version $Id: ICFGDep.hpp,v 1.2 2005/06/10 02:32:02 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -18,7 +19,7 @@
 #include <map>
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
 #include <OpenAnalysis/IRInterface/IRHandles.hpp>
-#include <OpenAnalysis/Location/Location.hpp>
+#include <OpenAnalysis/Location/Locations.hpp>
 
 #include "DepDFSet.hpp"
 
@@ -37,7 +38,7 @@ namespace OA {
         a = foo(x, &y)
    has the Dep <x,a> but not <y,a> or <x,y>.  
 */
-class ICFGDep {
+    class ICFGDep : public virtual Annotation {
   public:
     ICFGDep() {}
     ~ICFGDep() {}
@@ -45,12 +46,6 @@ class ICFGDep {
     //*****************************************************************
     // Interface Implementation
     //*****************************************************************
-
-    //! Return an iterator over all records in mDepDFSet
-  std::map<StmtHandle,OA_ptr<DepDFSet> >& getDepMap(){ return mDepDFSet; };
-
-    //! Return an iterator over all records in mDepDFSet
-  ProcHandle getProc(StmtHandle stmt){ return mStmtProcMap[stmt]; };
 
     //! Return an iterator over all locations whose definition may 
     //! depend on the given use location in the given stmt.
@@ -67,14 +62,6 @@ class ICFGDep {
     //! defined in the given stmt
     OA_ptr<LocIterator> getMustDefIterator(StmtHandle stmt);
 
-  //! Return an iterator over all MemRefs that are mapped from
-  //! the given Location
-  OA_ptr<std::set<MemRefHandle> > getMemRefSet(OA_ptr<Location> loc);
-
-  //! Return an iterator over all StmtHandles that are mapped from
-  //! the given Location
-  OA_ptr<std::set<StmtHandle> > getStmtSet(OA_ptr<Location> loc);
-
     //*****************************************************************
     // Construction methods
     //*****************************************************************
@@ -90,32 +77,20 @@ class ICFGDep {
     //! Insert must def location 
     void insertMustDefForStmt(StmtHandle stmt, OA_ptr<Location> def);
    
-    //! map stmt to its proc
-    void mapStmtToProc(StmtHandle stmt, ProcHandle proc)
-      { mStmtProcMap[stmt] = proc; }
-
-    //! map Location to MemRefHandle
-  void mapLocToMemRefSet(OA_ptr<Location> loc, MemRefHandle mref);
-
-    //! map Location to StmtHandle
-  void mapLocToStmtSet(OA_ptr<Location> loc, StmtHandle stmt);
+    //*****************************************************************
+    // Annotation Interface
+    //*****************************************************************
+    void output(OA::IRHandlesIRInterface& ir);
 
     //*****************************************************************
     // Output
     //*****************************************************************
-
     void dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir);
 
   private:
     std::map<StmtHandle,OA_ptr<DepDFSet> > mDepDFSet;
 
     std::map<StmtHandle,OA_ptr<LocSet> > mMustDefMap;
-
-    std::map<StmtHandle, ProcHandle > mStmtProcMap;
-
-    std::map<OA_ptr<Location>, OA_ptr<std::set<MemRefHandle> > > mLocToMemRefSet;
-
-    std::map<OA_ptr<Location>, OA_ptr<std::set<StmtHandle> > > mLocToStmtSet;
 
 };
 

@@ -7,11 +7,11 @@
   \authors Michelle Strout
   \version $Id: DifferentiableLocsVisitor.hpp,v 1.3 2005/03/17 21:47:45 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef DifferentiableLocsVisitor_H

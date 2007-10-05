@@ -1,15 +1,16 @@
 /*! \file
   
   \brief Declarations of the AnnotationManager that generates an AliasMap
+         for a given procedure.
 
   \authors Michelle Strout
-  \version $Id: ManagerAliasMapBasic.hpp,v 1.9 2005/06/10 02:32:03 mstrout Exp $
+  \version $Id: ManagerAliasMapBasic.hpp,v 1.9.6.1 2006/01/18 23:28:42 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef ALIASMANAGERAliasMapBasic_H
@@ -23,7 +24,7 @@
 #include <OpenAnalysis/Alias/AliasMap.hpp>
 
 #include <OpenAnalysis/MemRefExpr/MemRefExprVisitor.hpp>
-#include <OpenAnalysis/Location/Location.hpp>
+#include <OpenAnalysis/Location/Locations.hpp>
 #include <OpenAnalysis/IRInterface/AliasIRInterface.hpp>
 
 namespace OA {
@@ -44,9 +45,9 @@ public:
   ManagerAliasMapBasic(OA_ptr<AliasIRInterface> _ir) : mIR(_ir) {}
   ~ManagerAliasMapBasic () {}
 
-  OA_ptr<Alias::AliasMap> performAnalysis(ProcHandle proc, 
-                                          OA_ptr<AliasMap> seedAliasMap); 
+  OA_ptr<Alias::AliasMap> performAnalysis(ProcHandle proc);
 
+  /*
   OA_ptr<Alias::AliasMap> performAnalysis(ProcHandle proc) 
   {
     // optimistic assumption that reference parameters don't alias
@@ -55,6 +56,7 @@ public:
     seedAliasMap = new AliasMap(proc);
     return performAnalysis(proc,seedAliasMap);
   }
+  */
 
   //! do a trivial map of mre to loc if possible (no addressTaken
   //! and no dereferencing), otherwise return NULL

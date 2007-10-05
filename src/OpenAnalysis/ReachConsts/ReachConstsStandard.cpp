@@ -5,24 +5,21 @@
   \author Michelle Strout, Barbara Kreaseck
   \version $Id: ReachConstsStandard.cpp,v 1.7 2005/03/18 18:14:16 ntallent Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 
 #include "ReachConstsStandard.hpp"
+#include <Utils/Util.hpp>
 
 namespace OA {
   namespace ReachConsts {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_ReachConstsStandard)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
 
 //------------------------------------------------------------------
 // ConstDef methods
@@ -35,6 +32,7 @@ ConstDef::ConstDef(OA_ptr<Location> locP,
 		   OA_ptr<ConstValBasicInterface> cvbP,
 		   ConstDefType cdType) 
 {
+  OA_DEBUG_CTRL_MACRO("DEBUG_ReachConstsStandard:ALL", debug);
   mLocPtr = locP;
   mConstPtr = cvbP; 
   mCDType = cdType;
@@ -212,33 +210,6 @@ void ConstDefSet::replace(OA_ptr<Location> locPtr,
   }
 }
 
-//! Returns the set of ConstDefs that are in EITHER set, including the
-// ConstDefs that are in only this set and not the other and vice-versa.
-/*
-ConstDefSet& ConstDefSet::setUnion(ConstDefSet &other)
-{ 
-  std::set<ConstDef> temp;
-  std::set_union(mSet.begin(), mSet.end(), 
-                 other.mSet.begin(), other.mSet.end(),
-                 inserter(temp,temp.end()));
-  mSet = temp;
-  return *this;
-}
-*/
-
-//! Returns the set of ConstDefs that are in BOTH sets, omitting the
-//ConstDefs that are in only this set and not the other.
-/*
-ConstDefSet& ConstDefSet::setIntersect(ConstDefSet &other)
-{ 
-  std::set<ConstDef> temp;
-  std::set_intersection(mSet.begin(), mSet.end(), 
-                        other.mSet.begin(), other.mSet.end(),
-                        inserter(temp,temp.end()));
-  mSet = temp;
-  return *this;
-}
-*/
 
 //! operator == for a ConstDefSet cannot rely upon the == operator for the
 // underlying sets, because the == operator of an element of a ConstDefSet, 
@@ -259,6 +230,11 @@ bool ConstDefSet::operator==(DataFlow::DataFlowSet &other) const
 
   if (mSet->size() != recastOther.mSet->size()) {
     return false;
+  }
+
+  // FIXME: assumes that they both don't have all possible locations
+  if (mDefaultType!=recastOther.mDefaultType) {
+      return false;
   }
 
   // same size:  for every element in mSet, find the element in other.mSet
@@ -304,6 +280,18 @@ std::string ConstDefSet::toString(OA_ptr<IRHandlesIRInterface> pIR){
   std::ostringstream oss;
   oss << "{";
   
+  oss << "default = ";
+  switch (mDefaultType) {
+      case TOP:
+          oss << "TOP,";
+          break;
+      case BOTTOM:
+          oss << "BOTTOM,";
+          break;
+      default:
+          assert(0);
+          break;
+  }
   // iterate over ConstDef's and have the IR print them out
   ConstDefSetIterator iter(*this);
   //std::set<OA_ptr<ConstDef> >::iterator iter;
@@ -349,6 +337,21 @@ void ReachConstsStandard::dump(std::ostream& os,
 
         os << std::endl;
 
+    os << "Mapping of MemRefHandles to constants" << std::endl;
+    std::map<MemRefHandle,OA_ptr<ConstValBasicInterface> >::iterator mIter;
+    for (mIter=mMemRef2ReachConst.begin(); mIter!=mMemRef2ReachConst.end();
+         mIter++)
+    {
+        os << "\t" << ir->toString(mIter->first) << " --> ";
+        OA_ptr<ConstValBasicInterface> constPtr;
+        constPtr = mIter->second;
+        if (constPtr.ptrEqual(0)) {
+            os << "no constant value" << std::endl;
+        } else {
+            os << constPtr->toString() << std::endl;
+        }
+    }
+
         /*
         ConstDefSetIterator* sSetIter = getConstDefIterator(s); //should be one per stmt
         for ( ; (bool)(*sSetIter); ++(*sSetIter))
@@ -365,6 +368,96 @@ void ReachConstsStandard::dump(std::ostream& os,
         */
     }
 }
+
+
+
+void ConstDef::output(OA::IRHandlesIRInterface &ir)
+{
+    sOutBuild->objStart("ConstDef");
+
+    sOutBuild->fieldStart("Location");
+    mLocPtr->output(ir);
+    sOutBuild->fieldEnd("Location");
+
+  // mCDType.output(ir);
+
+    sOutBuild->fieldStart("mCDType");
+    std::ostringstream oss;
+    switch (mCDType) {
+      case TOP:
+         oss << ",TOP>"; break;
+      case BOTTOM:
+         oss << ",BOTTOM>"; break;
+      case VALUE:
+         oss << ",VALUE=" << (*mConstPtr).toString() << ">"; break;
+     }
+    sOutBuild->fieldEnd("mCDType");
+     // return oss.str();
+
+    sOutBuild->outputString( oss.str());
+
+    sOutBuild->objEnd("ConstDef");
+}
+
+
+
+void ConstDefSet::output(OA::IRHandlesIRInterface &ir)
+{
+    sOutBuild->objStart("ConstDefSet");
+
+    sOutBuild->listStart();
+    std::set<OA::OA_ptr<ConstDef> >::iterator reg_mSet_iterator;
+    for(reg_mSet_iterator  = mSet->begin();
+        reg_mSet_iterator != mSet->end();
+        reg_mSet_iterator++)
+    {
+        OA::OA_ptr<ConstDef>  item = *reg_mSet_iterator;
+        sOutBuild->listItemStart();
+        sOutBuild->fieldStart("ConstDef");
+        item->output(ir);
+        sOutBuild->fieldEnd("ConstDef");
+        sOutBuild->listItemEnd();
+    }
+    sOutBuild->listEnd();
+    sOutBuild->objEnd("ConstDefSet");
+}
+
+
+
+
+void ReachConstsStandard::output(OA::IRHandlesIRInterface &ir)
+{
+    sOutBuild->objStart("ReachConstsStandard");
+
+    sOutBuild->mapStart("mReachConsts", "StmtHandle", "OA::OA_ptr<ConstDefSet> ");
+    std::map<StmtHandle, OA::OA_ptr<ConstDefSet> >::iterator reg_mReachConsts_iterator;
+    for(reg_mReachConsts_iterator = mReachConsts.begin();
+        reg_mReachConsts_iterator != mReachConsts.end();
+        reg_mReachConsts_iterator++)
+    {
+        const StmtHandle &first = reg_mReachConsts_iterator->first;
+        OA::OA_ptr<ConstDefSet>  &second = reg_mReachConsts_iterator->second;
+        sOutBuild->mapEntryStart();
+        sOutBuild->mapKeyStart();
+        sOutBuild->fieldStart("Statement");
+        sOutBuild->outputIRHandle(first, ir);
+        sOutBuild->fieldEnd("Statement");
+
+        sOutBuild->mapKeyEnd();
+        sOutBuild->mapValueStart();
+        second->output(ir);
+        sOutBuild->mapValueEnd();
+        sOutBuild->mapEntryEnd();
+    }
+    sOutBuild->mapEnd("mReachConsts");
+
+    sOutBuild->objEnd("ReachConstsStandard");
+}
+
+
+
+
+
 
 /*!
    Returns a tab-delimited string with the number of total memory references

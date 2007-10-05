@@ -5,32 +5,31 @@
   \authors Michelle Strout
   \version $Id: ManagerVaryStandard.cpp,v 1.9 2005/06/10 02:32:03 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "ManagerVaryStandard.hpp"
+#include <Utils/Util.hpp>
 
 
 namespace OA {
   namespace Activity {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_ManagerVaryStandard)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
 
 
 
 /*!
 */
 ManagerVaryStandard::ManagerVaryStandard(OA_ptr<ActivityIRInterface> _ir) 
-    : DataFlow::CFGDFProblem( DataFlow::Forward ), mIR(_ir)
+    : mIR(_ir)
 {
+    OA_DEBUG_CTRL_MACRO("DEBUG_ManagerVaryStandard:ALL", debug);
+    mSolver = new DataFlow::CFGDFSolver(DataFlow::CFGDFSolver::Forward,*this);
 }
 
 OA_ptr<DataFlow::DataFlowSet> ManagerVaryStandard::initializeTop()
@@ -53,8 +52,9 @@ OA_ptr<DataFlow::DataFlowSet> ManagerVaryStandard::initializeBottom()
     put OutVary locs in VaryStandard as well.
 */
 OA_ptr<VaryStandard> ManagerVaryStandard::performAnalysis(ProcHandle proc, 
-    OA_ptr<CFG::Interface> cfg, OA_ptr<DepStandard> dep,
-    OA_ptr<DataFlow::LocDFSet> varyIn)
+    OA_ptr<CFG::CFGInterface> cfg, OA_ptr<DepStandard> dep,
+    OA_ptr<DataFlow::LocDFSet> varyIn,
+    DataFlow::DFPImplement algorithm)
 {
   if (debug) {
     std::cout << "In ManagerVaryStandard::performAnalysis" << std::endl;
@@ -71,7 +71,8 @@ OA_ptr<VaryStandard> ManagerVaryStandard::performAnalysis(ProcHandle proc,
   mCFG = cfg;
 
   // use the dataflow solver to get the In and Out sets for the BBs
-  DataFlow::CFGDFProblem::solve(cfg);
+  //DataFlow::CFGDFProblem::solve(cfg);
+  mSolver->solve(cfg,algorithm);
   
   return mVaryMap;
 
@@ -80,7 +81,7 @@ OA_ptr<VaryStandard> ManagerVaryStandard::performAnalysis(ProcHandle proc,
 //------------------------------------------------------------------
 // Implementing the callbacks for CFGDFProblem
 //------------------------------------------------------------------
-void ManagerVaryStandard::initializeNode(OA_ptr<CFG::Interface::Node> n)
+/*void ManagerVaryStandard::initializeNode(OA_ptr<CFG::Interface::Node> n)
 {
     mNodeInSetMap[n] = new DataFlow::LocDFSet;
     mNodeOutSetMap[n] = new DataFlow::LocDFSet;
@@ -91,7 +92,33 @@ void ManagerVaryStandard::initializeNode(OA_ptr<CFG::Interface::Node> n)
         mNodeInSetMap[n] = mVaryIn->clone();
         mNodeOutSetMap[n] = mVaryIn->clone();
     }
+}*/
+
+/*!
+ *  *    Not doing anything special at entries and exits.
+ *   *     */
+OA_ptr<DataFlow::DataFlowSet>
+ManagerVaryStandard::initializeNodeIN(OA_ptr<CFG::NodeInterface> n)
+{
+      OA_ptr<DataFlow::LocDFSet> retval;
+      retval = new DataFlow::LocDFSet;
+      if (n.ptrEqual(mCFG->getEntry())) {
+          retval = mVaryIn->clone().convert<DataFlow::LocDFSet>();
+      }
+      return retval;
 }
+
+OA_ptr<DataFlow::DataFlowSet>
+ManagerVaryStandard::initializeNodeOUT(OA_ptr<CFG::NodeInterface> n)
+{
+      OA_ptr<DataFlow::LocDFSet> retval;
+      retval = new DataFlow::LocDFSet;
+      if (n.ptrEqual(mCFG->getEntry())) {
+          retval = mVaryIn->clone().convert<DataFlow::LocDFSet>();
+      }
+      return retval;
+}
+
 
 OA_ptr<DataFlow::DataFlowSet> 
 ManagerVaryStandard::meet (OA_ptr<DataFlow::DataFlowSet> set1orig, 

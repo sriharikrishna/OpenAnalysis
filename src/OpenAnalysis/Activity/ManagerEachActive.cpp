@@ -3,34 +3,33 @@
   \brief The AnnotationManager that generates InterActive INTRAprocedurally.
 
   \authors Michelle Strout
-  \version $Id: ManagerEachActive.cpp,v 1.4 2005/06/10 02:32:02 mstrout Exp $
+  \version $Id: ManagerEachActive.cpp,v 1.4.6.1 2005/08/23 18:19:14 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
+
 
   Side-effect results are used to estimate the effect of procedure calls.
   Also used to seed independent and dependent variables for procedures who
   have unknown loc in their independent or dependent location seeds.
-
 */
 
 #include "ManagerEachActive.hpp"
+#include <Utils/Util.hpp>
 
 
 namespace OA {
   namespace Activity {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_ManagerEachActive)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
 
 ManagerEachActive::ManagerEachActive(
     OA_ptr<Activity::ActivityIRInterface> _ir) : mIR(_ir)
 {
+    OA_DEBUG_CTRL_MACRO("DEBUG_ManagerEachActive:ALL", debug);
 }
 
 /*!
@@ -51,25 +50,48 @@ ManagerEachActive::performAnalysis(
     
     ProcHandle proc = (irhandle_t)(procIter->current().hval());
 
-    //set currentProc()
-    mIR->currentProc(proc);
-
     // get Alias::Interface for this proc
     OA_ptr<Alias::Interface> alias;
     alias = interAlias->getAliasResults(proc);
 
     // get CFG for this proc
-    OA_ptr<CFG::Interface> cfg;
+    OA_ptr<CFG::CFGInterface> cfg;
     cfg = eachCFG->getCFGResults(proc);
 
     // create Active manager
     OA_ptr<Activity::ManagerActiveStandard> activeman;
     activeman = new Activity::ManagerActiveStandard(mIR);
 
-    // get iterator over indep and dep locations for procedure
-    OA_ptr<LocIterator> indepIter = mIR->getIndepLocIter(proc);
-    OA_ptr<LocIterator> depIter = mIR->getDepLocIter(proc);
+    // get iterator over independent locations for procedure
+    OA_ptr<LocIterator> indepIter;
+    OA_ptr<LocSet> indepSet; indepSet = new LocSet();
+    OA_ptr<MemRefExprIterator> indepMREIter=mIR->getIndepMemRefExprIter(proc);
+    for ( indepMREIter->reset(); indepMREIter->isValid(); (*indepMREIter)++ ) {
+      OA_ptr<MemRefExpr> memref = indepMREIter->current();
 
+      // get may locs for memref
+      OA_ptr<LocIterator> locIter = alias->getMayLocs(*memref,proc);
+      for (locIter->reset(); locIter->isValid(); (*locIter)++ ) {
+        indepSet->insert(locIter->current());
+      }
+    }
+    indepIter = new LocSetIterator(indepSet);
+    
+    // get iterator over dependent locations for procedure
+    OA_ptr<LocIterator> depIter;
+    OA_ptr<LocSet> depSet; depSet = new LocSet();
+    OA_ptr<MemRefExprIterator> depMREIter=mIR->getDepMemRefExprIter(proc);
+    for ( depMREIter->reset(); depMREIter->isValid(); (*depMREIter)++ ) {
+      OA_ptr<MemRefExpr> memref = depMREIter->current();
+
+      // get may locs for memref
+      OA_ptr<LocIterator> locIter = alias->getMayLocs(*memref,proc);
+      for (locIter->reset(); locIter->isValid(); (*locIter)++ ) {
+        depSet->insert(locIter->current());
+      }
+    }
+    depIter = new LocSetIterator(depSet);
+ 
     // if the Unknown Loc is in the indep set then it is better (and still 
     // conservatively correct) to estimate with the USE set for the procedure
     for ( indepIter->reset(); indepIter->isValid(); (*indepIter)++ ) {

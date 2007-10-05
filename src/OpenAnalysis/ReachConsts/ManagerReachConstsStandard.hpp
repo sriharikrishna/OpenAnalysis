@@ -5,11 +5,11 @@
   \authors Michelle Strout, Barbara Kreaseck
   \version $Id: ManagerReachConstsStandard.hpp,v 1.7 2005/03/18 18:14:16 ntallent Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef ReachConstsManagerStandard_h
@@ -21,7 +21,7 @@
 #include <OpenAnalysis/IRInterface/ReachConstsIRInterface.hpp>
 #include <OpenAnalysis/ReachConsts/ReachConstsStandard.hpp>
 
-#include <OpenAnalysis/CFG/Interface.hpp>
+#include <OpenAnalysis/CFG/CFGInterface.hpp>
 //#include <OpenAnalysis/CFG/CFGStandard.hpp>
 
 #include <OpenAnalysis/Alias/Interface.hpp>
@@ -33,6 +33,9 @@
 
 #include <OpenAnalysis/IRInterface/ConstValBasicInterface.hpp>
 #include <OpenAnalysis/ExprTree/EvalToConstVisitor.hpp>
+#include <OpenAnalysis/DataFlow/CFGDFSolver.hpp>
+#include <OpenAnalysis/DataFlow/LocDFSet.hpp>
+
 
 namespace OA {
   namespace ReachConsts {
@@ -43,16 +46,17 @@ namespace OA {
    This class can build an ReachConstsStandard, 
    (eventually) read one in from a file, and write one out to a file.
 */
-class ManagerStandard 
+class ManagerReachConstsStandard 
     : private DataFlow::CFGDFProblem { 
       //??? eventually public OA::AnnotationManager
 public:
-  ManagerStandard(OA_ptr<ReachConstsIRInterface> _ir);
-  ~ManagerStandard () {}
+  ManagerReachConstsStandard(OA_ptr<ReachConstsIRInterface> _ir);
+  ~ManagerReachConstsStandard () {}
 
   OA_ptr<ReachConstsStandard> performAnalysis(ProcHandle, 
-        OA_ptr<CFG::Interface> cfg, OA_ptr<Alias::Interface> alias,
-        OA_ptr<SideEffect::InterSideEffectInterface> interSE);
+        OA_ptr<CFG::CFGInterface> cfg, OA_ptr<Alias::Interface> alias,
+        OA_ptr<SideEffect::InterSideEffectInterface> interSE,
+        DataFlow::DFPImplement algorithm);
 
   //--------------------------------------------------------
   // For use within InterMPICFGDFProblem
@@ -63,10 +67,12 @@ public:
   // and therefore any changes made will be noticed next time
   // performAnalysis is called.
   //--------------------------------------------------------
-  OA_ptr<DataFlow::DataFlowSet> getInSet(OA_ptr<CFG::Interface::Node> node)
-    { return mNodeInSetMap[node]; }
-  OA_ptr<DataFlow::DataFlowSet> getOutSet(OA_ptr<CFG::Interface::Node> node)
-    { return mNodeOutSetMap[node]; }
+  // Shifted to CFGDFProblem */
+  // 
+  //OA_ptr<DataFlow::DataFlowSet> getInSet(OA_ptr<CFG::Interface::Node> node)
+  //  { return mNodeInSetMap[node]; }
+  //OA_ptr<DataFlow::DataFlowSet> getOutSet(OA_ptr<CFG::Interface::Node> node)
+  //  { return mNodeOutSetMap[node]; }
 
   //------------------------------------------------------------------
   // Implementing the callbacks for CFGDFProblem
@@ -81,8 +87,14 @@ private:
   void initializeTopAndBottom();
   
 
-  void initializeNode(OA_ptr<CFG::Interface::Node> n);
+  void initializeNode(OA_ptr<CFG::NodeInterface> n);
+  //! Should generate an in and out DataFlowSet for node
+  OA_ptr<DataFlow::DataFlowSet>
+            initializeNodeIN(OA_ptr<CFG::NodeInterface> n);
+  OA_ptr<DataFlow::DataFlowSet>
+            initializeNodeOUT(OA_ptr<CFG::NodeInterface> n);
 
+  
   OA_ptr<DataFlow::DataFlowSet> 
   meet (OA_ptr<DataFlow::DataFlowSet> set1, 
         OA_ptr<DataFlow::DataFlowSet> set2); 
@@ -121,10 +133,13 @@ private: // member variables
   std::map<StmtHandle,std::set<OA_ptr<Location> > > mStmtMustDefMap;
   OA_ptr<ConstDefSet> mAllTop;
   OA_ptr<ConstDefSet> mAllBottom;
-  OA_ptr<CFG::Interface> mCFG;
+  OA_ptr<CFG::CFGInterface> mCFG;
   OA_ptr<SideEffect::InterSideEffectInterface> mInterSE;
   OA_ptr<ReachConstsStandard> mRCS;
-};
+ // Added by PLM 07/26/06
+  OA_ptr<DataFlow::CFGDFSolver> mSolver;
+ 
+   };
 
   } // end of ReachConsts namespace
 } // end of OA namespace

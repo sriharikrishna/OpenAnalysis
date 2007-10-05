@@ -5,8 +5,9 @@
   \authors Arun Chauhan (2001 as part of Mint), Nathan Tallent, Michelle Strout
   \version $Id: SSAStandard.hpp,v 1.4 2005/08/18 14:06:56 johnmc Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -31,8 +32,9 @@
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
 #include <OpenAnalysis/IRInterface/SSAIRInterface.hpp>
 #include <OpenAnalysis/SSA/Phi.hpp>
-#include <OpenAnalysis/CFG/Interface.hpp>
+#include <OpenAnalysis/CFG/CFGInterface.hpp>
 #include <OpenAnalysis/Utils/DomTree.hpp>
+#include <OpenAnalysis/CFG/CFG.hpp>
 
 namespace OA {
   namespace SSA {
@@ -127,7 +129,7 @@ public:
   //--------------------------------------------------------------------
   class PhiNodesIterator : public Iterator {
   public:
-    PhiNodesIterator(SSAStandard& s, OA_ptr<CFG::Interface::Node> n) 
+    PhiNodesIterator(SSAStandard& s, OA_ptr<CFG::NodeInterface> n) 
       { phi_set = &s.phi_node_sets[n]; iter = phi_set->begin(); }
     virtual ~PhiNodesIterator() { }
 
@@ -166,15 +168,15 @@ public:
     DefBlocksIterator(SSAStandard& s, SymHandle name) 
       { blk_set = &(s.def_blocks_set[name]); iter = blk_set->begin(); }
     
-    OA_ptr<CFG::Interface::Node> current() const { return *iter; }
+    OA_ptr<CFG::NodeInterface> current() const { return *iter; }
     bool isValid() const { return (iter != blk_set->end()); }
     
     void operator++() { ++iter; }
     void reset() { iter = blk_set->begin(); }
     
   private:
-    std::set<OA_ptr<CFG::Interface::Node> >* blk_set;
-    std::set<OA_ptr<CFG::Interface::Node> >::iterator iter;
+    std::set<OA_ptr<CFG::NodeInterface> >* blk_set;
+    std::set<OA_ptr<CFG::NodeInterface> >::iterator iter;
   };
 
   
@@ -183,7 +185,7 @@ public:
 //-------------------------------------------------------------------
 public:
   SSAStandard(const SymHandle name, 
-	      OA_ptr<SSAIRInterface> ir, OA_ptr<CFG::Interface> cfg);
+	      OA_ptr<SSAIRInterface> ir, OA_ptr<CFG::CFGInterface> cfg);
   virtual ~SSAStandard();
 
   void dump (std::ostream&);
@@ -195,7 +197,7 @@ public:
   //-------------------------------------
   // Iterators
   //-------------------------------------
-  OA_ptr<PhiNodesIterator> getPhiNodesIterator(OA_ptr<CFG::Interface::Node> n) {
+  OA_ptr<PhiNodesIterator> getPhiNodesIterator(OA_ptr<CFG::NodeInterface> n) {
     OA_ptr<PhiNodesIterator> it; it = new PhiNodesIterator(*this, n);
     return it;
   }
@@ -216,15 +218,15 @@ private:
 
 private:
   SymHandle name;
-  OA_ptr<CFG::Interface> cfg;
-  std::map<OA_ptr<CFG::Interface::Node>, 
+  OA_ptr<CFG::CFGInterface> cfg;
+  std::map<OA_ptr<CFG::NodeInterface>, 
            std::set<OA_ptr<SSA::Phi> > > phi_node_sets;
   
   
   // FIXME: move to ManagerSSA
   OA_ptr<SSAIRInterface> mIR;
   std::set<LeafHandle> non_locals;
-  std::map<SymHandle, std::set<OA_ptr<CFG::Interface::Node> > > def_blocks_set;
+  std::map<SymHandle, std::set<OA_ptr<CFG::NodeInterface> > > def_blocks_set;
   
 };
 

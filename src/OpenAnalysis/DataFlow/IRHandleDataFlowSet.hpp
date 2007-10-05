@@ -5,10 +5,12 @@
   \authors Michelle Strout (June 2004)
   \version $Id: IRHandleDataFlowSet.hpp,v 1.11 2005/06/10 02:32:04 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
+
 
   Don't actually create an IRHandleDataFlowSet.  Instead inherit 
   privately from it to get implementation of DataFlowSet operations
@@ -80,7 +82,7 @@ public:
   }
 
   //! intersects both sets into this
-  IRHandleDataFlowSet<T>& setIntersect(IRHandleDataFlowSet<T> &other)
+ /* IRHandleDataFlowSet<T>& setIntersect(IRHandleDataFlowSet<T> &other)
   { 
     std::set<T> temp;
     std::set_intersection(mSet.begin(), mSet.end(), 
@@ -88,7 +90,21 @@ public:
                           std::inserter(temp,temp.end()));
     mSet = temp;
     return *this;
+  }*/
+
+
+  IRHandleDataFlowSet<T>& setIntersect(DataFlowSet &other)
+  {
+    IRHandleDataFlowSet<T>& recastOther
+        = dynamic_cast<IRHandleDataFlowSet<T>&>(other);
+    std::set<T> temp;
+    std::set_intersection(mSet.begin(), mSet.end(),
+                   recastOther.mSet.begin(), recastOther.mSet.end(),
+                   std::inserter(temp,temp.end()));
+    mSet = temp;
+    return *this;
   }
+
 
   void dump(std::ostream &os)
   {

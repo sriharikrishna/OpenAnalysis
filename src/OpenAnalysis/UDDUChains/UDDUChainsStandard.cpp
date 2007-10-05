@@ -5,8 +5,9 @@
   \author Michelle Strout
   \version $Id: UDDUChainsStandard.cpp,v 1.10 2004/12/23 07:37:53 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -15,7 +16,6 @@
 
 namespace OA {
   namespace UDDUChains {
-
 //! Return an iterator over all statements in this procedure
 //! that may define a location used in the given statement
 OA_ptr<Interface::ChainStmtIterator> 
@@ -116,7 +116,6 @@ UDDUChainsStandard::getMemRefsWithDUChainIterator()
     retval = new MemRefsWithDUChainIterator(mDUChainForMemRef);
     return retval;
 }
-
 //*****************************************************************
 // Construction methods 
 //*****************************************************************
@@ -170,6 +169,7 @@ void UDDUChainsStandard::insertStmtDefMemRefUse(StmtHandle def, MemRefHandle use
     }
     (*mUDChainForMemRef)[use]->insert(def); 
 }
+
 
 //*****************************************************************
 // Output
@@ -264,6 +264,198 @@ void UDDUChainsStandard::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir)
 
 }
 
+
+void UDDUChainsStandard::output(OA::IRHandlesIRInterface &ir)
+{
+    sOutBuild->objStart("UDDUChainsStandard");
+
+    sOutBuild->mapStart("mUDChainForStmt", "StmtHandle", "OA::OA_ptr<StmtSet> ");
+    std::map<StmtHandle, OA::OA_ptr<StmtSet> >::iterator reg_mUDChainForStmt_iterator;
+    for(reg_mUDChainForStmt_iterator = mUDChainForStmt->begin();
+        reg_mUDChainForStmt_iterator != mUDChainForStmt->end();
+        reg_mUDChainForStmt_iterator++)
+    {
+        const StmtHandle &first = reg_mUDChainForStmt_iterator->first;
+        OA::OA_ptr<StmtSet>  &second = reg_mUDChainForStmt_iterator->second;
+        sOutBuild->mapEntryStart();
+        sOutBuild->mapKeyStart();
+        sOutBuild->fieldStart("Use StatementHandle ");
+        sOutBuild->outputIRHandle(first, ir);
+        sOutBuild->fieldEnd("UseStatementHandle");
+
+        sOutBuild->mapKeyEnd();
+        sOutBuild->mapValueStart();
+
+        sOutBuild->fieldStart("Define Statements"); {
+           sOutBuild->listStart(); {
+            OA_ptr<StmtHandleIterator> stmtIterPtr;
+            stmtIterPtr=getUDChainStmtIterator(first);
+
+            for ( ; stmtIterPtr->isValid(); (*stmtIterPtr)++ ) {
+              sOutBuild->listItemStart(); {
+                sOutBuild->outputIRHandle(stmtIterPtr->current(),ir);
+              }sOutBuild->listItemEnd();
+            }
+          }sOutBuild->listEnd();
+        }sOutBuild->fieldEnd("Define Statements");
+
+
+        //second->output(ir);
+        sOutBuild->mapValueEnd();
+        sOutBuild->mapEntryEnd();
+
+  }
+    sOutBuild->mapEnd("mUDChainForStmt");
+
+     sOutBuild->mapStart("mDUChainForStmt", "StmtHandle", "OA::OA_ptr<StmtSet> ");
+    std::map<StmtHandle, OA::OA_ptr<StmtSet> >::iterator reg_mDUChainForStmt_iterator;
+    for(reg_mDUChainForStmt_iterator = mDUChainForStmt->begin();
+        reg_mDUChainForStmt_iterator != mDUChainForStmt->end();
+        reg_mDUChainForStmt_iterator++)
+    {
+        const StmtHandle &first = reg_mDUChainForStmt_iterator->first;
+        OA::OA_ptr<StmtSet>  &second = reg_mDUChainForStmt_iterator->second;
+        sOutBuild->mapEntryStart();
+        sOutBuild->mapKeyStart();
+        sOutBuild->fieldStart("Def StmtHandle");
+        sOutBuild->outputIRHandle(first, ir);
+        sOutBuild->fieldEnd("Def StmtHandle");
+
+        sOutBuild->mapKeyEnd();
+        sOutBuild->mapValueStart();
+
+        sOutBuild->fieldStart("Use Statements"); {
+           sOutBuild->listStart(); {
+            OA_ptr<StmtHandleIterator> stmtIterPtr;
+            stmtIterPtr=getDUChainStmtIterator(first);
+
+            for ( ; stmtIterPtr->isValid(); (*stmtIterPtr)++ ) {
+              sOutBuild->listItemStart(); {
+                sOutBuild->outputIRHandle(stmtIterPtr->current(),ir);
+              }sOutBuild->listItemEnd();
+            }
+          }sOutBuild->listEnd();
+        }sOutBuild->fieldEnd("Use Statements");
+
+       //second->output(ir);
+        sOutBuild->mapValueEnd();
+        sOutBuild->mapEntryEnd();
+    }
+    sOutBuild->mapEnd("mDUChainForStmt");
+
+    sOutBuild->mapStart("mUDChainForMemRef", "MemRefHandle", "OA::OA_ptr<StmtSet> ");
+    std::map<MemRefHandle, OA::OA_ptr<StmtSet> >::iterator reg_mUDChainForMemRef_iterator;
+    for(reg_mUDChainForMemRef_iterator = mUDChainForMemRef->begin();
+        reg_mUDChainForMemRef_iterator != mUDChainForMemRef->end();
+        reg_mUDChainForMemRef_iterator++)
+    {
+        const MemRefHandle &first = reg_mUDChainForMemRef_iterator->first;
+        OA::OA_ptr<StmtSet>  &second = reg_mUDChainForMemRef_iterator->second;
+        sOutBuild->mapEntryStart();
+        sOutBuild->mapKeyStart();
+        sOutBuild->fieldStart("Use MemRefHandle");
+        sOutBuild->outputIRHandle(first, ir);
+        sOutBuild->fieldEnd("Use MemRefHandle");
+
+        sOutBuild->mapKeyEnd();
+        sOutBuild->mapValueStart();
+        sOutBuild->fieldStart("Def Statements"); {
+           sOutBuild->listStart(); {
+            OA_ptr<StmtHandleIterator> stmtIterPtr;
+            stmtIterPtr=getUDChainStmtIterator(first);
+
+            for ( ; stmtIterPtr->isValid(); (*stmtIterPtr)++ ) {
+              sOutBuild->listItemStart(); {
+                sOutBuild->outputIRHandle(stmtIterPtr->current(),ir);
+              }sOutBuild->listItemEnd();
+            }
+          }sOutBuild->listEnd();
+        }sOutBuild->fieldEnd("Def Statements");
+
+        //second->output(ir);
+        sOutBuild->mapValueEnd();
+        sOutBuild->mapEntryEnd();
+    }
+    sOutBuild->mapEnd("mUDChainForMemRef");
+
+  sOutBuild->mapStart("mDUChainForMemRef", "MemRefHandle", "OA::OA_ptr<StmtSet> ");
+    std::map<MemRefHandle, OA::OA_ptr<StmtSet> >::iterator reg_mDUChainForMemRef_iterator;
+    for(reg_mDUChainForMemRef_iterator = mDUChainForMemRef->begin();
+        reg_mDUChainForMemRef_iterator != mDUChainForMemRef->end();
+        reg_mDUChainForMemRef_iterator++)
+    {
+        const MemRefHandle &first = reg_mDUChainForMemRef_iterator->first;
+        OA::OA_ptr<StmtSet>  &second = reg_mDUChainForMemRef_iterator->second;
+        sOutBuild->mapEntryStart();
+        sOutBuild->mapKeyStart();
+        sOutBuild->fieldStart("Def MemRefHandle");
+        sOutBuild->outputIRHandle(first, ir);
+        sOutBuild->fieldEnd("Def MemRefHandle");
+
+        sOutBuild->mapKeyEnd();
+        sOutBuild->mapValueStart();
+        sOutBuild->fieldStart("Use Statements"); {
+           sOutBuild->listStart(); {
+            OA_ptr<StmtHandleIterator> stmtIterPtr;
+            stmtIterPtr=getDUChainStmtIterator(first);
+
+            for ( ; stmtIterPtr->isValid(); (*stmtIterPtr)++ ) {
+              sOutBuild->listItemStart(); {
+                sOutBuild->outputIRHandle(stmtIterPtr->current(),ir);
+              }sOutBuild->listItemEnd();
+            }
+          }sOutBuild->listEnd();
+        }sOutBuild->fieldEnd("Use Statements");
+
+        //second->output(ir);
+        sOutBuild->mapValueEnd();
+        sOutBuild->mapEntryEnd();
+    }
+    sOutBuild->mapEnd("mDUChainForMemRef");
+
+
+   sOutBuild->mapStart("mMemRefToStmtMap", "MemRefHandle", "StmtHandle");
+    std::map<MemRefHandle, StmtHandle>::iterator reg_mMemRefToStmtMap_iterator;
+    for(reg_mMemRefToStmtMap_iterator = mMemRefToStmtMap.begin();
+        reg_mMemRefToStmtMap_iterator != mMemRefToStmtMap.end();
+        reg_mMemRefToStmtMap_iterator++)
+    {
+        const MemRefHandle &first = reg_mMemRefToStmtMap_iterator->first;
+        StmtHandle &second = reg_mMemRefToStmtMap_iterator->second;
+        sOutBuild->mapEntryStart();
+        sOutBuild->mapKeyStart();
+        sOutBuild->fieldStart("Def MemRefHandle");
+        sOutBuild->outputIRHandle(first, ir);
+        sOutBuild->fieldEnd("Def MemRefHandle");
+
+        sOutBuild->mapKeyEnd();
+        sOutBuild->mapValueStart();
+        sOutBuild->outputIRHandle(second, ir);
+
+        sOutBuild->mapKeyEnd();
+        sOutBuild->mapValueStart();
+        sOutBuild->fieldStart("Start Use Statements"); {
+           sOutBuild->listStart(); {
+            OA_ptr<StmtHandleIterator> stmtIterPtr;
+            stmtIterPtr=getDUChainStmtIterator(first);
+
+            for ( ; stmtIterPtr->isValid(); (*stmtIterPtr)++ ) {
+              sOutBuild->listItemStart(); {
+                sOutBuild->outputIRHandle(stmtIterPtr->current(),ir);
+              }sOutBuild->listItemEnd();
+            }
+          }sOutBuild->listEnd();
+        }sOutBuild->fieldEnd("End Use Statements");
+
+
+        sOutBuild->mapValueEnd();
+        sOutBuild->mapEntryEnd();
+    }
+    sOutBuild->mapEnd("mMemRefToStmtMap");
+
+
+        
+} 
 
 
   } // end of UDDUChains namespace

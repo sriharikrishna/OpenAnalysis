@@ -5,25 +5,29 @@
   \authors Michelle Strout
   \version $Id: ICFGDFSolver.cpp,v 1.2 2005/06/10 02:32:04 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
 
 #include "ICFGDFSolver.hpp"
+#include <Utils/Util.hpp>
 
 namespace OA {
   namespace DataFlow {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_ICFGDFSolver)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
+
+ICFGDFSolver::ICFGDFSolver(DFDirectionType pDirection, ICFGDFProblem& prob)
+    : mDirection(pDirection), mDFProb(prob)
+{
+    OA_DEBUG_CTRL_MACRO("DEBUG_ICFGDFSolver", debug);
+}
 
 void
-ICFGDFSolver::solve(OA_ptr<ICFG::ICFGStandard> icfg)
+ICFGDFSolver::solve(OA_ptr<ICFG::ICFGInterface> icfg, DFPImplement algorithm)
 {
     // remove all mappings of nodes to data flow sets 
     mNodeInSetMap.clear();
@@ -32,8 +36,9 @@ ICFGDFSolver::solve(OA_ptr<ICFG::ICFGStandard> icfg)
 
     mTop = mDFProb.initializeTop();
 
-    DataFlow::DGraphIterativeDFP::solve(icfg, 
-            ((mDirection==Forward) ? DGraph::DEdgeOrg : DGraph::DEdgeRev));
+    DataFlow::DGraphSolverDFP::solve(icfg, 
+            ((mDirection==Forward) ? DGraph::DEdgeOrg : DGraph::DEdgeRev),
+            algorithm);
 
     /*
     // if forward then return DataFlowSet for exit
@@ -56,32 +61,71 @@ ICFGDFSolver::solve(OA_ptr<ICFG::ICFGStandard> icfg)
 //--------------------------------------------------------
 // initialization upcall 
 //--------------------------------------------------------
-void ICFGDFSolver::initialize(OA_ptr<DGraph::Interface> dg)
+
+
+/*! commented by PLM 08/10/06
+void ICFGDFSolver::initialize(OA_ptr<DGraph::DGraphInterface> dg)
 {
-    OA_ptr<ICFG::ICFGStandard> cfg = dg.convert<ICFG::ICFGStandard>();
+    OA_ptr<ICFG::ICFG> cfg = dg.convert<ICFG::ICFG>();
 
     // iterate over all nodes and call initialization routine
     // that sets up DataFlowSets
-    OA_ptr<ICFG::ICFGStandard::NodesIterator> nodeIterPtr;
+    OA_ptr<ICFG::ICFG::NodesIterator> nodeIterPtr;
     nodeIterPtr = cfg->getNodesIterator();
+    if (debug) {
+      std::cout << "initializing:  looping over nodes:\n";
+    }
     for ( ;nodeIterPtr->isValid(); ++(*nodeIterPtr) ) {
-        mNodeInSetMap[nodeIterPtr->current()] 
-            = mDFProb.initializeNodeIN(nodeIterPtr->current());
-        mNodeOutSetMap[nodeIterPtr->current()] 
-            = mDFProb.initializeNodeOUT(nodeIterPtr->current());
-        mNodeInitTransApp[nodeIterPtr->current()] = false;
+      if (debug) {
+        std::cout << "\tNode " << (nodeIterPtr->current())->getId()
+                  << std::endl;
+      }
+      mNodeInSetMap[nodeIterPtr->current()] 
+        = mDFProb.initializeNodeIN(nodeIterPtr->current());
+      mNodeOutSetMap[nodeIterPtr->current()] 
+        = mDFProb.initializeNodeOUT(nodeIterPtr->current());
+      mNodeInitTransApp[nodeIterPtr->current()] = false;
     }
 }
+
+*/
+
+
+void ICFGDFSolver::initialize(OA_ptr<DGraph::DGraphInterface> dg)
+{
+    OA_ptr<ICFG::ICFGInterface> cfg = dg.convert<ICFG::ICFGInterface>();
+
+    // iterate over all nodes and call initialization routine
+    // that sets up DataFlowSets
+    OA_ptr<ICFG::NodesIteratorInterface> nodeIterPtr;
+    nodeIterPtr = cfg->getICFGNodesIterator();
+    if (debug) {
+      std::cout << "initializing:  looping over nodes:\n";
+    }
+    for ( ;nodeIterPtr->isValid(); ++(*nodeIterPtr) ) {
+      if (debug) {
+        std::cout << "\tNode " << (nodeIterPtr->current())->getId()
+                  << std::endl;
+      }
+      OA_ptr<ICFG::NodeInterface> iNode = nodeIterPtr->currentICFGNode();
+      mNodeInSetMap[iNode]
+        = mDFProb.initializeNodeIN(iNode);
+      mNodeOutSetMap[iNode]
+        = mDFProb.initializeNodeOUT(iNode);
+      mNodeInitTransApp[iNode] = false;
+    }
+}
+
 
 //--------------------------------------------------------
 // solver upcalls
 //--------------------------------------------------------
-bool ICFGDFSolver::atDGraphNode( OA_ptr<DGraph::Interface::Node> pNode, 
+bool ICFGDFSolver::atDGraphNode( OA_ptr<DGraph::NodeInterface> pNode, 
                                  DGraph::DGraphEdgeDirection pOrient)
 {
     bool changed = false;
-    OA_ptr<ICFG::ICFGStandard::Node> node 
-        = pNode.convert<OA::ICFG::ICFGStandard::Node>();
+    OA_ptr<ICFG::NodeInterface> node 
+        = pNode.convert<OA::ICFG::NodeInterface>();
 
     if (debug) {
         std::cout << "ICFGDFSolver::atDGraphNode: ICFG node = ";
@@ -104,19 +148,19 @@ bool ICFGDFSolver::atDGraphNode( OA_ptr<DGraph::Interface::Node> pNode,
     }
 
     // set up iterator for predecessor edges
-    OA_ptr<ICFG::ICFGStandard::EdgesIterator> predIterPtr;
+    OA_ptr<ICFG::EdgesIteratorInterface> predIterPtr;
     if (pOrient==DGraph::DEdgeOrg) {
-      predIterPtr = node->getIncomingEdgesIterator();
+      predIterPtr = node->getICFGIncomingEdgesIterator();
     } else {
-      predIterPtr = node->getOutgoingEdgesIterator();
+      predIterPtr = node->getICFGOutgoingEdgesIterator();
     }
     // iterate over predecessors and do meet operation
     for (; predIterPtr->isValid(); ++(*predIterPtr)) {
-      OA_ptr<ICFG::ICFGStandard::Edge> predEdge = predIterPtr->current();
-      OA_ptr<ICFG::ICFGStandard::Node> predNode;
+      OA_ptr<ICFG::EdgeInterface> predEdge = predIterPtr->currentICFGEdge();
+      OA_ptr<ICFG::NodeInterface> predNode;
       OA_ptr<DataFlowSet> inSet;
       if (pOrient==DGraph::DEdgeOrg) {
-        predNode = predEdge->source();
+        OA_ptr<ICFG::NodeInterface> predNode = predEdge->getICFGSource();
         switch(predEdge->getType()) {
             case (ICFG::CALL_EDGE):
                 // mNodeInSet because only get to use data-flow set before call
@@ -130,15 +174,27 @@ bool ICFGDFSolver::atDGraphNode( OA_ptr<DGraph::Interface::Node> pNode,
                             mNodeOutSetMap[predNode], predEdge->getCall(),
                             predEdge->getSinkProc());
                 break;
+            case (ICFG::CALL_RETURN_EDGE):
+              // has same parameter order as callerToCallee() for now
+              // but will need to be changed when callToReturn is 
+              // revisited.  Currently, only LocDFSet is used.
+                inSet = mDFProb.callToReturn(predEdge->getSourceProc(),
+                            mNodeInSetMap[predNode], predEdge->getCall(),
+                            predEdge->getSinkProc());
+                break;
             case (ICFG::CFLOW_EDGE):
                 inSet = mNodeOutSetMap[predNode];
                 break;
         }
+        if (debug) {
+          std::cout << "performing forward meet with pred node " 
+                    << predNode->getId() << std::endl;
+        }                                              
         meetPartialResult = mDFProb.meet(meetPartialResult, inSet);
 
       // backward flow
       } else {
-        predNode = predEdge->sink();
+        OA_ptr<ICFG::NodeInterface> predNode = predEdge->getICFGSink();
         switch(predEdge->getType()) {
             case (ICFG::CALL_EDGE):
                 inSet = mDFProb.calleeToCaller(predEdge->getSinkProc(),
@@ -151,10 +207,22 @@ bool ICFGDFSolver::atDGraphNode( OA_ptr<DGraph::Interface::Node> pNode,
                             mNodeOutSetMap[predNode], predEdge->getCall(),
                             predEdge->getSourceProc());
                 break;
+            case (ICFG::CALL_RETURN_EDGE):
+              // has same parameter order as callerToCallee() for now
+              // but will need to be changed when callToReturn is 
+              // revisited.  Currently, only LocDFSet is used.
+                inSet = mDFProb.callToReturn(predEdge->getSinkProc(),
+                            mNodeOutSetMap[predNode], predEdge->getCall(),
+                            predEdge->getSourceProc());
+                break;
             case (ICFG::CFLOW_EDGE):
                 inSet = mNodeInSetMap[predNode];
                 break;
         }
+        if (debug) {
+          std::cout << "performing backward meet with succ node " 
+                    << predNode->getId() << std::endl;
+        }                                              
         meetPartialResult = mDFProb.meet(meetPartialResult, inSet);
       }
     }
@@ -196,7 +264,7 @@ bool ICFGDFSolver::atDGraphNode( OA_ptr<DGraph::Interface::Node> pNode,
         // otherwise it is a normal node and should apply regular transfer
         // loop through statements in forward order
         } else {
-            OA_ptr<CFG::Interface::NodeStatementsIterator> stmtIterPtr 
+            OA_ptr<CFG::NodeStatementsIteratorInterface> stmtIterPtr 
                 = node->getNodeStatementsIterator();
             for (; stmtIterPtr->isValid(); ++(*stmtIterPtr)) {
                 OA::StmtHandle stmt = stmtIterPtr->current();
@@ -220,11 +288,18 @@ bool ICFGDFSolver::atDGraphNode( OA_ptr<DGraph::Interface::Node> pNode,
         // otherwise it is a normal node and should apply regular transfer
         } else {
             // loop through statements in reverse order
-            OA_ptr<CFG::Interface::NodeStatementsRevIterator> stmtIterPtr 
+            OA_ptr<CFG::NodeStatementsRevIteratorInterface> stmtIterPtr 
                 = node->getNodeStatementsRevIterator();
+            if (debug) {
+              std::cout << "looping through statements in reverse order:\n";
+            }
             for (; stmtIterPtr->isValid(); ++(*stmtIterPtr)) {
                 OA::StmtHandle stmt = stmtIterPtr->current();
+                if (debug) {
+                  std::cout << "\tstmt.hval(" << stmt.hval() << ")\n";
+                }
                 prevIn = mDFProb.transfer(node->getProc(), prevIn, stmt);
+                
             }
         }
 
@@ -237,7 +312,8 @@ bool ICFGDFSolver::atDGraphNode( OA_ptr<DGraph::Interface::Node> pNode,
     }
    
     if (debug) {
-      std::cout << "ICFGDFSolver::atDGraphNode: changed = " << changed << std::endl;
+      std::cout << "ICFGDFSolver::atDGraphNode: changed = " << changed 
+                << std::endl;
     }
     return changed;
 }
@@ -246,7 +322,7 @@ bool ICFGDFSolver::atDGraphNode( OA_ptr<DGraph::Interface::Node> pNode,
 // finalization upcalls
 //--------------------------------------------------------
 void 
-ICFGDFSolver::finalizeNode(OA_ptr<DGraph::Interface::Node> node)
+ICFGDFSolver::finalizeNode(OA_ptr<DGraph::NodeInterface> node)
 {
 }
 
@@ -258,7 +334,7 @@ ICFGDFSolver::finalizeNode(OA_ptr<DGraph::Interface::Node> node)
 void ICFGDFSolver::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir)
 {
     // iterate over all entries in mNodeInSetMap and mNodeOutSetMap
-    std::map<OA_ptr<ICFG::ICFGStandard::Node>,
+    std::map<OA_ptr<ICFG::NodeInterface>,
              OA_ptr<DataFlowSet> >::iterator mapIter;
     for (mapIter=mNodeInSetMap.begin(); mapIter!=mNodeInSetMap.end(); mapIter++)
     {

@@ -5,8 +5,9 @@
   \authors Michelle Strout
   \version $Id: ManagerSideEffectStandard.hpp,v 1.5 2005/08/08 20:03:52 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -32,16 +33,17 @@ namespace OA {
    The AnnotationManager for SideEffectStandard.
    This class can build a SideEffectStandard. 
 */
-class ManagerStandard {
+class ManagerSideEffectStandard {
       //??? eventually public OA::AnnotationManager
 public:
-  ManagerStandard(OA_ptr<SideEffectIRInterface> _ir) : mIR(_ir) {}
-  ~ManagerStandard () {}
+  ManagerSideEffectStandard(OA_ptr<SideEffectIRInterface> _ir);
+  ~ManagerSideEffectStandard () {}
 
   //! Used to perform analysis when not using AQM
   OA_ptr<SideEffectStandard> performAnalysis(ProcHandle, 
                                      OA_ptr<Alias::Interface> alias,
                                      OA_ptr<InterSideEffectInterface> inter);
+
 
 private: // member variables
 

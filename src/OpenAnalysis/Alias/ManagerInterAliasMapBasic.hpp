@@ -5,11 +5,11 @@
   \authors Michelle Strout
   \version $Id: ManagerInterAliasMapBasic.hpp,v 1.1 2004/11/30 13:51:33 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef InterMANAGERAliasMapBasic_H
@@ -36,7 +36,7 @@ public:
   ManagerInterAliasMapBasic(OA_ptr<AliasIRInterface> _ir) : mIR(_ir) {}
   ~ManagerInterAliasMapBasic () {}
 
-  OA_ptr<Alias::InterAliasMap> performAnalysis();
+  OA_ptr<Alias::InterAliasMap> performAnalysis(OA_ptr<IRProcIterator> procIter);
 
 private:
   OA_ptr<AliasIRInterface> mIR;

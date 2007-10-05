@@ -5,22 +5,20 @@
   \author Michelle Strout
   \version $Id: ICFGDep.cpp,v 1.2 2005/06/10 02:32:02 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
 
 #include "ICFGDep.hpp"
+#include <Utils/Util.hpp>
 
 namespace OA {
   namespace Activity {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_ICFGDep)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
 
 
 //*****************************************************************
@@ -34,6 +32,7 @@ static bool debug = false;
 OA_ptr<LocIterator> 
 ICFGDep::getMayDefIterator(StmtHandle stmt, const OA_ptr<Location> use)
 {
+    OA_DEBUG_CTRL_MACRO("DEBUG_ICFGDep:ALL", debug);
     if (mDepDFSet[stmt].ptrEqual(0)) {
         mDepDFSet[stmt] = new DepDFSet;
     }
@@ -49,6 +48,7 @@ ICFGDep::getMayDefIterator(StmtHandle stmt, const OA_ptr<Location> use)
 OA_ptr<LocIterator> 
 ICFGDep::getDiffUseIterator(StmtHandle stmt, OA_ptr<Location> def)
 {
+
     if (mDepDFSet[stmt].ptrEqual(0)) {
         mDepDFSet[stmt] = new DepDFSet;
     }
@@ -70,24 +70,6 @@ OA_ptr<LocIterator> ICFGDep::getMustDefIterator(StmtHandle stmt)
     retval = new LocSetIterator(mMustDefMap[stmt]); 
   }
   return retval;
-}
-
-
-//! Return an iterator over all MemRefs that are mapped from
-//! the given Location
-OA_ptr<std::set<MemRefHandle> > 
-ICFGDep::getMemRefSet(OA_ptr<Location> loc)
-{
-  return mLocToMemRefSet[loc];
-}
-
-
-//! Return an iterator over all StmtHandles that are mapped from
-//! the given Location
-OA_ptr<std::set<StmtHandle> > 
-ICFGDep::getStmtSet(OA_ptr<Location> loc)
-{
-  return mLocToStmtSet[loc];
 }
 
 
@@ -114,32 +96,12 @@ void ICFGDep::insertDepForStmt(StmtHandle stmt,
 
 //! Insert must def location 
 void ICFGDep::insertMustDefForStmt(StmtHandle stmt, 
-                                   OA_ptr<Location> def)
+                                       OA_ptr<Location> def)
 {
     if (mMustDefMap[stmt].ptrEqual(0)) {
         mMustDefMap[stmt] = new LocSet;
     }
     mMustDefMap[stmt]->insert(def);
- }
- 
-
-//! map Location to MemRefHandle
-void ICFGDep::mapLocToMemRefSet(OA_ptr<Location> loc, MemRefHandle mref)
-{
-    if (mLocToMemRefSet[loc].ptrEqual(0)) {
-        mLocToMemRefSet[loc] = new std::set<MemRefHandle>;
-    }
-    mLocToMemRefSet[loc]->insert(mref);
- }
- 
-
-//! map Location to StmtHandle
-void ICFGDep::mapLocToStmtSet(OA_ptr<Location> loc, StmtHandle stmt)
-{
-    if (mLocToStmtSet[loc].ptrEqual(0)) {
-        mLocToStmtSet[loc] = new std::set<StmtHandle>;
-    }
-    mLocToStmtSet[loc]->insert(stmt);
  }
  
 //*****************************************************************
@@ -173,6 +135,94 @@ void ICFGDep::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir)
     }
 
     std::cout << std::endl;
+}
+
+void ICFGDep::output(OA::IRHandlesIRInterface& ir)
+{
+
+  // output MustDefMap
+  sOutBuild->mapStart("MustDefMap", "StmtHandle", "LocSet");
+
+  OA_ptr<LocIterator> locIterPtr;
+  std::map<StmtHandle,OA_ptr<LocSet> >::iterator mapIter;
+
+  for (mapIter=mMustDefMap.begin(); mapIter!=mMustDefMap.end(); mapIter++) {
+
+    StmtHandle stmt = mapIter->first;
+    if (stmt == StmtHandle(0)) { continue; }
+
+    sOutBuild->mapEntryStart();
+    sOutBuild->mapKey(ir.toString(stmt));
+    sOutBuild->mapValueStart();
+
+    locIterPtr = getMustDefIterator(mapIter->first);
+    if (locIterPtr->isValid()) {
+ 
+      sOutBuild->listStart();
+      for ( ; locIterPtr->isValid(); (*locIterPtr)++ ) {
+        sOutBuild->listItemStart();
+        
+        OA_ptr<Location> loc;
+        loc = locIterPtr->current();
+        loc->output(ir);
+
+        sOutBuild->listItemEnd();
+
+      }
+      sOutBuild->listEnd();
+
+    }
+    // removing a level of indent manually to accommodate a map Value
+    // that has a list of objects
+    ostringstream correct;
+    correct << popIndt;
+    sOutBuild->outputString( correct.str() );
+
+    sOutBuild->mapValueEnd();
+
+  }
+
+  sOutBuild->mapEnd("MustDefMap");
+
+
+  // output DepDFSets
+  sOutBuild->mapStart("mDepDFSet", "StmtHandle", "DepDFSet");
+  
+  std::map<StmtHandle,OA_ptr<DepDFSet> >::iterator mapIter2;
+
+  for (mapIter2=mDepDFSet.begin(); mapIter2!=mDepDFSet.end(); mapIter2++) {
+    StmtHandle stmt = mapIter2->first;
+    if (stmt == StmtHandle(0)) { continue; }
+
+    sOutBuild->mapEntryStart();
+    sOutBuild->mapKeyStart();
+
+    ostringstream stmtlabel;
+    stmtlabel << "stmt: " << ir.toString(stmt);
+    sOutBuild->outputString( stmtlabel.str() );
+    
+    sOutBuild->mapKeyEnd();
+    sOutBuild->mapValueStart();
+
+    ostringstream indentMapValue;
+    indentMapValue << pushIndt;
+    sOutBuild->outputString( indentMapValue.str() );
+
+    OA_ptr<DepDFSet> depDFSet = mapIter2->second;
+    if (!depDFSet.ptrEqual(NULL)) {
+      depDFSet->output(ir); 
+    }
+    // removing two levels of indent manually to accommodate a map Value
+    // that has a list of objects manually indented
+    ostringstream correct;
+    correct << popIndt << popIndt;
+    sOutBuild->outputString( correct.str() );
+
+    sOutBuild->mapValueEnd();
+
+  }
+  sOutBuild->mapEnd("DepDFSets");
+
 }
 
   } // end of Activity namespace

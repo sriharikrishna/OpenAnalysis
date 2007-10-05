@@ -5,16 +5,17 @@
   \authors Michelle Strout
   \version $Id: UDDUChainsIRInterface.hpp,v 1.8 2004/12/21 21:15:19 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
+
 
   The source IR will be responsible for ...
 
   Preliminary version of this interface so that Nathan can implement
   getVisibleSymIterator.
-
 */
 
 #ifndef UDDUChainsIRInterface_h
@@ -67,9 +68,6 @@ class UDDUChainsIRInterface : public virtual IRHandlesIRInterface {
   //! Return an iterator over all of the callsites in a given stmt
   virtual OA_ptr<IRCallsiteIterator> getCallsites(StmtHandle h) = 0;
 
-  //! returns true if given symbol is a pass by reference parameter 
-  virtual bool isRefParam(SymHandle) = 0;
-               
 };  
 
   } // end of namespace UDDUChains

@@ -8,8 +8,9 @@
            Ported to OpenAnalysis by Nathan Tallent
   \version $Id: SCC.cpp,v 1.9 2005/06/08 20:31:50 eraxxon Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 
@@ -17,7 +18,6 @@
   The algorithm uses a push-down STACK. With every node in the graph,
   three variables are associated: visited, dfn, link.  Furthermore, the
   algorithm uses counters df-count and r.
-
 */
 
 
@@ -251,7 +251,7 @@ CreateHelper(OA::SCCSet* sccSet,
   state->Push(v, vid);                        // push v into stack
   
   // for each w which is on the adjacency list of v, there is an edge v->w
-  OA::OA_ptr<OA::DGraph::Interface::SinkNodesIterator> it = 
+  OA::OA_ptr<OA::DGraph::Interface::NodesIterator> it = 
     v->getSinkNodesIterator();
   for (; it->isValid(); ++(*it)) {
     OA_ptr<DGraph::Interface::Node> w = it->current();

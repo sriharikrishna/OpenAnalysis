@@ -1,29 +1,31 @@
 /*! \file
   
+NOTE: deprecated!!  No longer being compiled.
+6/2/06, Removed ManagerInsNoPtrInterAliasMap because it is no longer
+valid.  It used the CallGraph data-flow analysis framework
+and dependended on the isRefParam() call, which has been deprecated.
+
   \brief The AnnotationManager that generates InterAliasMaps in a context
          and flow insensitive way and handles pointers conservatively.
 
-  \authors Michelle Strout
-  \version $Id: ManagerInsNoPtrInterAliasMap.cpp,v 1.2 2005/06/10 02:32:03 mstrout Exp $
+  \authors Michelle Strout, Brian White
+  \version $Id: ManagerInsNoPtrInterAliasMap.cpp,v 1.2.6.1 2006/01/18 23:28:42 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "ManagerInsNoPtrInterAliasMap.hpp"
+#include <Utils/Util.hpp>
 
 
 namespace OA {
   namespace Alias {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_ManagerInsNoPtrInterAliasMap)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
 
 /*!
 */
@@ -32,6 +34,7 @@ ManagerInsNoPtrInterAliasMap::ManagerInsNoPtrInterAliasMap(
     : DataFlow::CallGraphDFProblemNew(DataFlow::CallGraphDFProblemNew::TopDown),
       mIR(_ir)
 {
+    OA_DEBUG_CTRL_MACRO("DEBUG_ManagerInsNoPtrInterAliasMap:ALL", debug);
 }
 
 OA_ptr<Alias::InterAliasMap> 
@@ -224,7 +227,9 @@ ManagerInsNoPtrInterAliasMap::atCallGraphNode(
     ////// given the seed AliasMap
     OA_ptr<ManagerAliasMapBasic> aliasMan;
     aliasMan = new ManagerAliasMapBasic(mIR);
-    OA_ptr<AliasMap> alias = aliasMan->performAnalysis(proc,seedAliasMap);
+    assert(0); // this whole thing doesn't work any more because if isRefParam
+    //OA_ptr<AliasMap> alias = aliasMan->performAnalysis(proc,seedAliasMap);
+    OA_ptr<AliasMap> alias;
     mInterAliasMap->mapProcToAliasMap(proc,alias);
 
     // return inSets, didn't change it

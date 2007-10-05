@@ -5,11 +5,12 @@
   \authors Michelle Strout 
   \version $Id: ParamBindings.cpp,v 1.2 2005/06/10 02:32:04 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "ParamBindings.hpp"
@@ -19,13 +20,13 @@ namespace OA {
 
 //! get caller mem ref associated with callee formal
 MemRefHandle 
-ParamBindings::getCallerMemRef(ExprHandle call, SymHandle calleeFormal)
+ParamBindings::getCallerMemRef(CallHandle call, SymHandle calleeFormal)
 {
     return mCalleeToCallerMap[call][calleeFormal];
 }
 
 //! returns an iterator over the memory reference parameters for a call
-OA_ptr<MemRefHandleIterator> ParamBindings::getActualIterator(ExprHandle call)
+OA_ptr<MemRefHandleIterator> ParamBindings::getActualIterator(CallHandle call)
 {
     OA_ptr<MemRefIterator> retval;
     OA_ptr<std::set<OA::MemRefHandle> > retSet;
@@ -41,9 +42,10 @@ OA_ptr<MemRefHandleIterator> ParamBindings::getActualIterator(ExprHandle call)
 
 //! get callee formal associated with caller mem ref
 SymHandle 
-ParamBindings::getCalleeFormal(ExprHandle call, MemRefHandle callerRef)
+ParamBindings::getCalleeFormal(CallHandle call, MemRefHandle callerRef,
+                               ProcHandle callee)
 {
-    return mCallerToCalleeMap[call][callerRef];
+    return mCallerToCalleeMap[call][callee][callerRef];
 }
 
 //! returns an iterator over the formal symbols for a procedure
@@ -60,26 +62,48 @@ OA_ptr<SymHandleIterator> ParamBindings::getFormalIterator(ProcHandle proc)
     return retval;
 }
 
-//! returns true if given formal is a reference parameter
-bool ParamBindings::isRefParam(SymHandle formal)
-{
-    return mIsRefParam[formal];
+  //! returns an iterator over the actual ExprHandles for a call in order
+OA_ptr<ExprHandleIterator> 
+ParamBindings::getActualExprHandleIterator(CallHandle call) {
+
+  OA_ptr<ExprHandleIterator> retval;
+  if (mCallToExprListMap[call].ptrEqual(0)) {
+    OA_ptr<std::list<ExprHandle> > emptyList;
+    emptyList = new std::list<ExprHandle>;
+    retval = new ExprIterator(emptyList);
+  } else {
+    retval = new ExprIterator(mCallToExprListMap[call]);
+  }
+  return retval;
 }
+
+//! get ExprTree for actual ExprHandle
+OA_ptr<ExprTree> ParamBindings::getActualExprTree(ExprHandle expr){
+  return mExprToTreeMap[expr];
+}
+
+//! get actual ExprHandle in CallHandle for formal SymHandle
+ExprHandle ParamBindings::getActualExprHandle(CallHandle call, SymHandle formal) {
+  return mCallToFormalToActualMap[call][formal];
+}
+
+
+
 
 //*****************************************************************
 // Construction methods 
 //*****************************************************************
-void ParamBindings::mapMemRefToFormal(ExprHandle call, 
-                                      MemRefHandle ref, SymHandle sym)
+void ParamBindings::mapMemRefToFormal(CallHandle call, MemRefHandle actual, 
+                                      ProcHandle callee, SymHandle sym)
 {
-    mCallerToCalleeMap[call][ref] = sym;
-    mCalleeToCallerMap[call][sym] = ref;
+    mCallerToCalleeMap[call][callee][actual] = sym;
+    mCalleeToCallerMap[call][sym] = actual;
+    if (mCallToActualSetMap[call].ptrEqual(0)) {
+        mCallToActualSetMap[call] = new std::set<MemRefHandle>;
+    }
+    mCallToActualSetMap[call]->insert(actual);
 }
 
-void ParamBindings::setRefParam(SymHandle sym) 
-{
-    mIsRefParam[sym] = true;
-}
 
 void ParamBindings::mapFormalToProc(SymHandle formal, ProcHandle proc) 
 {
@@ -89,12 +113,32 @@ void ParamBindings::mapFormalToProc(SymHandle formal, ProcHandle proc)
     mProcToFormalSetMap[proc]->insert(formal);
 }
 
+/*
 void ParamBindings::mapActualToCall(MemRefHandle actual, ExprHandle call) 
 {
     if (mCallToActualSetMap[call].ptrEqual(0)) {
         mCallToActualSetMap[call] = new std::set<MemRefHandle>;
     }
     mCallToActualSetMap[call]->insert(actual);
+}
+*/
+
+
+void ParamBindings::mapCallToExprList(CallHandle call,
+                                      OA_ptr<std::list<ExprHandle> > elist)
+{
+  mCallToExprListMap[call] = elist;
+}
+
+void ParamBindings::mapExprToTree(ExprHandle expr, OA_ptr<ExprTree> etree)
+{
+  mExprToTreeMap[expr] = etree;
+}
+
+void ParamBindings::mapFormalToExpr(CallHandle call, SymHandle formal, 
+                                    ExprHandle act_expr)
+{
+  mCallToFormalToActualMap[call][formal] = act_expr;
 }
 
 
@@ -103,10 +147,11 @@ void ParamBindings::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir)
     os << "====================== ParamBindings" << std::endl;
 
     // iterate over all the calls we have information about
-    std::map<ExprHandle,std::map<MemRefHandle,SymHandle> >::iterator callIter;
+    std::map<CallHandle,std::map<ProcHandle,std::map<MemRefHandle,SymHandle> > >::iterator callIter;
     for (callIter=mCallerToCalleeMap.begin();
          callIter!=mCallerToCalleeMap.end(); callIter++) 
     {
+        /*
         os << "Call = " << ir->toString(callIter->first) << std::endl;
         std::map<MemRefHandle,SymHandle>::iterator memRefIter;
         for (memRefIter=callIter->second.begin();
@@ -117,9 +162,8 @@ void ParamBindings::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir)
             os << "\tCaller MemRef = " << ir->toString(ref);
             os << ", Callee Formal = " << ir->toString(sym);
             os << std::endl;
-            os << "\t\tFormal isRefParam = " << isRefParam(sym);
-            os << std::endl;
         }
+        */
     }
 
 }

@@ -5,11 +5,11 @@
   \authors Michelle Strout
   \version $Id: CallGraphDFProblemIRInterface.hpp,v 1.4 2005/03/17 21:47:46 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef CallGraphDFProblemIRInterface_h
@@ -17,7 +17,7 @@
 
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
 #include <OpenAnalysis/IRInterface/IRHandles.hpp>
-#include <OpenAnalysis/Location/Location.hpp>
+#include <OpenAnalysis/Location/Locations.hpp>
 #include <OpenAnalysis/ExprTree/ExprTree.hpp>
 
 namespace OA {
@@ -40,13 +40,10 @@ class CallGraphDFProblemIRInterface : public virtual IRHandlesIRInterface {
   //! Get IRCallsiteParamIterator for a callsite.
   //! Iterator visits actual parameters in called order.
   virtual OA::OA_ptr<OA::IRCallsiteParamIterator> 
-    getCallsiteParams(OA::ExprHandle h) = 0;
+    getCallsiteParams(OA::CallHandle h) = 0;
 
-  //! returns true if given symbol is a pass by reference parameter 
-  virtual bool isRefParam(SymHandle) = 0;
-               
   //! return the formal parameter that an actual parameter is associated with 
-  virtual SymHandle getFormalForActual(ProcHandle caller, ExprHandle call, 
+  virtual SymHandle getFormalForActual(ProcHandle caller, CallHandle call, 
                                        ProcHandle callee, ExprHandle param) = 0; 
  
   //! For the given symbol create a Location that indicates statically
@@ -58,11 +55,6 @@ class CallGraphDFProblemIRInterface : public virtual IRHandlesIRInterface {
   //! Given an ExprHandle, return an ExprTree 
   virtual OA_ptr<ExprTree> getExprTree(ExprHandle h) = 0;
   
-  // indicates to source IR the current procedure that we will be making
-  // queries about
-  // FIXME: should probably put ProcHandle as param to other interface methods
-  // this is a temporary bandaid
-  virtual void currentProc(ProcHandle p) = 0;
 };  
 
   } // end of namespace DataFlow

@@ -5,16 +5,17 @@
   \authors Michelle Strout
   \version $Id: SSAIRInterface.hpp,v 1.1 2005/03/08 19:00:12 ntallent Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
+
 
   An SSA AnnotationManager generates a SSA representation of the program.
   The analysis engine within the SSA AnnotationManager requires that
   the SSAIRInterface be implemented so that queries can be made to
   the Source IR relevant to constructing SSA.
-
 */
 
 #ifndef SSAIRInterface_h

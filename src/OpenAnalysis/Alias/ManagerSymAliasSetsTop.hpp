@@ -1,5 +1,10 @@
 /*! \file
   
+NOTE: deprecated!!  No longer being compiled.
+6/2/06, Removed ManagerInsNoPtrInterAliasMap because it is no longer
+valid.  It used the CallGraph data-flow analysis framework
+and dependended on the isRefParam() call, which has been deprecated.
+
   \brief Declarations of the AnnotationManager that generates an
          SymAliasSet that is optimistic, each non-local and reference
          param is in its own set.
@@ -7,11 +12,11 @@
   \authors Michelle Strout
   \version $Id: ManagerSymAliasSetsTop.hpp,v 1.2 2005/06/10 02:32:03 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef ManagerSymAliasSets_H

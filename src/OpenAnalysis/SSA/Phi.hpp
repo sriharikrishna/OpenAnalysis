@@ -5,8 +5,9 @@
   \authors Arun Chauhan (2001 as part of Mint), Nathan Tallent, Michelle Strout
   \version $Id: Phi.hpp,v 1.2 2005/03/11 18:13:22 ntallent Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -23,7 +24,7 @@
 
 // OpenAnalysis headers
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
-#include <OpenAnalysis/CFG/Interface.hpp>
+#include <OpenAnalysis/CFG/CFGInterface.hpp>
 #include <OpenAnalysis/Utils/Iterator.hpp>
 #include <OpenAnalysis/Utils/Exception.hpp>
 
@@ -46,7 +47,7 @@ public:
       : center(const_cast<Phi&>(p)), iter(center.args.begin()) { }
     ~ArgIterator() { }
     
-    OA_ptr<CFG::Interface::Node> currentSrc() const { return (*iter).first; }
+    OA_ptr<CFG::NodeInterface> currentSrc() const { return (*iter).first; }
     LeafHandle                   currentTarg() const { return (*iter).second; }
     bool isValid() const { return (iter != center.args.end()); }
     
@@ -55,18 +56,18 @@ public:
     
   private:
     Phi& center;
-    std::map<OA_ptr<CFG::Interface::Node>, LeafHandle>::iterator iter;
+    std::map<OA_ptr<CFG::NodeInterface>, LeafHandle>::iterator iter;
   };
   //--------------------------------------------------------------------
 
 public:
-  Phi(const SymHandle& var_name, OA_ptr<CFG::Interface> cfg_)
+  Phi(const SymHandle& var_name, OA_ptr<CFG::CFGInterface> cfg_)
     : sym(var_name), cfg(cfg_) { }
   ~Phi() { }
   
-  void add_arg(OA_ptr<CFG::Interface::Node> c_n, LeafHandle a_n) 
+  void add_arg(OA_ptr<CFG::NodeInterface> c_n, LeafHandle a_n) 
     { args[c_n] = a_n; }
-  LeafHandle arg(OA_ptr<CFG::Interface::Node> n) { return args[n]; }
+  LeafHandle arg(OA_ptr<CFG::NodeInterface> n) { return args[n]; }
   int num_args() { return args.size(); }
 
   bool operator==(Phi& other) { return &other == this; }
@@ -84,9 +85,9 @@ public:
 
 private:
   SymHandle sym;
-  OA_ptr<CFG::Interface> cfg;
+  OA_ptr<CFG::CFGInterface> cfg;
   
-  std::map<OA_ptr<CFG::Interface::Node>, LeafHandle> args;
+  std::map<OA_ptr<CFG::NodeInterface>, LeafHandle> args;
 };
 //-----------------------------------------------------------------------------
 

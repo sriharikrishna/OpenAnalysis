@@ -5,11 +5,11 @@
   \authors Michelle Strout
   \version $Id: ManagerUsefulStandard.hpp,v 1.3 2005/06/10 02:32:03 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef UsefulManagerStandard_h
@@ -21,9 +21,10 @@
 #include "UsefulStandard.hpp"
 
 #include <OpenAnalysis/IRInterface/ActivityIRInterface.hpp>
-#include <OpenAnalysis/CFG/Interface.hpp>
+#include <OpenAnalysis/CFG/CFGInterface.hpp>
 #include <OpenAnalysis/DataFlow/CFGDFProblem.hpp>
 #include <OpenAnalysis/DataFlow/LocDFSet.hpp>
+#include <OpenAnalysis/DataFlow/CFGDFSolver.hpp>
 
 namespace OA {
   namespace Activity {
@@ -44,8 +45,9 @@ public:
   //! depLocIter is a location iterator over dependent locations
   //! that the algorithm should calculate InUseful from
   OA_ptr<UsefulStandard> performAnalysis(ProcHandle, 
-        OA_ptr<CFG::Interface> cfg, OA_ptr<DepStandard> dep,
-        OA_ptr<DataFlow::LocDFSet> depLocSet);
+        OA_ptr<CFG::CFGInterface> cfg, OA_ptr<DepStandard> dep,
+        OA_ptr<DataFlow::LocDFSet> depLocSet,
+        DataFlow::DFPImplement type);
 
   //------------------------------------------------------------------
   // Implementing the callbacks for CFGDFProblem
@@ -54,8 +56,16 @@ private:
   OA_ptr<DataFlow::DataFlowSet> initializeTop();
   OA_ptr<DataFlow::DataFlowSet> initializeBottom();
 
-  void initializeNode(OA_ptr<CFG::Interface::Node> n);
+//  void initializeNode(OA_ptr<CFG::Interface::Node> n);
 
+   // Added by PLM 07/26/06
+  //! Should generate an in and out DataFlowSet for node
+  OA_ptr<DataFlow::DataFlowSet>
+             initializeNodeIN(OA_ptr<CFG::NodeInterface> n);
+  OA_ptr<DataFlow::DataFlowSet>
+             initializeNodeOUT(OA_ptr<CFG::NodeInterface> n);
+ 
+  
   OA_ptr<DataFlow::DataFlowSet> 
   meet (OA_ptr<DataFlow::DataFlowSet> set1, OA_ptr<DataFlow::DataFlowSet> set2); 
 
@@ -68,8 +78,10 @@ private: // member variables
   OA_ptr<DepStandard> mDep;
   OA_ptr<UsefulStandard> mUsefulMap;
   OA_ptr<LocIterator> mDepLocIter;
-  OA_ptr<CFG::Interface> mCFG;
-
+  OA_ptr<CFG::CFGInterface> mCFG;
+  // Added by PLM 07/26/06
+  OA_ptr<DataFlow::CFGDFSolver> mSolver;
+  
 };
 
   } // end of Activity namespace

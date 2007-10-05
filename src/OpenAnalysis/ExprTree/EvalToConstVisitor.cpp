@@ -5,11 +5,11 @@
   \authors Barbara Kreaseck, Michelle Strout
   \version $Id: EvalToConstVisitor.cpp,v 1.5 2005/03/17 21:47:45 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include <OpenAnalysis/ExprTree/EvalToConstVisitor.hpp>
@@ -121,6 +121,8 @@ void EvalToConstVisitor::visitMemRefNode(ExprTree::MemRefNode& n)
   if (mReachConsts.ptrEqual(NULL)) {
     mEvalResult = NULL;
   } else {
+    // if this memref has its address taken, then this should result 
+    // in no constant value.  need to check this ... BK
     mEvalResult = mReachConsts->getReachConst(memref);
   }
 

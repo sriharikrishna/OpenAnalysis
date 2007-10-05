@@ -5,31 +5,29 @@
   \authors Michelle Strout
   \version $Id: ManagerUsefulStandard.cpp,v 1.10 2005/06/10 02:32:03 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "ManagerUsefulStandard.hpp"
+#include <Utils/Util.hpp>
 
 
 namespace OA {
   namespace Activity {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_ManagerUsefulStandard)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
-
 
 /*!
 */
 ManagerUsefulStandard::ManagerUsefulStandard(OA_ptr<ActivityIRInterface> _ir) 
-    : DataFlow::CFGDFProblem( DataFlow::Backward ), mIR(_ir)
+    : mIR(_ir)
 {
+    OA_DEBUG_CTRL_MACRO("DEBUG_ManagerUsefulStandard:ALL", debug);
+    mSolver = new DataFlow::CFGDFSolver(DataFlow::CFGDFSolver::Backward,*this);
 }
 
 OA_ptr<DataFlow::DataFlowSet> ManagerUsefulStandard::initializeTop()
@@ -54,12 +52,13 @@ OA_ptr<DataFlow::DataFlowSet> ManagerUsefulStandard::initializeBottom()
     put InUseful locs in UsefulStandard as well.
 */
 OA_ptr<UsefulStandard> ManagerUsefulStandard::performAnalysis(ProcHandle proc, 
-    OA_ptr<CFG::Interface> cfg, OA_ptr<DepStandard> dep,
-    OA_ptr<DataFlow::LocDFSet> depLocSet)
+    OA_ptr<CFG::CFGInterface> cfg, OA_ptr<DepStandard> dep,
+    OA_ptr<DataFlow::LocDFSet> depLocSet,
+    DataFlow::DFPImplement algorithm)
 {
   if (debug) {
     std::cout << "In ManagerUsefulStandard::performAnalysis" << std::endl;
-    cfg->dump(std::cout,mIR);
+    //cfg->dump(std::cout,mIR);
   }
   mUsefulMap = new UsefulStandard(proc);
 
@@ -74,13 +73,19 @@ OA_ptr<UsefulStandard> ManagerUsefulStandard::performAnalysis(ProcHandle proc,
   mCFG = cfg;
 
   // use the dataflow solver to get the In and Out sets for the BBs
-  DataFlow::CFGDFProblem::solve(cfg);
+  //DataFlow::CFGDFProblem::solve(cfg);
+  mSolver->solve(cfg,algorithm);
 
   // get the final useful set from the entry node
-  OA_ptr<CFG::Interface::Node> entry = cfg->getEntry();
-  OA_ptr<DataFlow::DataFlowSet> dfset = mNodeOutSetMap[entry];
-  mUsefulMap->mapFinalUseful(dfset.convert<DataFlow::LocDFSet>());
-  
+  OA_ptr<CFG::NodeInterface> entry = cfg->getEntry();
+//  OA_ptr<DataFlow::DataFlowSet> dfset = mNodeOutSetMap[entry];
+  OA_ptr<DataFlow::DataFlowSet> dfset = mSolver->getOutSet(entry);
+
+  //  No routine is using this FinalUseful set, so depredated in UsefulStandard
+  //  All code is still there, but commented out. BK 8/06
+  //  mUsefulMap->mapFinalUseful(dfset.convert<DataFlow::LocDFSet>());
+  assert(0);
+ 
   return mUsefulMap;
 
 }
@@ -88,7 +93,7 @@ OA_ptr<UsefulStandard> ManagerUsefulStandard::performAnalysis(ProcHandle proc,
 //------------------------------------------------------------------
 // Implementing the callbacks for CFGDFProblem
 //------------------------------------------------------------------
-void ManagerUsefulStandard::initializeNode(OA_ptr<CFG::Interface::Node> n)
+/*void ManagerUsefulStandard::initializeNode(OA_ptr<CFG::Interface::Node> n)
 {
     mNodeInSetMap[n] = new DataFlow::LocDFSet;
     mNodeOutSetMap[n] = new DataFlow::LocDFSet;
@@ -107,7 +112,55 @@ void ManagerUsefulStandard::initializeNode(OA_ptr<CFG::Interface::Node> n)
        mNodeInSetMap[n] = temp->clone();
        mNodeOutSetMap[n] = temp->clone();
     }
+} */
+
+
+/*!
+ *  *  *    Not doing anything special at entries and exits.
+ *   *   *     */
+OA_ptr<DataFlow::DataFlowSet>
+ManagerUsefulStandard::initializeNodeIN(OA_ptr<CFG::NodeInterface> n)
+{
+     OA_ptr<DataFlow::LocDFSet> retval;
+     retval = new DataFlow::LocDFSet;
+
+     if (n.ptrEqual(mCFG->getExit())) {
+        OA_ptr<DataFlow::LocDFSet> temp;
+        temp = new DataFlow::LocDFSet;
+
+        for (mDepLocIter->reset(); mDepLocIter->isValid(); ++(*mDepLocIter) ) {
+            OA_ptr<Location> loc = mDepLocIter->current();
+            mUsefulMap->insertDepLoc(loc);
+            temp->insert(loc);
+        }
+        retval = temp->clone().convert<DataFlow::LocDFSet>();
+      }
+     
+     return retval;
 }
+
+OA_ptr<DataFlow::DataFlowSet>
+ManagerUsefulStandard::initializeNodeOUT(OA_ptr<CFG::NodeInterface> n)
+{
+      OA_ptr<DataFlow::LocDFSet> retval;
+      retval = new DataFlow::LocDFSet;
+
+      if (n.ptrEqual(mCFG->getExit())) {
+         OA_ptr<DataFlow::LocDFSet> temp;
+         temp = new DataFlow::LocDFSet;
+
+         for (mDepLocIter->reset(); mDepLocIter->isValid(); ++(*mDepLocIter) ) {
+              OA_ptr<Location> loc = mDepLocIter->current();
+              mUsefulMap->insertDepLoc(loc);
+              temp->insert(loc);
+          }
+          retval = temp->clone().convert<DataFlow::LocDFSet>();
+       }
+      
+      return retval;
+}
+
+
 
 OA_ptr<DataFlow::DataFlowSet> 
 ManagerUsefulStandard::meet (OA_ptr<DataFlow::DataFlowSet> set1orig, 
@@ -161,9 +214,9 @@ ManagerUsefulStandard::transfer(OA_ptr<DataFlow::DataFlowSet> out,
     // set for them
     OA_ptr<IRCallsiteIterator> callsiteItPtr = mIR->getCallsites(stmt);
     for ( ; callsiteItPtr->isValid(); ++(*callsiteItPtr)) {
-        ExprHandle call = callsiteItPtr->current();
+        CallHandle call = callsiteItPtr->current();
 
-        mUsefulMap->copyIntoOutUseful(call, outRecast);
+        mUsefulMap->copyIntoCallOutUseful(call, outRecast);
     }
 
     // use dep pairs to determine what locations should be in  InUseful 

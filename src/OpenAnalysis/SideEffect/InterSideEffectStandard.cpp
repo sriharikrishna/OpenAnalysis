@@ -5,11 +5,11 @@
   \author Michelle Strout
   \version $Id: InterSideEffectStandard.cpp,v 1.9 2005/08/08 20:03:52 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "InterSideEffectStandard.hpp"
@@ -59,7 +59,7 @@ OA_ptr<ProcIterator> InterSideEffectStandard::getKnownProcIterator()
 // analysis results
 
 OA_ptr<LocIterator> 
-InterSideEffectStandard::getLMODIterator(ExprHandle call)
+InterSideEffectStandard::getLMODIterator(CallHandle call)
 {
   if (mCallToSideEffectMap[call].ptrEqual(0)) {
     return mDefaultSideEffect->getLMODIterator();
@@ -69,7 +69,7 @@ InterSideEffectStandard::getLMODIterator(ExprHandle call)
 }
 
 OA_ptr<LocIterator> 
-InterSideEffectStandard::getMODIterator(ExprHandle call)
+InterSideEffectStandard::getMODIterator(CallHandle call)
 {
   if (mCallToSideEffectMap[call].ptrEqual(0)) {
     return mDefaultSideEffect->getMODIterator();
@@ -79,7 +79,7 @@ InterSideEffectStandard::getMODIterator(ExprHandle call)
 }
 
 OA_ptr<LocIterator> 
-InterSideEffectStandard::getLDEFIterator(ExprHandle call)
+InterSideEffectStandard::getLDEFIterator(CallHandle call)
 {
   if (mCallToSideEffectMap[call].ptrEqual(0)) {
     return mDefaultSideEffect->getLDEFIterator();
@@ -89,7 +89,7 @@ InterSideEffectStandard::getLDEFIterator(ExprHandle call)
 }
 
 OA_ptr<LocIterator> 
-InterSideEffectStandard::getDEFIterator(ExprHandle call)
+InterSideEffectStandard::getDEFIterator(CallHandle call)
 {
   if (mCallToSideEffectMap[call].ptrEqual(0)) {
     return mDefaultSideEffect->getDEFIterator();
@@ -99,7 +99,7 @@ InterSideEffectStandard::getDEFIterator(ExprHandle call)
 }
 
 OA_ptr<LocIterator> 
-InterSideEffectStandard::getLUSEIterator(ExprHandle call)
+InterSideEffectStandard::getLUSEIterator(CallHandle call)
 {
   if (mCallToSideEffectMap[call].ptrEqual(0)) {
     return mDefaultSideEffect->getLUSEIterator();
@@ -109,7 +109,7 @@ InterSideEffectStandard::getLUSEIterator(ExprHandle call)
 }
 
 OA_ptr<LocIterator> 
-InterSideEffectStandard::getUSEIterator(ExprHandle call)
+InterSideEffectStandard::getUSEIterator(CallHandle call)
 {
   if (mCallToSideEffectMap[call].ptrEqual(0)) {
     return mDefaultSideEffect->getUSEIterator();
@@ -119,7 +119,7 @@ InterSideEffectStandard::getUSEIterator(ExprHandle call)
 }
 
 OA_ptr<LocIterator> 
-InterSideEffectStandard::getLREFIterator(ExprHandle call)
+InterSideEffectStandard::getLREFIterator(CallHandle call)
 {
   if (mCallToSideEffectMap[call].ptrEqual(0)) {
     return mDefaultSideEffect->getLREFIterator();
@@ -129,7 +129,7 @@ InterSideEffectStandard::getLREFIterator(ExprHandle call)
 }
 
 OA_ptr<LocIterator> 
-InterSideEffectStandard::getREFIterator(ExprHandle call)
+InterSideEffectStandard::getREFIterator(CallHandle call)
 {
   if (mCallToSideEffectMap[call].ptrEqual(0)) {
     return mDefaultSideEffect->getREFIterator();
@@ -333,7 +333,7 @@ InterSideEffectStandard::getSideEffectResults(ProcHandle proc)
 
 //! Associate the given call with the given intraprocedural
 //! SideEffect information
-void InterSideEffectStandard::mapCallToSideEffect(ExprHandle call, 
+void InterSideEffectStandard::mapCallToSideEffect(CallHandle call, 
     OA_ptr<OA::SideEffect::SideEffectStandard> sideEffect)
 {
     if (sideEffect.ptrEqual(0) ) { std::cout << "sideEffect.ptrEqual(0)" << std::endl; }
@@ -396,7 +396,7 @@ int InterSideEffectStandard::getLocCount(ProcHandle proc)
     return count;
 }
     
-void InterSideEffectStandard::initCallSideEffect(ExprHandle call)
+void InterSideEffectStandard::initCallSideEffect(CallHandle call)
 {
     mCallToSideEffectMap[call] = new SideEffectStandard;
     // empty out all the sets
@@ -411,49 +411,49 @@ void InterSideEffectStandard::initCallSideEffect(ExprHandle call)
 }
 
 //! Insert a location into the LMOD set for the given call
-void InterSideEffectStandard::insertLMOD(ExprHandle p, OA_ptr<Location> loc)
+void InterSideEffectStandard::insertLMOD(CallHandle p, OA_ptr<Location> loc)
 {
     mCallToSideEffectMap[p]->insertLMOD(loc);
 }
     
 //! Insert a location into the MOD set for the given call
-void InterSideEffectStandard::insertMOD(ExprHandle p, OA_ptr<Location> loc)
+void InterSideEffectStandard::insertMOD(CallHandle p, OA_ptr<Location> loc)
 {
     mCallToSideEffectMap[p]->insertMOD(loc);
 }
     
 //! Insert a location into the LDEF set for the given call
-void InterSideEffectStandard::insertLDEF(ExprHandle p, OA_ptr<Location> loc)
+void InterSideEffectStandard::insertLDEF(CallHandle p, OA_ptr<Location> loc)
 {
     mCallToSideEffectMap[p]->insertLDEF(loc);
 }
     
 //! Insert a location into the DEF set for the given call
-void InterSideEffectStandard::insertDEF(ExprHandle p, OA_ptr<Location> loc)
+void InterSideEffectStandard::insertDEF(CallHandle p, OA_ptr<Location> loc)
 {
     mCallToSideEffectMap[p]->insertDEF(loc);
 }
     
 //! Insert a location into the LUSE set for the given call
-void InterSideEffectStandard::insertLUSE(ExprHandle p, OA_ptr<Location> loc)
+void InterSideEffectStandard::insertLUSE(CallHandle p, OA_ptr<Location> loc)
 {
     mCallToSideEffectMap[p]->insertLUSE(loc);
 }
     
 //! Insert a location into the USE set for the given call
-void InterSideEffectStandard::insertUSE(ExprHandle p, OA_ptr<Location> loc)
+void InterSideEffectStandard::insertUSE(CallHandle p, OA_ptr<Location> loc)
 {
     mCallToSideEffectMap[p]->insertUSE(loc);
 }
     
 //! Insert a location into the LREF set for the given call
-void InterSideEffectStandard::insertLREF(ExprHandle p, OA_ptr<Location> loc)
+void InterSideEffectStandard::insertLREF(CallHandle p, OA_ptr<Location> loc)
 {
     mCallToSideEffectMap[p]->insertLREF(loc);
 }
     
 //! Insert a location into the REF set for the given call
-void InterSideEffectStandard::insertREF(ExprHandle p, OA_ptr<Location> loc)
+void InterSideEffectStandard::insertREF(CallHandle p, OA_ptr<Location> loc)
 {
     mCallToSideEffectMap[p]->insertREF(loc);
 }
@@ -581,7 +581,7 @@ void InterSideEffectStandard::dump(std::ostream& os,
     for (mapIter=mCallToSideEffectMap.begin();
          mapIter!=mCallToSideEffectMap.end(); mapIter++)
     {
-        ExprHandle call = mapIter->first;
+        CallHandle call = mapIter->first;
 
         // print all sets for each procedure
         std::cout << "Call( " << ir->toString(call) << " )" << std::endl;

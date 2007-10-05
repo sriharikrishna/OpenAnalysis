@@ -5,11 +5,11 @@
   \author Michelle Strout
   \version $Id: AliasMapXAIF.cpp,v 1.3 2005/02/16 21:48:20 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "AliasMapXAIF.hpp"
@@ -124,6 +124,57 @@ void AliasMapXAIF::mapMemRefToMapSet(MemRefHandle ref, int setId)
     mMemRefToIdMap[ref] = setId;
     mIdToMemRefSetMap[setId].insert(ref);
 }
+
+//! output for regression tests
+void AliasMapXAIF::output(IRHandlesIRInterface& ir)
+{
+    sOutBuild->objStart("AliasMapXAIF");
+
+    sOutBuild->outputIRHandle(mProcHandle, ir);
+
+    // print locations for each set, ID : { LocTuple }
+    sOutBuild->mapStart("mIdToLocTupleSetMap", "int", "OA_ptr<std::set<LocTuple> >");
+
+    OA_ptr<IdIterator> idIterPtr = getIdIterator();
+    for ( ; idIterPtr->isValid(); ++(*idIterPtr) ) {
+      //os << "AliasMapSet[" << i << "] = { ";
+      int i = idIterPtr->current();
+      sOutBuild->mapEntryStart();
+      sOutBuild->mapKey(OA::int2string(i));
+
+      sOutBuild->mapValueStart();
+
+      sOutBuild->listStart();
+      OA_ptr<LocTupleIterator> locIterPtr = getLocIterator(i);
+      for (; locIterPtr->isValid(); ++(*locIterPtr) ) {
+        LocTuple loc = locIterPtr->current();
+        sOutBuild->listItemStart();
+        loc.output(ir);
+        sOutBuild->listItemEnd();
+      }
+      sOutBuild->listEnd();
+      sOutBuild->mapValueEnd();
+      sOutBuild->mapEntryEnd();
+    }
+    sOutBuild->mapEnd("mIdToLocTupleSetMap");
+
+    // print all memrefs and their mapping
+    sOutBuild->mapStart("mMemRefToIdMap", "MemRefHandle", "int");
+    OA_ptr<MemRefHandleIterator> memIterPtr = getMemRefIter();
+    for (; memIterPtr->isValid(); (*memIterPtr)++) {
+        MemRefHandle memref = memIterPtr->current();
+        sOutBuild->mapEntryStart();
+        sOutBuild->mapKeyStart();
+        sOutBuild->outputIRHandle(memref, ir);
+        sOutBuild->mapKeyEnd();
+        sOutBuild->mapValue(OA::int2string(getMapSetId(memref)));
+        sOutBuild->mapEntryEnd();
+    }
+    sOutBuild->mapEnd("mMemRefToIdMap");
+
+    sOutBuild->objEnd("AliasMap");
+}
+
 
 
 //! incomplete output of info for debugging 

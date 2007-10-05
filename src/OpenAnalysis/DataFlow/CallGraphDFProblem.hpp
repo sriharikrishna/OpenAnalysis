@@ -1,175 +1,120 @@
 /*! \file
   
-  \brief Abstract class for solving dataflow analysis problems on CallGraphs
+  \brief Class for solving dataflow analysis problems on CallGraphs in a flow
+         and context insensitive fashion.
 
-  \authors Michelle Strout (Nov 2004)
-           similar to John Mellor-Crummey's CallGraphDFProblem.h
-  \version $Id: CallGraphDFProblem.hpp,v 1.5 2005/06/10 02:32:03 mstrout Exp $
+  \authors Michelle Strout (Jan 2005)
+           similar to John Mellor-Crummey's CallGraphFlowInsensitiveDFProblem.h
+  \version $Id: CallGraphDFProblemNew.hpp,v 1.3 2005/06/10 02:32:03 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 
+
   To use this for performing interprocedural dataflow analysis,
-  privately inherit from the CallGraphDFProblem class and
+  privately inherit from the CallGraphDFProblemNew class and
   implement the callbacks.
+  It is flow insensitive because for top down analyses it uses the analysis
+  results for the whole caller at each of the caller's callsites.
+  It is context-insensitive because it meets all the data flow information
+  for callers when working top-down and callees when working bottom-up.
 */
 
 #ifndef CallGraphDFProblem_h
 #define CallGraphDFProblem_h
 
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
-#include <OpenAnalysis/DataFlow/DGraphIterativeDFP.hpp>
 #include <OpenAnalysis/DataFlow/DataFlowSet.hpp>
-#include <OpenAnalysis/CallGraph/Interface.hpp>
-#include <map>
-
-#include <OpenAnalysis/ExprTree/EvalToMemRefVisitor.hpp>
-#include <OpenAnalysis/IRInterface/CallGraphDFProblemIRInterface.hpp>
-#include <OpenAnalysis/Alias/InterAliasInterface.hpp>
+#include <OpenAnalysis/CallGraph/CallGraphInterface.hpp>
 
 namespace OA {
   namespace DataFlow {
 
   
 //*********************************************************************
-// class CallGraphDFProblem
+// class CallGraphDFProblemNew
 //*********************************************************************
-class CallGraphDFProblem  : private DataFlow::DGraphIterativeDFP {
+class CallGraphDFProblem {
 public:
-  typedef enum { TopDown, BottomUp } CallGraphDirectionType;
-private:
-  OA_ptr<DataFlowSet> mTop;
-  OA_ptr<DataFlowSet> mBottom;
-  CallGraphDirectionType mDirection;
+     //--------------------------------------------------------
+     // constructor/destructor
+     //--------------------------------------------------------
+     CallGraphDFProblem() {}
+     virtual ~CallGraphDFProblem() {}
 
-public:
-  //--------------------------------------------------------
-  // constructor/destructor
-  //--------------------------------------------------------
-  CallGraphDFProblem(CallGraphDirectionType pDirection, 
-                     OA_ptr<DataFlow::CallGraphDFProblemIRInterface> ir)
-      : mDirection(pDirection), mIR(ir) {}
-  virtual ~CallGraphDFProblem() {}
+       
 
-  void solve(OA_ptr<CallGraph::Interface> callGraph,
-             OA_ptr<Alias::InterAliasInterface> interAlias);
-
-protected:
-  //--------------------------------------------------------
-  // Methods for subclasses to get information about mapping
-  // of locations in Callee to locations in Caller
-  //--------------------------------------------------------
-  OA_ptr<LocIterator> 
-      getCalleeToCallerMayLocs(ExprHandle call, OA_ptr<Location> loc);
-  OA_ptr<LocIterator> 
-      getCalleeToCallerMustLocs(ExprHandle call, OA_ptr<Location> loc);
-
-private:
   //--------------------------------------------------------
   // initialization callbacks
   //--------------------------------------------------------
 
   //! Return an initialized top set
-  //virtual OA_ptr<DataFlowSet>  initializeTop() = 0;
+  virtual OA_ptr<DataFlowSet>  initializeTop() = 0;
 
   //! Return an initialized bottom set
-  //virtual OA_ptr<DataFlowSet>  initializeBottom() = 0;
+  virtual OA_ptr<DataFlowSet>  initializeBottom() = 0;
 
-  //! Should generate an in and out DataFlowSet for a function
-  //! and store these in mNodeInSetMap and mNodeOutSetMap.
-  //virtual void initializeNode(OA_ptr<CFG::Interface::Node> n)  = 0;
-  //virtual void initializeEdge(DGraph::Interface::Edge *e)  = 0;
+  //! Should generate an in and out DataFlowSet for node
+  virtual OA_ptr<DataFlowSet>
+      initializeNodeIN(OA_ptr<CallGraph::NodeInterface> n)  = 0;
+  virtual OA_ptr<DataFlowSet>
+      initializeNodeOUT(OA_ptr<CallGraph::NodeInterface> n)  = 0;
+
+  //! Should generate an initial DataFlowSet for a procedure
+  //! Nodes that we don't have procedure definition for will get ProcHandle(0)
+  virtual OA_ptr<DataFlowSet> initializeNode(ProcHandle proc) = 0;
+  //! Should generate an initial DataFlowSet, use if for a call if both caller
+  //! and callee are defined
+  virtual OA_ptr<DataFlowSet> initializeEdge(CallHandle call,
+                                             ProcHandle caller,
+                                             ProcHandle callee) = 0;
+  //! Should generate an initial DataFlowSet for a call,
+  //! called when callee is not defined in call graph and therefore
+  //! doesn't have a procedure definition handle
+  virtual OA_ptr<DataFlowSet> initializeEdge(CallHandle call,
+                                             ProcHandle caller,
+                                             SymHandle callee) = 0;
 
   //--------------------------------------------------------
-  // solver callbacks 
+  // solver callbacks
   //--------------------------------------------------------
-  
+
   //! OK to modify set1 and return it as result, because solver
   //! only passes a tempSet in as set1
-  //virtual OA_ptr<DataFlowSet> meet(OA_ptr<DataFlowSet> set1, 
-  //                                 OA_ptr<DataFlowSet> set2) = 0; 
+  virtual OA_ptr<DataFlowSet> meet(OA_ptr<DataFlowSet> set1,
+                                   OA_ptr<DataFlowSet> set2)  = 0;
 
-  //! OK to modify in set and return it again as result because
-  //! solver clones the BB in sets
-  //virtual OA_ptr<DataFlowSet> transfer(OA_ptr<DataFlowSet> in, 
-  //                                     OA::StmtHandle stmt) = 0; 
-                            
-protected:
-  //========================================================
-  // implementation of DGraphIterativeDFP callbacks
-  // These are implemented in CallGraphDFProblem.cpp for a 
-  // CallGraph.
-  //========================================================
+  //! What the analysis does for the particular procedure
+  virtual OA_ptr<DataFlowSet>
+       atCallGraphNode(OA_ptr<DataFlowSet> inSet, OA::ProcHandle proc) = 0;
   
-  //--------------------------------------------------------
-  // initialization upcall 
-  //--------------------------------------------------------
-  void initialize(OA_ptr<DGraph::Interface> dg);
+  //! What the analysis does for a particular call
+  //! use if both caller and callee are defined
+  virtual OA_ptr<DataFlowSet>
+       atCallGraphEdge(OA_ptr<DataFlowSet> inSet, CallHandle call,
+                            ProcHandle caller, ProcHandle callee) = 0;
+  //! use if callee is not defined in the call graph
+  virtual OA_ptr<DataFlowSet>
+       atCallGraphEdge(OA_ptr<DataFlowSet> inSet, CallHandle call,
+		            ProcHandle caller, SymHandle callee) = 0;
   
-  //--------------------------------------------------------
-  // solver upcalls
-  //--------------------------------------------------------
-  //bool atDGraphNode(OA_ptr<DGraph::Interface::Node> node, 
-  //                  DGraph::DGraphEdgeDirection pOrient);
-  virtual bool atDGraphEdge(OA_ptr<DGraph::Interface::Edge>, 
-                            DGraph::DGraphEdgeDirection);
+  //! translate results from procedure node to callee edge if top-down
+  //! or to caller edge if bottom-up using data-flow set at procedure node
+  //! the proc could be ProcHandle(0) if the called procedure has not
+  //! been defined
+  virtual OA_ptr<DataFlowSet>  nodeToEdge(ProcHandle proc,
+                          OA_ptr<DataFlow::DataFlowSet> procDFSet, CallHandle call) = 0;
   
-  //--------------------------------------------------------
-  // finalization upcalls
-  //--------------------------------------------------------
-  void finalizeNode(OA_ptr<DGraph::Interface::Node> node);
-  void finalizeEdge(OA_ptr<DGraph::Interface::Edge> edge);
-
-
-  /*! 
-     transfer function for a CFG::Interface::Node
-     Will clone in set to block before passing it to this function
-     so ok to return a modified in set
-  */
-  //OA_ptr<DataFlowSet> transfer(OA_ptr<DataFlowSet> in, 
-  //                             OA_ptr<DGraph::Interface::Node> n);
-
-  //--------------------------------------------------------
-  // debugging
-  //--------------------------------------------------------
-public:
-  void dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir);
-
-
-private:
-  void mapFormalToActualMay(ExprHandle call,
-                            OA_ptr<Location> formalLoc,
-                            OA_ptr<Location> actualLoc)
-    {
-        mFormalToActualLocMay[call][formalLoc].insert(actualLoc);
-    }
-  void mapFormalToActualMust(ExprHandle call,
-                             OA_ptr<Location> formalLoc,
-                             OA_ptr<Location> actualLoc)
-    {
-        mFormalToActualLocMust[call][formalLoc].insert(actualLoc);
-    }
-
-private:
-  typedef std::map<ExprHandle,
-                   std::map<OA_ptr<Location>,LocSet> >
-      CallToLocToLocSetMap;
-  CallToLocToLocSetMap mFormalToActualLocMay;
-  CallToLocToLocSetMap mFormalToActualLocMust;
-
-  OA_ptr<Alias::InterAliasInterface> mInterAlias;
-  OA_ptr<CallGraphDFProblemIRInterface> mIR;
-
-  //std::map<OA_ptr<CFG::Interface::Node>,OA_ptr<DataFlowSet> > mNodeInSetMap;
-  //std::map<OA_ptr<CFG::Interface::Node>,OA_ptr<DataFlowSet> > mNodeOutSetMap;
-
-  // whether or not the node has had the transfer function applied
-  // to all statements at least once
-  //std::map<OA_ptr<CFG::Interface::Node>,bool> mNodeInitTransApp;
-
-};
+  //! translate results from caller edge to procedure node if top-down
+  //! or from callee edge if bottom-up using call data flow set
+  virtual OA_ptr<DataFlowSet>  edgeToNode(CallHandle call,
+                          OA_ptr<DataFlow::DataFlowSet> callDFSet, ProcHandle proc) = 0;
+  
+  
+   };
 
   } // end of DataFlow namespace
 }  // end of OA namespace

@@ -1,5 +1,5 @@
 # -*-Mode: makefile;-*-
-# $Header: /Volumes/cvsrep/developer/OpenAnalysis/src/OpenAnalysis/Makefile.am,v 1.9 2005/10/17 21:21:40 garvin Exp $
+# $Header: /Volumes/cvsrep/developer/OpenAnalysis/src/OpenAnalysis/Makefile.am,v 1.8.6.5 2006/01/19 05:30:47 mstrout Exp $
 
 ## * BeginRiceCopyright *****************************************************
 ## 
@@ -34,6 +34,8 @@
 ## if advised of the possibility of such damage. 
 ## 
 ## ******************************************************* EndRiceCopyright *
+##
+## Copyright (c) 2006 Contributors
 
 #############################################################################
 #
@@ -64,22 +66,21 @@ include $(top_srcdir)/src/Makeinclude.config
 # Order: Interface; engines in alphabetical order; utils
 MYINSTALLEDHEADERS = \
   IRInterface/IRHandles.hpp \
-  IRInterface/AccessLocIRInterface.hpp \
+  IRInterface/CalleeToCallerVisitorIRInterface.hpp \
+  IRInterface/AffineExprIRInterface.hpp \
   IRInterface/AliasIRInterface.hpp \
   IRInterface/AliasIRInterfaceDefault.hpp \
   IRInterface/CallGraphIRInterface.hpp \
   IRInterface/CallGraphDFProblemIRInterface.hpp \
   IRInterface/ConstValBasicInterface.hpp \
   IRInterface/ConstValIntInterface.hpp \
+  IRInterface/DataDepIRInterface.hpp \
   IRInterface/CFGIRInterface.hpp \
   IRInterface/CFGIRInterfaceDefault.hpp \
   IRInterface/ICFGIRInterface.hpp \
-  IRInterface/DUGIRInterface.hpp \
   IRInterface/ActivityIRInterface.hpp \
   IRInterface/EvalToConstVisitorIRInterface.hpp \
-  IRInterface/ExprStmtPairIterator.hpp \
-  IRInterface/MREBasicIRShortCircuit.hpp \
-  IRInterface/MREBasicIRShortCircuitDefault.hpp \
+  IRInterface/AssignPairIterator.hpp \
   IRInterface/ParamBindingsIRInterface.hpp \
   IRInterface/ReachConstsIRInterface.hpp \
   IRInterface/ReachDefsIRInterface.hpp \
@@ -89,12 +90,12 @@ MYINSTALLEDHEADERS = \
   IRInterface/SSAIRInterface.hpp \
   IRInterface/UDDUChainsIRInterface.hpp \
   IRInterface/XAIFIRInterface.hpp \
+  IRInterface/LinearityIRInterface.hpp \
+  IRInterface/LivenessIRInterface.hpp \
+  IRInterface/DUGIRInterface.hpp \
+  IRInterface/LoopIRInterface.hpp \
   \
   OABase/Annotation.hpp \
-  \
-  AccessLoc/ManagerAccessLocStandard.hpp \
-  AccessLoc/Interface.hpp \
-  AccessLoc/AccessLocStandard.hpp \
   \
   Activity/DepDFSet.hpp \
   Activity/ManagerDepStandard.hpp \
@@ -107,7 +108,7 @@ MYINSTALLEDHEADERS = \
   Activity/ManagerVaryStandard.hpp \
   Activity/VaryStandard.hpp \
   Activity/ManagerICFGVary.hpp \
-  Activity/ManagerICFGVaryInActive.hpp \
+  Activity/ManagerICFGVaryActive.hpp \
   Activity/ManagerICFGUseful.hpp \
   Activity/InterVary.hpp \
   Activity/ManagerUsefulStandard.hpp \
@@ -115,68 +116,113 @@ MYINSTALLEDHEADERS = \
   Activity/InterUseful.hpp \
   Activity/ManagerActiveStandard.hpp \
   Activity/ActiveStandard.hpp \
-  Activity/InActivePerStmt.hpp \
+  Activity/ActivePerStmt.hpp \
   Activity/ManagerEachActive.hpp \
   Activity/ManagerInterActive.hpp \
   Activity/ManagerICFGActive.hpp \
   Activity/InterActive.hpp \
+  Activity/InterActiveFortran.hpp \
+  \
+  AffineExpr/AffineExprAbstraction.hpp \
+  AffineExpr/ManagerAffineExpr.hpp \
   \
   Alias/Interface.hpp \
   Alias/EquivSets.hpp \
-  Alias/ManagerNoAddressOf.hpp \
+  Alias/EquivSets.hpp \
+  Alias/ManagerFIAlias.hpp \
+  Alias/ManagerFIAliasEquivSets.hpp \
+  Alias/ManagerFIAliasAliasMap.hpp \
   Alias/AliasMap.hpp \
   Alias/ManagerAliasMapBasic.hpp \
   Alias/InterAliasInterface.hpp \
   Alias/InterAliasMap.hpp \
   Alias/ManagerInterAliasMapBasic.hpp \
-  Alias/SymAliasSets.hpp \
-  Alias/ManagerSymAliasSetsTop.hpp \
-  Alias/ManagerSymAliasSetsBottom.hpp \
-  Alias/ManagerInsNoPtrInterAliasMap.hpp \
+  Alias/NotationGenerator.hpp \
   \
-  CallGraph/ManagerCallGraphStandard.hpp \
-  CallGraph/CallGraphStandard.hpp \
-  CallGraph/Interface.hpp \
+  CallGraph/ManagerCallGraph.hpp \
+  CallGraph/CallGraph.hpp \
+  CallGraph/CallGraphInterface.hpp \
   \
-  CFG/ManagerCFGStandard.hpp \
-  CFG/CFGStandard.hpp \
-  CFG/Interface.hpp \
+  CFG/ManagerCFG.hpp \
+  CFG/CFG.hpp \
+  CFG/CFGInterface.hpp \
   CFG/EachCFGInterface.hpp \
   CFG/EachCFGStandard.hpp \
   \
+  DataDep/DataDepResults.hpp \
+  DataDep/Interface.hpp \
+  DataDep/ManagerDataDepGCD.hpp \
+  DataDep/ManagerDataDep.hpp \
+  \
   DataFlow/DataFlowSet.hpp \
-  DataFlow/DGraphIterativeDFP.hpp \
+  DataFlow/DGraphSolverDFP.hpp \
+  DataFlow/WorkList.hpp \
+  DataFlow/WorkListPQueue.hpp \
+  DataFlow/WorkListQueue.hpp \
   DataFlow/CFGDFProblem.hpp \
+  DataFlow/CFGDFSolver.hpp \
   DataFlow/CallGraphDFProblem.hpp \
-  DataFlow/CallGraphDFProblemNew.hpp \
+  DataFlow/CFGDFSolver.hpp \
+  DataFlow/CallGraphDFSolver.hpp \
   DataFlow/IRHandleDataFlowSet.hpp \
-  DataFlow/LocDFSet.hpp \
   DataFlow/CountDFSet.hpp \
   DataFlow/ManagerParamBindings.hpp \
   DataFlow/ParamBindings.hpp \
   DataFlow/CalleeToCallerVisitor.hpp \
-  DataFlow/ICFGDFSolver.hpp \
+  DataFlow/LocDFSet.hpp \
   DataFlow/ICFGDFProblem.hpp \
+  DataFlow/ICFGDFSolver.hpp \
   \
   ExprTree/ExprTree.hpp \
   ExprTree/ExprTreeVisitor.hpp \
   ExprTree/DifferentiableLocsVisitor.hpp \
   ExprTree/EvalToConstVisitor.hpp \
   ExprTree/EvalToMemRefVisitor.hpp \
+  ExprTree/MemRefsVisitor.hpp\
+  ExprTree/LinearityLocsVisitor.hpp \
+  ExprTree/OutputExprTreeVisitor.hpp \
+  ExprTree/ExprTreeSetIterator.hpp \
+  ExprTree/CompareExprTree.hpp \
   \
-  ICFG/ICFGStandard.hpp \
-  ICFG/ManagerICFGStandard.hpp \
+  ICFG/ICFGInterface.hpp \
+  ICFG/ICFG.hpp \
+  ICFG/ManagerICFG.hpp \
   \
-  DUG/DUGStandard.hpp \
-  DUG/ManagerDUGStandard.hpp \
+  CSFIActivity/DUGInterface.hpp \
+  CSFIActivity/DUGStandard.hpp \
+  CSFIActivity/ManagerDUGStandard.hpp \
+  CSFIActivity/ManagerDUActive.hpp \
   \
-  duaa/ManagerDUActive.hpp \
+  Linearity/Interface.hpp \
+  Linearity/LinearityPair.hpp \
+  Linearity/LinearityDepsSet.hpp \
+  Linearity/LinearityMatrixStandard.hpp \
+  Linearity/ManagerLinearityStandard.hpp \
+  \
+  Liveness/LivenessStandard.hpp \
+  Liveness/ManagerLivenessStandard.hpp \
   \
   Location/Location.hpp \
+  Location/InvisibleLoc.hpp \
   Location/LocationVisitor.hpp \
+  Location/LocFieldSubSet.hpp \
+  Location/LocIdxSubSet.hpp \
+  Location/LocSet.hpp \
+  Location/LocSubSet.hpp \
+  Location/NamedLoc.hpp \
+  Location/UnknownLoc.hpp \
+  Location/UnnamedLoc.hpp \
+  Location/Iterators/LocIterator.hpp \
+  Location/Iterators/LocSetIterator.hpp \
+  Location/Iterators/OverlapSymIterator.hpp \
+  Location/Locations.hpp \
   \
-  MemRefExpr/MemRefExprBasic.hpp \
-  MemRefExpr/LocBlock.hpp \
+  Loop/LoopAbstraction.hpp \
+  Loop/LoopIndex.hpp \
+  Loop/LoopManager.hpp \
+  Loop/Interface.hpp \
+  Loop/LoopResults.hpp \
+  \
   MemRefExpr/MemRefExpr.hpp \
   MemRefExpr/MemRefExprVisitor.hpp \
   \
@@ -185,10 +231,15 @@ MYINSTALLEDHEADERS = \
   ReachConsts/Interface.hpp\
   ReachConsts/InterReachConsts.hpp \
   ReachConsts/ManagerInterReachConsts.hpp \
+  ReachConsts/ManagerICFGReachConsts.hpp \
   \
   ReachDefs/Interface.hpp \
   ReachDefs/ReachDefsStandard.hpp \
   ReachDefs/ManagerReachDefsStandard.hpp \
+  \
+  ReachDefsOverwrite/Interface.hpp \
+  ReachDefsOverwrite/ReachDefsOverwriteStandard.hpp \
+  ReachDefsOverwrite/ManagerReachDefsOverwriteStandard.hpp \
   \
   SideEffect/SideEffectInterface.hpp \
   SideEffect/SideEffectStandard.hpp \
@@ -205,29 +256,30 @@ MYINSTALLEDHEADERS = \
   UDDUChains/UDDUChainsStandard.hpp \
   UDDUChains/ManagerUDDUChainsStandard.hpp \
   \
+  XAIF/ChainsXAIF.hpp \
   XAIF/ManagerUDDUChainsXAIF.hpp \
   XAIF/UDDUChainsXAIF.hpp \
   XAIF/ManagerAliasMapXAIF.hpp \
   XAIF/AliasMapXAIF.hpp \
+  XAIF/ManagerReachDefsOverwriteXAIF.hpp \
+  XAIF/ReachDefsOverwriteXAIF.hpp \
   \
-  Utils/BaseGraph.hpp \
-  Utils/DomTree.hpp \
   Utils/Exception.hpp \
   Utils/Iterator.hpp \
-  Utils/NestedSCR.hpp \
+  Utils/SetIterator.hpp \
+  Utils/ListIterator.hpp \
+  Utils/GenOutputTool.hpp \
   Utils/OA_ptr.hpp \
   Utils/OutputBuilder.hpp \
   Utils/OutputBuilderText.hpp \
-  Utils/RIFG.hpp \
-  Utils/SetIterator.hpp \
-  Utils/SCC.hpp \
+  Utils/OutputBuilderDOT.hpp \
   Utils/Tree.hpp \
   Utils/UnionFindUniverse.hpp \
   Utils/Util.hpp \
-  Utils/DGraph/Interface.hpp \
-  Utils/DGraph/DGraphInterfaceIterators.hpp \
-  Utils/DGraph/DGraphStandard.hpp
-
+  Utils/DGraph/DGraphInterface.hpp \
+  Utils/DGraph/DGraphImplement.hpp \
+  Utils/RIFG.hpp \
+  Utils/NestedSCR.hpp
 
 # Order: Interface; engines in alphabetical order; utils
 MYSOURCES = \
@@ -236,9 +288,7 @@ MYSOURCES = \
   \
   Utils/OutputBuilder.cpp \
   Utils/OutputBuilderText.cpp \
-  \
-  AccessLoc/ManagerAccessLocStandard.cpp \
-  AccessLoc/AccessLocStandard.cpp \
+  Utils/OutputBuilderDOT.cpp \
   \
   Activity/DepDFSet.cpp \
   Activity/ManagerDepStandard.cpp \
@@ -251,73 +301,119 @@ MYSOURCES = \
   Activity/ManagerVaryStandard.cpp \
   Activity/VaryStandard.cpp \
   Activity/ManagerICFGVary.cpp \
-  Activity/ManagerICFGVaryInActive.cpp \
+  Activity/ManagerICFGVaryActive.cpp \
   Activity/ManagerUsefulStandard.cpp \
   Activity/UsefulStandard.cpp \
   Activity/ManagerICFGUseful.cpp \
   Activity/ManagerActiveStandard.cpp \
   Activity/ActiveStandard.cpp \
-  Activity/InActivePerStmt.cpp \
+  Activity/ActivePerStmt.cpp \
   Activity/ManagerEachActive.cpp \
   Activity/ManagerICFGActive.cpp \
   Activity/InterActive.cpp \
+  Activity/InterActiveFortran.cpp \
+  \
+  AffineExpr/AffineExprAbstraction.cpp \
+  AffineExpr/AffineExprAbstraction_output.cpp \
+  AffineExpr/ManagerAffineExpr.cpp \
   \
   Alias/EquivSets.cpp \
-  Alias/ManagerNoAddressOf.cpp \
+  Alias/EquivSets_output.cpp \
+  Alias/ManagerFIAlias.cpp \
+  Alias/ManagerFIAliasEquivSets.cpp \
+  Alias/ManagerFIAliasAliasMap.cpp \
   Alias/AliasMap.cpp \
+  Alias/AliasMap_output.cpp \
   Alias/ManagerAliasMapBasic.cpp \
   Alias/ManagerInterAliasMapBasic.cpp \
-  Alias/SymAliasSets.cpp \
-  Alias/ManagerSymAliasSetsTop.cpp \
-  Alias/ManagerSymAliasSetsBottom.cpp \
-  Alias/ManagerInsNoPtrInterAliasMap.cpp \
+  Alias/NotationGenerator.cpp \
   \
-  CallGraph/CallGraphStandard.cpp \
-  CallGraph/ManagerCallGraphStandard.cpp \
+  CallGraph/CallGraph.cpp \
+  CallGraph/ManagerCallGraph.cpp \
   \
-  CFG/CFGStandard.cpp \
-  CFG/ManagerCFGStandard.cpp \
+  CFG/CFG.cpp \
+  CFG/ManagerCFG.cpp \
   \
-  DataFlow/CFGDFProblem.cpp \
-  DataFlow/CallGraphDFProblem.cpp \
-  DataFlow/CallGraphDFProblemNew.cpp \
-  DataFlow/DGraphIterativeDFP.cpp \
+  DataDep/DataDepResults.cpp \
+  DataDep/DataDepResults_output.cpp \
+  DataDep/ManagerDataDep.cpp \
+  DataDep/ManagerDataDepGCD.cpp \
+  \
+  DataFlow/CFGDFSolver.cpp \
+  DataFlow/CallGraphDFSolver.cpp \
+  DataFlow/DGraphSolverDFP.cpp \
   DataFlow/LocDFSet.cpp \
   DataFlow/CountDFSet.cpp \
   DataFlow/ManagerParamBindings.cpp \
   DataFlow/ParamBindings.cpp \
+  DataFlow/ParamBindings_output.cpp \
   DataFlow/CalleeToCallerVisitor.cpp \
   DataFlow/ICFGDFSolver.cpp \
   \
   ExprTree/ExprTree.cpp \
+  ExprTree/CompareExprTree.cpp \
   ExprTree/DifferentiableLocsVisitor.cpp \
   ExprTree/EvalToConstVisitor.cpp \
+  ExprTree/MemRefsVisitor.cpp\
+  ExprTree/LinearityLocsVisitor.cpp \
+  ExprTree/OutputExprTreeVisitor.cpp \
+  ExprTree/ExprTreeSetIterator.cpp \
   \
-  ICFG/ICFGStandard.cpp \
-  ICFG/ManagerICFGStandard.cpp \
+  ICFG/ICFG.cpp \
+  ICFG/ManagerICFG.cpp \
   \
-  DUG/DUGStandard.cpp \
-  DUG/ManagerDUGStandard.cpp \
+  CSFIActivity/DUGStandard.cpp \
+  CSFIActivity/ManagerDUGStandard.cpp \
+  CSFIActivity/ManagerDUActive.cpp \
   \
-  duaa/ManagerDUActive.cpp \
+  Linearity/LinearityPair.cpp \
+  Linearity/LinearityDepsSet.cpp \
+  Linearity/LinearityMatrixStandard.cpp \
+  Linearity/ManagerLinearityStandard.cpp \
   \
+  Liveness/ManagerLivenessStandard.cpp \
+  Liveness/LivenessStandard.cpp \
+  \
+  Location/LocationVisitor.cpp \
   Location/Location.cpp \
+  Location/InvisibleLoc.cpp \
+  Location/LocFieldSubSet.cpp \
+  Location/LocIdxSubSet.cpp \
+  Location/LocSet.cpp \
+  Location/LocSubSet.cpp \
+  Location/NamedLoc.cpp \
+  Location/UnknownLoc.cpp \
+  Location/UnnamedLoc.cpp \
+  Location/Iterators/LocIterator.cpp \
+  Location/Iterators/LocSetIterator.cpp \
+  Location/Iterators/OverlapSymIterator.cpp \
+  \
+  Loop/LoopAbstraction.cpp \
+  Loop/LoopAbstraction_output.cpp \
+  Loop/LoopIndex.cpp \
+  Loop/LoopIndex_output.cpp \
+  Loop/LoopManager.cpp \
+  Loop/LoopResults.cpp \
   \
   MemRefExpr/MemRefExpr.cpp \
-  MemRefExpr/MemRefExprBasic.cpp \
-  MemRefExpr/LocBlock.cpp \
   \
-  ReachConsts/ManagerReachConstsStandard.cpp \
   ReachConsts/ReachConstsStandard.cpp \
+  ReachConsts/ManagerReachConstsStandard.cpp \
   ReachConsts/InterReachConsts.cpp \
   ReachConsts/ManagerInterReachConsts.cpp \
+  ReachConsts/ManagerICFGReachConsts.cpp \
   \
-  ReachDefs/ReachDefsStandard.cpp \
   ReachDefs/ManagerReachDefsStandard.cpp \
+  ReachDefs/ReachDefsStandard.cpp \
+  \
+  ReachDefsOverwrite/ManagerReachDefsOverwriteStandard.cpp \
+  ReachDefsOverwrite/ReachDefsOverwriteStandard.cpp \
   \
   SideEffect/SideEffectStandard.cpp \
+  SideEffect/SideEffectStandard_output.cpp \
   SideEffect/ManagerSideEffectStandard.cpp \
   SideEffect/InterSideEffectStandard.cpp \
+  SideEffect/InterSideEffectStandard_output.cpp \
   SideEffect/ManagerInterSideEffectStandard.cpp \
   \
   SSA/SSAStandard.cpp \
@@ -327,21 +423,21 @@ MYSOURCES = \
   UDDUChains/UDDUChainsStandard.cpp \
   UDDUChains/ManagerUDDUChainsStandard.cpp \
   \
-  Utils/BaseGraph.cpp \
-  Utils/DomTree.cpp \
-  Utils/Graph.cpp \
-  Utils/NestedSCR.cpp \
-  Utils/RIFG.cpp \
-  Utils/SCC.cpp \
   Utils/Tree.cpp \
   Utils/UnionFindUniverse.cpp \
-  Utils/DGraph/DGraphStandard.cpp \
-  Utils/DGraph/DGraphInterfaceIterators.cpp \
+  Utils/DGraph/DGraphImplement.cpp \
+  Utils/RIFG.cpp \
+  Utils/NestedSCR.cpp \
   \
+  XAIF/ChainsXAIF.cpp \
   XAIF/UDDUChainsXAIF.cpp \
   XAIF/ManagerUDDUChainsXAIF.cpp \
+  XAIF/AliasMapXAIF.cpp \
   XAIF/ManagerAliasMapXAIF.cpp \
-  XAIF/AliasMapXAIF.cpp 
+  XAIF/ReachDefsOverwriteXAIF.cpp \
+  XAIF/ManagerReachDefsOverwriteXAIF.cpp
+
+
 
 MYCXXFLAGS = @HOST_CXXFLAGS@ $(OA_IFLAGS)
 

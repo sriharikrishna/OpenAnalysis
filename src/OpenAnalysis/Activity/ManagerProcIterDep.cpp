@@ -5,24 +5,21 @@
   \authors Michelle Strout
   \version $Id: ManagerProcIterDep.cpp,v 1.1 2005/06/21 15:20:54 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "ManagerProcIterDep.hpp"
+#include <Utils/Util.hpp>
 
 
 namespace OA {
   namespace Activity {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_ManagerProcIterDep)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
 
 
 /*!
@@ -30,6 +27,7 @@ static bool debug = false;
 ManagerProcIterDep::ManagerProcIterDep(OA_ptr<ActivityIRInterface> _ir) 
     : mIR(_ir)
 {
+    OA_DEBUG_CTRL_MACRO("DEBUG_ManagerProcIterDep:ALL", debug);
 }
 
 
@@ -78,11 +76,9 @@ OA_ptr<ICFGDep> ManagerProcIterDep::performAnalysis(
       // set of expressions to analyze for differentiable uses
       std::set<ExprHandle> exprSet;
 
-      // iterate over memref = expr pairs if this is an EXPR_STMT
-      OA::Activity::IRStmtType sType = mIR->getActivityStmtType(stmt);
-      if (sType==EXPR_STMT) {
-        OA_ptr<ExprStmtPairIterator> espIterPtr 
-            = mIR->getExprStmtPairIterator(stmt);
+      OA_ptr<AssignPairIterator> espIterPtr 
+         = mIR->getAssignPairIterator(stmt);
+      if(!espIterPtr.ptrEqual(0)) {
         for ( ; espIterPtr->isValid(); ++(*espIterPtr)) {
             // unbundle pair
             MemRefHandle mref = espIterPtr->currentTarget();
@@ -147,7 +143,7 @@ OA_ptr<ICFGDep> ManagerProcIterDep::performAnalysis(
       // reference parameters
       OA_ptr<IRCallsiteIterator> callsiteItPtr = mIR->getCallsites(stmt);
       for ( ; callsiteItPtr->isValid(); ++(*callsiteItPtr)) {
-        ExprHandle call = callsiteItPtr->current();
+        CallHandle call = callsiteItPtr->current();
         if (debug) {
           std::cout << "\nhandling all callsite params, ";
           std::cout << "call = " << mIR->toString(call) << std::endl;
@@ -167,11 +163,12 @@ OA_ptr<ICFGDep> ManagerProcIterDep::performAnalysis(
             if (debug) { eTreePtr->dump(std::cout,mIR); }
             if ( evalVisitor.isMemRef() ) {
                 MemRefHandle memref = evalVisitor.getMemRef();
-                if (mParamBind->isRefParam(
-                        mParamBind->getCalleeFormal(call,memref)) )
-                {
-                  isRefParam = true;
-                }
+                assert(0); // need to rewrite alg, see MMS
+                //if (mParamBind->isRefParam(
+                //        mParamBind->getCalleeFormal(call,memref)) )
+                //{
+                //  isRefParam = true;
+               // }
             }
 
             // record expr for those that aren't reference parameters

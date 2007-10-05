@@ -3,28 +3,32 @@
   \brief Implementation of Alias::AliasMap
 
   \author Michelle Strout
-  \version $Id: AliasMap.cpp,v 1.24 2005/06/10 02:32:03 mstrout Exp $
+  \version $Id: AliasMap.cpp,v 1.24.6.1 2005/09/14 16:53:39 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "AliasMap.hpp"
+#include <Utils/Util.hpp>
 
 namespace OA {
   namespace Alias {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_AliasMap)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
+
+const int AliasMap::SET_ID_NONE = -1; 
+
+AliasMap::AliasMap() {
+    OA_DEBUG_CTRL_MACRO("DEBUG_AliasMap:ALL", debug);
+}
 
 AliasMap::AliasMap(ProcHandle p) : mProcHandle(p), mNumSets(1), mStartId(0)
 {
+  OA_DEBUG_CTRL_MACRO("DEBUG_AliasMap:ALL", debug);
   // default set for things MemRefHandles that we don't know enough
   // information about
   mIdToSetStatusMap[0] = MAYALIAS;
@@ -32,6 +36,7 @@ AliasMap::AliasMap(ProcHandle p) : mProcHandle(p), mNumSets(1), mStartId(0)
   loc = dynamic_cast<Location*>(new UnknownLoc());
   mIdToLocSetMap[0] = new LocSet;
   mIdToLocSetMap[0]->insert( loc );
+
 }
 
 /*! 
@@ -64,36 +69,92 @@ AliasMap::AliasMap(AliasMap& other)
 */
 AliasResultType AliasMap::alias(MemRefHandle ref1, MemRefHandle ref2)
 { 
-    unsigned int id1, id2;
-    id1 = mMemRefToIdMap[ref1];
-    id2 = mMemRefToIdMap[ref2];
     AliasResultType retval = MAYALIAS;
 
-    // first check if the memory references map to the same alias map set
-    if (id1==0 || id2==0) {
-        retval = MAYALIAS;
-    } else if (id1==id2 && mIdToSetStatusMap[id1]==MUSTALIAS) {
-        retval = MUSTALIAS;
-    } else if (id1==id2 && mIdToSetStatusMap[id1]==MAYALIAS) {
-        retval = MAYALIAS;
+    // If either of the refs map to 0 (the unknown loc set), return
+    // MAYALIAS.
+    std::set<int>::iterator it1;
+    std::set<int>::iterator it2;
 
-    // next check the relationships between locations if there are two
-    // different alias map sets, only do full relationship check if
-    // this information hasn't been cached
-    } else if (mayOverlapLocSets(*mIdToLocSetMap[id1],
-                                           *mIdToLocSetMap[id2]) )
-    {
-        retval = MAYALIAS;
-        // if is a MAYALIAS and both sets have MUSTALIAS status then
-        // this is really a MUSTALIAS
-        if (isMust(id1) && isMust(id2)) {
+    OA_ptr<std::set<int> > ids1 = getMapSetIds(ref1);
+    for(it1 = ids1->begin(); it1 != ids1->end(); ++it1) {
+      if (*it1 == 0) 
+        return retval;
+    }
+
+    OA_ptr<std::set<int> > ids2 = getMapSetIds(ref2);
+    for(it2 = ids2->begin(); it2 != ids2->end(); ++it2) {
+      if (*it2 == 0) 
+        return retval;
+    }
+
+    // Check to see if there is any overlap in the sets.
+    std::set<int> temp; 
+/*
+    std::set_intersection(ids1->begin(), 
+                          ids1->end(),
+                          ids2->begin(), 
+                          ids2->end(),
+                          std::inserter(temp,temp.end()));
+*/
+
+    std::set_intersection(ids1->begin(),
+                          ids1->end(),
+                          ids2->begin(),
+                          ids2->end(),
+                          std::inserter(temp,temp.begin()));
+ 
+ 
+    if (!temp.empty()) {
+
+      // The sets do overlap.  If there is an overlapping MUST alias
+      // set, return MUSTALIAS.  Else return MAYAliaS.
+      for (it1 = temp.begin(); it1 != temp.end(); ++it1) {
+        if (mIdToSetStatusMap[*it1]==MUSTALIAS)
+          return MUSTALIAS;
+      }
+
+      return MAYALIAS;
+    } 
+
+    bool locationsOverlap = false;
+    retval = MAYALIAS;
+
+    for(it1 = ids1->begin(); it1 != ids1->end(); ++it1) {
+       
+      if (*it1 == 0)
+      {
+        return retval;
+      } 
+          
+      for(it2 = ids2->begin(); it2 != ids2->end(); ++it2) {
+
+       if (*it2 == 0) 
+       { 
+        return retval;
+       }  
+
+        if (mayOverlapLocSets(*mIdToLocSetMap[*it1],
+                              *mIdToLocSetMap[*it2]) ) {
+          locationsOverlap = true;
+          if (isMust(*it1) && isMust(*it2)) {
             retval = MUSTALIAS;
+            return retval;
+          }
+          // At this point, we know we have at least a MAYALIAS.
+          // However, subsequent mayOverlapLocSets may determine
+          // this is a MUSTALIAS, so keep looking.
         }
 
-    // otherwise these two references do not alias
-    } else {
-        retval = NOALIAS; 
+      }
     }
+
+    if (locationsOverlap) {
+      return retval;
+    }
+
+    // otherwise these two references do not alias
+    retval = NOALIAS; 
 
     return retval; 
 } 
@@ -113,16 +174,43 @@ OA_ptr<LocIterator> AliasMap::getLocIterator(int setId)
 //! iterator over locations that a memory reference may reference
 OA_ptr<LocIterator> AliasMap::getMayLocs(MemRefHandle ref)
 {
-    // trivial with alias maps, just return iterator to location
-    // set we map to 
-    int setId = mMemRefToIdMap[ref];
-    OA_ptr<LocSetIterator> retval;
-    if (mIdToLocSetMap[setId].ptrEqual(0)) {
-        OA_ptr<LocSet> emptySet; emptySet = new LocSet;
-        retval = new LocSetIterator(emptySet);  // empty loc set
-    } else {
-        retval = new LocSetIterator(mIdToLocSetMap[setId]); 
+
+    /*
+    std::cout << "reference MemRefHandle" << ref.hval() << std::endl;
+
+    std::map<MemRefHandle, std::set<int> >::iterator reg_mMemRefToIdMap_iterator;
+
+
+    std::cout << "before mMemRefToIdMap" << std::endl; 
+    for(reg_mMemRefToIdMap_iterator = mMemRefToIdMap.begin();
+        reg_mMemRefToIdMap_iterator != mMemRefToIdMap.end();
+        reg_mMemRefToIdMap_iterator++)
+    {
+        const MemRefHandle &first = reg_mMemRefToIdMap_iterator->first;
+        std::cout << "MemRefHandle" << first.hval() << std::endl;
     }
+    std::cout << "after mMemRefToIdMap" << std::endl;
+    */
+    
+    OA_ptr<LocSet> locSet;
+    locSet = new LocSet;
+    OA_ptr<LocSetIterator> retval;
+
+    // iterate over all the sets for this MemRefHandle and return
+    // an iterator over all the locations in those sets
+    std::set<int>::iterator iter;
+    for (iter=mMemRefToIdMap[ref].begin();
+         iter!=mMemRefToIdMap[ref].end(); iter++)
+    {
+      if (!mIdToLocSetMap[*iter].ptrEqual(0))
+      {
+
+         locSet = unionLocSets(*locSet, 
+                            *(mIdToLocSetMap[*iter]));
+      }
+    }
+
+    retval = new LocSetIterator(locSet);
     return retval;
 }
 
@@ -130,21 +218,106 @@ OA_ptr<LocIterator> AliasMap::getMayLocs(MemRefHandle ref)
 //! these locations will all have full static overlap
 OA_ptr<LocIterator> AliasMap::getMustLocs(MemRefHandle ref)
 {
-    OA_ptr<LocIterator> retIter;
+    OA_ptr<LocSet> locSet;
+    locSet = new LocSet;
+    OA_ptr<LocSetIterator> retval;
 
-    // trivial with alias maps, just return iterator to location
-    // set we map to if that location map has MUSTALIAS status
-    int setId = mMemRefToIdMap[ref];
-    if (mIdToSetStatusMap[setId]==MUSTALIAS 
-        && !mIdToLocSetMap[setId].ptrEqual(0)) 
+    // iterate over all the sets for this MemRefHandle and return
+    // an iterator over all the locations in those sets
+    std::set<int>::iterator iter;
+    for (iter=mMemRefToIdMap[ref].begin();
+         iter!=mMemRefToIdMap[ref].end(); iter++)
     {
-        retIter = new LocSetIterator(mIdToLocSetMap[setId]);
-    } else {
-        OA_ptr<LocSet> emptySet; emptySet = new LocSet;
-        retIter = new LocSetIterator(emptySet);  // empty loc set
+      if (mIdToSetStatusMap[*iter]==MUSTALIAS 
+          && !mIdToLocSetMap[*iter].ptrEqual(0)) 
+      {
+        locSet = unionLocSets(*locSet, 
+                              *(mIdToLocSetMap[*iter]));
+      }
     }
 
-    return retIter;
+    retval = new LocSetIterator(locSet);
+    return retval;
+}
+
+//! iterator over locations that a memory refer expression may reference
+OA_ptr<LocIterator> AliasMap::getMayLocs(MemRefExpr &ref, ProcHandle proc)
+{
+    OA_ptr<LocSet> locSet;
+    locSet = new LocSet;
+    OA_ptr<LocSetIterator> retval;
+
+    // iterate over all the sets for this MemRefHandle and return
+    // an iterator over all the locations in those sets
+    OA_ptr<MemRefExpr> refPtr = ref.clone();
+    if( mMREToIdMap.find(refPtr) != mMREToIdMap.end() ) {
+      int id = mMREToIdMap[refPtr];
+      if (!mIdToLocSetMap[id].ptrEqual(0))
+      {
+         locSet = unionLocSets(*locSet, *(mIdToLocSetMap[id]));
+      }
+    }
+
+    // if nothing was found then return the may locs for 
+    // the partially or fully accurate counterpart
+    // It is necessary when
+    // an aggregate is only accessed one way or another and then
+    // the other MRE is used to look up mayloc info.
+    OA_ptr<MemRefExpr> mreClone = refPtr->clone();
+
+    /* PLM 1/23/07 deprecated hasFullAccuracy
+    if (refPtr->hasFullAccuracy() ) {
+        mreClone->setAccuracy(false);
+    } else {
+        mreClone->setAccuracy(true);
+    }
+    */
+
+
+   OA::OA_ptr<OA::SubSetRef> subset_mre;
+   OA::OA_ptr<OA::MemRefExpr> nullMRE;
+   OA::OA_ptr<OA::MemRefExpr> composed_mre;
+
+   subset_mre = new OA::SubSetRef(
+                                  OA::MemRefExpr::USE,
+                                  nullMRE
+                                 );
+
+   mreClone = subset_mre->composeWith(mreClone->clone());
+
+    
+    if( mMREToIdMap.find(mreClone) != mMREToIdMap.end() ) {
+      int id = mMREToIdMap[mreClone];
+      if (!mIdToLocSetMap[id].ptrEqual(0))
+      {
+         locSet = unionLocSets(*locSet, *(mIdToLocSetMap[id]));
+      }
+    }
+
+    retval = new LocSetIterator(locSet);
+    return retval;
+}
+
+//! iterator over locations that a memory refer expression may reference
+OA_ptr<LocIterator> AliasMap::getMustLocs(MemRefExpr &ref, ProcHandle proc)
+{
+    OA_ptr<LocSet> locSet;
+    locSet = new LocSet;
+    OA_ptr<LocSetIterator> retval;
+
+    OA_ptr<MemRefExpr> refPtr = ref.clone();
+    if ( mMREToIdMap.find(refPtr) != mMREToIdMap.end() ) {
+      int id = mMREToIdMap[refPtr];
+      if (mIdToSetStatusMap[id]==MUSTALIAS 
+          && !mIdToLocSetMap[id].ptrEqual(0)) 
+      {
+        locSet = unionLocSets(*locSet, 
+                              *(mIdToLocSetMap[id]));
+      }
+    }
+
+    retval = new LocSetIterator(locSet);
+    return retval;
 }
 
 //! get iterator over all must aliases for a specific mem ref
@@ -152,12 +325,16 @@ OA_ptr<MemRefIterator> AliasMap::getMustAliases(MemRefHandle ref)
 { 
     // create an empty MemRefSet that will be given to iterator
     OA_ptr<MemRefSet> mustSet; mustSet = new MemRefSet;
-    OA_ptr<MemRefIterator> retIter; retIter = new AliasMapMemRefIter(mustSet);
 
-    // determine what set the reference maps to
-    int id = mMemRefToIdMap[ref];
+    // determine what sets the references map to
+    OA_ptr<std::set<int> > ids = getMapSetIds(ref);
+    std::set<int>::iterator it;
+
     if (debug) {
-      std::cout << "AliasMap::getMustAliases: id = " << id << std::endl;
+      std::cout << "AliasMap::getMustAliases: id = ";
+      for(it = ids->begin(); it != ids->end(); ++it) {
+	std::cout << *it << " ";
+      }
     }
 
     // find all the map sets that contain locations which may overlap with
@@ -165,16 +342,21 @@ OA_ptr<MemRefIterator> AliasMap::getMustAliases(MemRefHandle ref)
     // MUST status
     std::set<int> mustOverlapMapSetIds;
     std::map<int,OA_ptr<LocSet> >::iterator mapIter;
-    for (mapIter = mIdToLocSetMap.begin(); mapIter != mIdToLocSetMap.end();
-         mapIter++) 
-    {
-        int otherId = mapIter->first;
-        if (mIdToSetStatusMap[otherId]==MUSTALIAS 
-            && mIdToSetStatusMap[id]==MUSTALIAS
-            && mayOverlapLocSets(*(mapIter->second),*mIdToLocSetMap[id])) 
-        {
-            mustOverlapMapSetIds.insert(otherId);
-        }
+    for (it = ids->begin(); it != ids->end(); ++it) {
+
+      int id = *it;
+
+      for (mapIter = mIdToLocSetMap.begin(); mapIter != mIdToLocSetMap.end();
+           mapIter++) 
+      {
+          int otherId = mapIter->first;
+          if (mIdToSetStatusMap[otherId]==MUSTALIAS 
+              && mIdToSetStatusMap[id]==MUSTALIAS
+              && mayOverlapLocSets(*(mapIter->second),*mIdToLocSetMap[id])) 
+          {
+              mustOverlapMapSetIds.insert(otherId);
+          }
+      }
     }
 
     // find all the memory references that map to those loc sets
@@ -194,6 +376,7 @@ OA_ptr<MemRefIterator> AliasMap::getMustAliases(MemRefHandle ref)
         }
     }
 
+    OA_ptr<MemRefIterator> retIter; retIter = new AliasMapMemRefIter(mustSet);
     return retIter;
 
 }
@@ -203,31 +386,39 @@ OA_ptr<MemRefIterator> AliasMap::getMayAliases(MemRefHandle ref)
 { 
     // create an empty MemRefSet that will be given to iterator
     OA_ptr<MemRefSet> maySet; maySet = new MemRefSet;
-    OA_ptr<MemRefIterator> retIter; retIter = new AliasMapMemRefIter(maySet);
 
-    // determine what set the reference maps to
-    int id = mMemRefToIdMap[ref];
+    // determine what sets the references map to
+    OA_ptr<std::set<int> > ids = getMapSetIds(ref);
+    std::set<int>::iterator it;
+
     if (debug) {
-      std::cout << "AliasMap::getMustAliases: id = " << id << std::endl;
+      std::cout << "AliasMap::getMayAliases: id = ";
+      for(it = ids->begin(); it != ids->end(); ++it) {
+	std::cout << *it << " ";
+      }
     }
 
     // find all the map sets that contain locations which may overlap with
     // this map set (it should find itself)
     std::set<int> mayOverlapMapSetIds;
     std::map<int,OA_ptr<LocSet> >::iterator mapIter;
-    for (mapIter = mIdToLocSetMap.begin(); mapIter != mIdToLocSetMap.end();
-         mapIter++) 
-    {
-        int otherId = mapIter->first;
-        if (mayOverlapLocSets(*(mapIter->second),
-                                        *mIdToLocSetMap[id])) 
-        {
-            mayOverlapMapSetIds.insert(otherId);
-        }
+    for (it = ids->begin(); it != ids->end(); ++it) {
+
+      int id = *it;
+
+      for (mapIter = mIdToLocSetMap.begin(); mapIter != mIdToLocSetMap.end();
+           mapIter++) 
+      {
+          int otherId = mapIter->first;
+          if (mayOverlapLocSets(*(mapIter->second),*mIdToLocSetMap[id])) 
+          {
+              mayOverlapMapSetIds.insert(otherId);
+          }
+      }
     }
 
     // find all the memory references that map to those loc sets
-    // and put them in the set of may aliases
+    // and put them in the set of must aliases
     std::set<int>::iterator setIter;
     for (setIter=mayOverlapMapSetIds.begin(); 
          setIter!=mayOverlapMapSetIds.end(); setIter++ )
@@ -243,8 +434,8 @@ OA_ptr<MemRefIterator> AliasMap::getMayAliases(MemRefHandle ref)
         }
     }
 
+    OA_ptr<MemRefIterator> retIter; retIter = new AliasMapMemRefIter(maySet);
     return retIter;
-
 }
     
 //! get iterator over all must aliases for a specific location
@@ -252,7 +443,6 @@ OA_ptr<MemRefIterator> AliasMap::getMustAliases(OA_ptr<Location> loc)
 {
     // create an empty MemRefSet that will be given to iterator
     OA_ptr<MemRefSet> mustSet; mustSet = new MemRefSet;
-    OA_ptr<MemRefIterator> retIter; retIter = new AliasMapMemRefIter(mustSet);
 
     // find all the map sets that contain locations which may overlap with
     // this location and the alias map set is a MUST alias and this location
@@ -265,6 +455,8 @@ OA_ptr<MemRefIterator> AliasMap::getMustAliases(OA_ptr<Location> loc)
          mapIter++) 
     {
         int otherId = mapIter->first;
+
+        /* PLM 1/23/07 deprecated accuracy field
         if (mIdToSetStatusMap[otherId]==MUSTALIAS 
             && loc->hasFullAccuracy()
             && mayOverlapLocSets(*(mapIter->second),
@@ -272,6 +464,16 @@ OA_ptr<MemRefIterator> AliasMap::getMustAliases(OA_ptr<Location> loc)
         {
             mustOverlapMapSetIds.insert(otherId);
         }
+        */
+
+        if (mIdToSetStatusMap[otherId]==MUSTALIAS
+            && (!loc->isaSubSet())
+            && mayOverlapLocSets(*(mapIter->second),
+                                           singleEntrySet))
+        {
+            mustOverlapMapSetIds.insert(otherId);
+        }
+
     }
 
     // find all the memory references that map to those loc sets
@@ -291,6 +493,7 @@ OA_ptr<MemRefIterator> AliasMap::getMustAliases(OA_ptr<Location> loc)
         }
     }
 
+    OA_ptr<MemRefIterator> retIter; retIter = new AliasMapMemRefIter(mustSet);
     return retIter;
 }
 
@@ -299,7 +502,6 @@ OA_ptr<MemRefIterator> AliasMap::getMayAliases(OA_ptr<Location> loc)
 {
     // create an empty MemRefSet that will be given to iterator
     OA_ptr<MemRefSet> maySet; maySet = new MemRefSet;
-    OA_ptr<MemRefIterator> retIter; retIter = new AliasMapMemRefIter(maySet);
 
     // find all the map sets that contain locations which may overlap with
     // this location 
@@ -334,6 +536,7 @@ OA_ptr<MemRefIterator> AliasMap::getMayAliases(OA_ptr<Location> loc)
         }
     }
 
+    OA_ptr<MemRefIterator> retIter; retIter = new AliasMapMemRefIter(maySet);
     return retIter;
 }
 
@@ -345,7 +548,7 @@ OA_ptr<MemRefIterator> AliasMap::getMemRefIter()
     OA_ptr<MemRefSet> memrefSet; memrefSet = new MemRefSet;
 
     // put all memory references that we know about into the set
-    std::map<MemRefHandle,int>::iterator mapIter;
+    std::map<MemRefHandle,std::set<int> >::iterator mapIter;
     for (mapIter=mMemRefToIdMap.begin(); mapIter!=mMemRefToIdMap.end();
          mapIter++) 
     {
@@ -415,19 +618,27 @@ OA_ptr<AliasMap> AliasMap::meet(AliasMap& other)
 // Info methods unique to Alias::AliasMap
 //*****************************************************************
     
-//! get unique id for the alias map set for this memory reference,
+//! get ids for the alias map set for this memory reference,
 //! SET_ID_NONE indicates that this memory reference doesn't map to any of
 //! the existing AliasMap sets
-int AliasMap::getMapSetId(MemRefHandle ref) 
+OA_ptr<std::set<int> > AliasMap::getMapSetIds(MemRefHandle ref) 
 {
-    std::map<MemRefHandle,int>::iterator pos;
+    std::map<MemRefHandle,std::set<int> >::iterator pos;
     pos = mMemRefToIdMap.find(ref);
-    if (pos != mMemRefToIdMap.end()) {
-        return pos->second;
-    } else {
 
-        return AliasMap::SET_ID_NONE;
+    OA_ptr<std::set<int> > retval;
+    retval = new std::set<int>;
+
+    if (pos != mMemRefToIdMap.end()) {
+        std::set<int>::iterator setIt;
+        for(setIt = pos->second.begin(); setIt != pos->second.end(); ++setIt) {
+	   retval->insert(*setIt);
+        }
+    } else {
+        retval->insert(AliasMap::SET_ID_NONE);
     }
+
+    return retval;
 }
 
 //! get unique id for the alias map set for this memory reference
@@ -549,8 +760,9 @@ void AliasMap::insertInto(MemRefHandle ref, int setId)
 //! associate the given location with the given mapSet
 void AliasMap::addLocation(OA_ptr<Location> pLoc, int setId)
 {
+
     if (debug) {
-        std::cout << "AliasMap::addLocation: pLoc = ";
+        std::cout << "AliasMap::addLocation: setId = " << setId << ", pLoc = ";
         pLoc->dump(std::cout);
     }
     // check that an empty location set exists for this setId
@@ -561,13 +773,21 @@ void AliasMap::addLocation(OA_ptr<Location> pLoc, int setId)
     // if new location doesn't have full accuracy then need
     // to give the set MAYALIAS status
     if (mIdToSetStatusMap[setId]==MUSTALIAS) {
-        if (!pLoc->hasFullAccuracy()) {
-            mIdToSetStatusMap[setId] = MAYALIAS;
-            if (debug) {
-                std::cout << "\tpLoc does not have full accuracy" << std::endl;
-            }
 
+        // subclasses of LocSubSet are fully accurate
+        if(pLoc->isaSubSet()) {
+           OA_ptr<LocSubSet> subLoc = pLoc.convert<LocSubSet>();
+           if(!subLoc->isSubClassOfLocSubSet()) {
+                mIdToSetStatusMap[setId] = MAYALIAS;
+                if (debug) {
+                  std::cout << "\tpLoc not fully accurate, making set " 
+                            << setId << " MAYALIAS\n";
+                }
+           }
         } else {
+            /* MMS 5/17/07, this is too expensive and only useful
+             * when have NamedLocs with different SymHandles that
+             * statically alias.
             // also if there are other locations in the set already 
             // and they don't all fully overlap with this location
             LocSetIterator locIter(mIdToLocSetMap[setId]);
@@ -576,6 +796,32 @@ void AliasMap::addLocation(OA_ptr<Location> pLoc, int setId)
                 if (!loc->mustOverlap(*pLoc)) {
                     mIdToSetStatusMap[setId] = MAYALIAS;
                 }
+            }
+            */
+
+            // conservatively make a set MAYALIAS as soon as a second
+            // location is being added, checking that this location
+            // is not already in set
+            // If size is greater than one, then will have already been 
+            // set to MAYALIAS.
+            if (!mIdToLocSetMap[setId]->empty() && 
+                mIdToLocSetMap[setId]->find(pLoc)==mIdToLocSetMap[setId]->end()
+               ) 
+            {
+                mIdToSetStatusMap[setId] = MAYALIAS;
+                if (debug) {
+                  std::cout << "\tmultiple locs within set " << setId 
+                            << "  becoming MAYALIAS\n";
+                } 
+            }
+
+            // make the set MAYALIAS if pLoc is an InvisibleLoc
+            if(pLoc->isaInvisible()) {
+              mIdToSetStatusMap[setId] = MAYALIAS;
+              if (debug) {
+                std::cout << "\npLoc is InvLoc, making set " << setId
+                          << " MAYALIAS\n";
+              }
             }
         }
     }
@@ -586,18 +832,33 @@ void AliasMap::addLocation(OA_ptr<Location> pLoc, int setId)
     // only map the location to this set if it is not already mapped
     // or if it is mapped to a set with less accuracy
     bool moreAccurate = false;
-    std::map<OA_ptr<Location>,int>::iterator mapIter;
-    for (mapIter=mLocToIdMap.begin(); mapIter!=mLocToIdMap.end(); mapIter++) {
-        OA_ptr<Location> mappedLoc = mapIter->first;
-        if (mappedLoc == pLoc 
-            && mIdToSetStatusMap[mapIter->second]==MUSTALIAS)
-        {
-            moreAccurate = true;
-        }
+    if (mLocToIdMap.find(pLoc)!=mLocToIdMap.end() 
+        && mIdToSetStatusMap[mLocToIdMap[pLoc]]==MUSTALIAS)
+    {
+        moreAccurate = true;
     }
     if (!moreAccurate) {
         mLocToIdMap[pLoc] = setId;
     }
+}
+
+OA_ptr<std::map<int,OA_ptr<LocSet> > > AliasMap::getIdToLocSetMap()
+{
+   OA_ptr<std::map<int, OA_ptr<LocSet> > > retVal;
+   retVal = new std::map<int, OA_ptr<LocSet> >;
+
+   OA_ptr<IdIterator> idIterPtr = getIdIterator();
+   for ( ; idIterPtr->isValid(); ++(*idIterPtr) ) {
+     int i = idIterPtr->current();
+     (*retVal)[i] = new LocSet;
+     OA_ptr<LocIterator> locIterPtr = getLocIterator(i);
+     for (; locIterPtr->isValid(); (*locIterPtr)++ ) {
+       OA_ptr<Location> loc = (locIterPtr->current());
+       (*retVal)[i]->insert(loc);
+     }
+   }
+
+   return retVal;
 }
 
 /*! 
@@ -672,7 +933,8 @@ void AliasMap::remapMemRefs(int oldSetId, int newSetId)
     for (mrIter = mIdToMemRefSetMap[oldSetId].begin();
          mrIter != mIdToMemRefSetMap[oldSetId].end(); mrIter++ )
     {
-        mMemRefToIdMap[*mrIter] = newSetId;
+        mMemRefToIdMap[*mrIter].erase(oldSetId);
+        mMemRefToIdMap[*mrIter].insert(newSetId);
         mIdToMemRefSetMap[newSetId].insert(*mrIter);
     }
     // then the MemRefExprs
@@ -687,26 +949,81 @@ void AliasMap::remapMemRefs(int oldSetId, int newSetId)
     ////// move last alias map set to the old spot
     int lastSetId = mStartId+mNumSets-1;
 
-    // move  the MemRefHandles
-    mIdToMemRefSetMap[oldSetId] = mIdToMemRefSetMap[lastSetId];
-    for (mrIter = mIdToMemRefSetMap[oldSetId].begin();
-         mrIter != mIdToMemRefSetMap[oldSetId].end(); mrIter++ )
-    {
-        mMemRefToIdMap[*mrIter] = oldSetId;
+    if ( lastSetId != oldSetId ) {
+       // move  the MemRefHandles
+       mIdToMemRefSetMap[oldSetId] = mIdToMemRefSetMap[lastSetId];
+       for (mrIter = mIdToMemRefSetMap[oldSetId].begin();
+            mrIter != mIdToMemRefSetMap[oldSetId].end(); mrIter++ )
+       {
+           mMemRefToIdMap[*mrIter].erase(lastSetId);
+           mMemRefToIdMap[*mrIter].insert(oldSetId);
+       }
+
+       // move  the MemRefExprs
+       mIdToMRESetMap[oldSetId] = mIdToMRESetMap[lastSetId];
+       for (mreIter = mIdToMRESetMap[oldSetId].begin();
+            mreIter != mIdToMRESetMap[oldSetId].end(); mreIter++ )
+       {
+           mMREToIdMap[*mreIter] = oldSetId;
+       }
+
+       mIdToSetStatusMap[oldSetId] = mIdToSetStatusMap[lastSetId];
     }
 
-    // move  the MemRefExprs
-    mIdToMRESetMap[oldSetId] = mIdToMRESetMap[lastSetId];
-    for (mreIter = mIdToMRESetMap[oldSetId].begin();
-         mreIter != mIdToMRESetMap[oldSetId].end(); mreIter++ )
-    {
-        mMREToIdMap[*mreIter] = oldSetId;
+    // any locations which point to the oldSetId should now
+    // reference the newSetId
+    LocSetIterator oldLocIter(mIdToLocSetMap[oldSetId]);
+    for (; oldLocIter.isValid(); ++oldLocIter) {
+        OA_ptr<Location> loc = oldLocIter.current();
+        mLocToIdMap[loc] = newSetId;
     }
-    
+
+    if ( lastSetId != oldSetId ) {
+       // any locations which point to the lastSetId should now
+       // reference the oldSetId. 
+       // NB:  this loop can not proceed the previous.
+      if ( !mIdToLocSetMap[lastSetId].ptrEqual(0)) {
+        LocSetIterator lastLocIter(mIdToLocSetMap[lastSetId]);
+        for (; lastLocIter.isValid(); ++lastLocIter) {
+          OA_ptr<Location> loc = lastLocIter.current();
+          mLocToIdMap[loc] = oldSetId;
+        }
+      }
+    }
+
+    // remove the lastSetId from the various maps; it has been
+    // moved to oldSetId.
+    mIdToLocSetMap.erase(lastSetId);
+    mIdToSetStatusMap.erase(lastSetId);
+    mIdToMemRefSetMap.erase(lastSetId);
+    mIdToMRESetMap.erase(lastSetId);
 
     // reduce the number of sets
     mNumSets--;
+}
 
+//! assign the UnknownLoc to the given alias map set and remove
+//! all other locations from this set.
+void AliasMap::mapToUnknown(int setId)
+{
+    // remove any locations which point to the setId.
+    LocSetIterator oldLocIter(mIdToLocSetMap[setId]);
+    for (; oldLocIter.isValid(); ++oldLocIter) {
+        OA_ptr<Location> loc = oldLocIter.current();
+        mLocToIdMap.erase(loc);
+    }
+
+    // Remove any locations to which setId pointed.
+    mIdToLocSetMap.erase(setId);
+
+    // And establish that it only points to one location, UnknownLoc.
+    OA_ptr<Location> loc;
+    loc = dynamic_cast<Location*>(new UnknownLoc());
+    mIdToLocSetMap[setId] = new LocSet;
+    mIdToLocSetMap[setId]->insert( loc );
+
+    // Change the status of the map to MAYALIAS, as appropriate for unknown.
+    mIdToSetStatusMap[setId] = MAYALIAS;
 }
 
 //! associate a MemRefHandle with the given mapset,
@@ -714,13 +1031,7 @@ void AliasMap::remapMemRefs(int oldSetId, int newSetId)
 //! in the mapset, if only one full location then is a must access
 void AliasMap::mapMemRefToMapSet(MemRefHandle ref, int setId)
 {
-    // should not be mapping the same MemRefHandle 
-    // to a different setId than previously mapped without
-    // handling associated MemRefExprs as well
-    int currSetId = getMapSetId(ref);
-    assert(currSetId==SET_ID_NONE || currSetId==setId);
-
-    mMemRefToIdMap[ref] = setId;
+    mMemRefToIdMap[ref].insert(setId);
     mIdToMemRefSetMap[setId].insert(ref);
 }
 
@@ -729,53 +1040,125 @@ void AliasMap::mapMemRefToMapSet(MemRefHandle ref, int setId)
 //! in the mapSet
 void AliasMap::mapMemRefToMapSet(OA_ptr<MemRefExpr> ref, int setId)
 {
-    // should not be mapping the same MemRefExpr 
-    // to a different setId than previously mapped
-    // without handling associated MemRefHandles as well
-    int currSetId = getMapSetId(ref);
-    assert(currSetId==SET_ID_NONE || currSetId==setId);
-
     if (!ref.ptrEqual(0)) { 
         mMREToIdMap[ref] = setId; 
         mIdToMRESetMap[setId].insert(ref);
     }
 }
 
-void AliasMap::output(OA_ptr<IRHandlesIRInterface> ir)
+//! remove all the InvisibleLocs from the specificed set
+void AliasMap::removeInvisibleLocs(int setId)
 {
-    sOB->objStart("AliasMap");
+    // check that a location set exists for this setId
+    if (!mIdToLocSetMap[setId].ptrEqual(0)) {
+       
+        // also if there are other locations in the set already 
+        // and they don't all fully overlap with this location
+        std::set<OA_ptr<Location> > removeSet;
+        LocSetIterator locIter(mIdToLocSetMap[setId]);
+        for (; locIter.isValid(); ++locIter) {
+            OA_ptr<Location> loc = locIter.current();
+            if (loc->isaInvisible()) {
+                removeSet.insert(loc);
+            }
+        }
 
-    sOB->fieldStart("mProcHandle");
-    sOB->outputIRHandle(mProcHandle,ir);
-    sOB->fieldEnd("mProcHandle");
-    
-    sOB->field("mNumSets",int2string(mNumSets));
-
-    sOB->field("mStartId",int2string(mStartId));
-
-    sOB->mapStart("mIdToLocSetMap", "id", "locset");
-    OA_ptr<IdIterator> idIterPtr = getIdIterator();
-    for ( ; idIterPtr->isValid(); ++(*idIterPtr) ) {
-      sOB->mapEntryStart();
-      int i = idIterPtr->current();
-      sOB->mapKey(int2string(i));
-      sOB->mapValueStart();
-      sOB->listStart();
-      OA_ptr<LocIterator> locIterPtr = getLocIterator(i);
-      for (; locIterPtr->isValid(); (*locIterPtr)++ ) {
-        sOB->listItemStart();
-        OA_ptr<Location> loc = (locIterPtr->current());
-        loc->output(ir);
-        sOB->listItemEnd();
-      }
-      sOB->listEnd();
-      sOB->mapValueEnd();
-      sOB->mapEntryStart();
+        for (std::set<OA_ptr<Location> >::iterator setIter = removeSet.begin();
+             setIter!=removeSet.end(); setIter++ )
+        {
+            mIdToLocSetMap[setId]->erase(*setIter);
+        }
     }
-    sOB->mapEnd("mIdToLocSetMap");
-
-    sOB->objEnd("AliasMap");
 }
+
+/*********************************************************************/
+
+//! remove the specific Inv
+//! MREs are compared.
+void AliasMap::removeInvisibleLocs(int setId, OA_ptr<MemRefExpr> inv_memref)
+{
+     std::set<OA_ptr<Location> > removeSet;
+     LocSetIterator locIter(mIdToLocSetMap[setId]);
+
+     if (debug) { 
+         std::cout << "AliasMap::removeInvisibleLocs" << std::endl;
+         std::cout << "\tmIdToLocSetMap[" << setId << "]->size() = "
+                   << mIdToLocSetMap[setId]->size() << std::endl;
+     }
+     
+     for (; locIter.isValid(); ++locIter) {
+          OA_ptr<Location> loc = locIter.current(); 
+          if (loc->isaInvisible()) {
+               OA_ptr<InvisibleLoc>  temp_inv_loc 
+                         = loc.convert<InvisibleLoc>();
+
+               OA_ptr<MemRefExpr> loc_memref 
+                         = temp_inv_loc->getMemRefExpr();
+
+               if(inv_memref == loc_memref) {
+                   removeSet.insert(loc);
+               }
+          }
+     }
+     if (debug) {
+         std::cout << "\tremoveSet.size() = " << removeSet.size() << std::endl;
+     }
+
+     for (std::set<OA_ptr<Location> >::iterator setIter = removeSet.begin();
+             setIter!=removeSet.end(); setIter++ )
+     {
+        OA_ptr<Location> loc = *setIter;
+        if (debug) {
+            std::cout << "\terasing invisible loc = " << std::endl;
+            loc->dump(std::cout);
+        }
+        mIdToLocSetMap[setId]->erase(*setIter);
+     }
+}
+
+
+void AliasMap::removeBaseLoc(OA_ptr<Location> baseLoc, int setId)
+{
+     std::set<OA_ptr<Location> > removeSet;
+     LocSetIterator locIter(mIdToLocSetMap[setId]);
+
+     for (; locIter.isValid(); ++locIter) {
+          OA_ptr<Location> loc = locIter.current();
+          if( loc == baseLoc ) {
+              removeSet.insert(loc);
+          }     
+     }
+ 
+     for (std::set<OA_ptr<Location> >::iterator setIter = removeSet.begin();
+              setIter!=removeSet.end(); setIter++ )
+     {
+            mIdToLocSetMap[setId]->erase(*setIter);
+     }
+}
+
+
+//! for location with fullAccuracy, check if there exists another
+//! location with partial Accuracy in the mIdToLocSetMap.
+bool AliasMap::isPartial(int setId, OA_ptr<MemRefExpr> inv_memref)
+{
+     LocSetIterator locIter(mIdToLocSetMap[setId]);
+     for (; locIter.isValid(); ++locIter) {
+            OA_ptr<Location> loc = locIter.current();
+            if (loc->isaInvisible()) {
+                OA_ptr<InvisibleLoc>  temp_inv_loc =
+                             loc.convert<InvisibleLoc>();
+                OA_ptr<MemRefExpr> loc_memref = 
+                             temp_inv_loc->getMemRefExpr();
+                if(inv_memref == loc_memref) {
+                   return true;
+                }
+             }
+     }
+     return false;
+}
+
+/***********************************************************************/
+
 
 //! incomplete output of info for debugging 
 //! may also include non-persistent handle values
@@ -804,7 +1187,15 @@ void AliasMap::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir)
     for (; memIterPtr->isValid(); (*memIterPtr)++) {
       MemRefHandle memref = memIterPtr->current();
       os << "(" << memref.hval() << ") " << ir->toString(memref);
-      os << " --> " << getMapSetId(memref) << std::endl;
+      os << " --> [";
+
+      OA_ptr<std::set<int> > ids = getMapSetIds(memref);
+      std::set<int>::iterator it;
+      for(it = ids->begin(); it != ids->end(); ++it) {
+        os << *it << " ";
+      }
+      os << "]" << std::endl;
+
     }
  
 }

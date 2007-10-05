@@ -6,23 +6,24 @@
   \authors Michelle Strout
   \version $Id: InterUseful.hpp,v 1.2 2005/06/10 02:32:02 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef InterUseful_H
 #define InterUseful_H
 
 #include <OpenAnalysis/Activity/UsefulStandard.hpp>
+#include <OpenAnalysis/OABase/Annotation.hpp>
 #include <map>
 
 namespace OA {
   namespace Activity {
 
-class InterUseful {
+    class InterUseful : public virtual Annotation {
   public:
     InterUseful() { mNumIter = 0; }
     virtual ~InterUseful() {}
@@ -61,6 +62,36 @@ class InterUseful {
       }
 
     
+
+    //*****************************************************************
+    // Annotation Interface
+    //*****************************************************************
+    void output(IRHandlesIRInterface &ir) {
+
+      sOutBuild->objStart("InterUseful"); {
+        sOutBuild->mapStart("mProcToUsefulMap","ProcHandle","UsefulStandard");
+        std::map<ProcHandle,OA_ptr<UsefulStandard> >::iterator mapIter;
+        for (mapIter=mProcToUsefulMap.begin();
+             mapIter!=mProcToUsefulMap.end();
+             mapIter++)
+          {
+            ProcHandle proc = mapIter->first;
+            OA_ptr<UsefulStandard> results = mapIter->second;
+
+            sOutBuild->mapEntryStart(); {
+              sOutBuild->mapKeyStart(); {
+                sOutBuild->outputIRHandle(proc,ir);
+              } sOutBuild->mapKeyEnd();
+              sOutBuild->mapValueStart(); {
+                results->output(ir);
+              } sOutBuild->mapValueEnd();
+            } sOutBuild->mapEntryEnd();
+          }
+        sOutBuild->mapEnd("mProcToUsefulMap");
+      } sOutBuild->objEnd("InterUseful");
+
+    }
+
     //*****************************************************************
     // Construction methods 
     //*****************************************************************

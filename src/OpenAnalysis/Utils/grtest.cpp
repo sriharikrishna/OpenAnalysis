@@ -5,8 +5,9 @@
   \authors Arun Chauhan (2001 was part of Mint), Michelle Strout
   \version $Id: grtest.cpp,v 1.4 2004/11/19 19:21:53 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */

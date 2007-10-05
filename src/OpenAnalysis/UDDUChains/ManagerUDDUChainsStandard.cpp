@@ -5,11 +5,11 @@
   \authors Michelle Strout
   \version $Id: ManagerUDDUChainsStandard.cpp,v 1.21 2005/03/17 21:47:47 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "ManagerUDDUChainsStandard.hpp"
@@ -21,14 +21,17 @@ bool debug = false;
 
 /*!
 */
-ManagerStandard::ManagerStandard(OA_ptr<UDDUChainsIRInterface> _ir) : mIR(_ir) 
+
+ManagerUDDUChainsStandard::ManagerUDDUChainsStandard(OA_ptr<UDDUChainsIRInterface> _ir) : mIR(_ir) 
 {
+ OA_DEBUG_CTRL_MACRO("DEBUG_ManagerUDDUChainsStandard:ALL", debug);
 }
 
 
 /*!
 */
-OA_ptr<UDDUChainsStandard> ManagerStandard::performAnalysis(ProcHandle proc, 
+
+OA_ptr<UDDUChainsStandard> ManagerUDDUChainsStandard::performAnalysis(ProcHandle proc, 
         OA_ptr<Alias::Interface> alias, OA_ptr<ReachDefs::Interface> reachDefs,
         OA_ptr<SideEffect::InterSideEffectInterface> interSE)
 {
@@ -135,7 +138,7 @@ OA_ptr<UDDUChainsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
           // must or may defines from procedure calls
           OA_ptr<IRCallsiteIterator> callsiteItPtr = mIR->getCallsites(reachStmt);
           for ( ; callsiteItPtr->isValid(); ++(*callsiteItPtr)) {
-            ExprHandle expr = callsiteItPtr->current();
+            CallHandle expr = callsiteItPtr->current();
 
             OA_ptr<LocIterator> locIterPtr;
       
@@ -183,7 +186,7 @@ OA_ptr<UDDUChainsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
     // loop over uses due to function calls in this statement
     OA_ptr<IRCallsiteIterator> callsiteItPtr = mIR->getCallsites(stmt);
     for ( ; callsiteItPtr->isValid(); ++(*callsiteItPtr)) {
-      ExprHandle expr = callsiteItPtr->current();
+      CallHandle expr = callsiteItPtr->current();
 
       // USE
       OA_ptr<LocIterator> locIterPtr;
@@ -191,6 +194,8 @@ OA_ptr<UDDUChainsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
       for ( ; locIterPtr->isValid(); (*locIterPtr)++) {
         mayUseCountForStmt++;
         OA_ptr<Location> useLoc= locIterPtr->current();
+
+        int mustCountForUse=0;
 
         // for each reaching definition
         OA_ptr<ReachDefs::Interface::ReachDefsIterator> rdIterPtr 
@@ -232,7 +237,7 @@ OA_ptr<UDDUChainsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
           // must or may defines from procedure calls
           OA_ptr<IRCallsiteIterator> callsiteItPtr = mIR->getCallsites(reachStmt);
           for ( ; callsiteItPtr->isValid(); ++(*callsiteItPtr)) {
-            ExprHandle expr = callsiteItPtr->current();
+            CallHandle expr = callsiteItPtr->current();
 
             OA_ptr<LocIterator> locIterPtr;
       
@@ -253,11 +258,21 @@ OA_ptr<UDDUChainsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
               }
               if (modLoc->mustOverlap(*useLoc)) {
                 mustCountForStmt++;
+                mustCountForUse++;
               }
             } // loop over locations modified by callsite
           } // loop over callsites in reachstmt
 
         } // loop over reaching statements
+
+        if (mustCountForUse==0) {
+           if (debug) { std::cout << "line 169, inserting ";
+              std::cout << "reachStmt = StmtHandle(0)";
+              std::cout << ", stmt = " << mIR->toString(stmt);
+              std::cout << std::endl;
+           }
+           aUDDUChains->insertDefUse(StmtHandle(0),stmt);
+        }
 
       } // loop over uses in callsite
     } // loop over callsites
@@ -327,8 +342,28 @@ OA_ptr<UDDUChainsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
           aUDDUChains->insertMemRefDefStmtUse(def,StmtHandle(0));
           aUDDUChains->insertDefUse(reachStmt,StmtHandle(0));
         // determine if this is a reference parameter
-        } else if (loc->isaNamed()) {
-          OA_ptr<NamedLoc> nloc = loc.convert<NamedLoc>();
+        } else if(loc->isaInvisible()) {
+            /*OA_ptr<InvisibleLoc> nloc = loc.convert<InvisibleLoc>();
+            OA_ptr<MemRefExpr> mre = nloc->getMemRefExpr();
+            OA_ptr<RefOp> refop;
+            if(mre->isaRefOp()) {
+                 aUDDUChains->insertDefUse(reachStmt,StmtHandle(0));
+                 aUDDUChains->insertMemRefDefStmtUse(def,StmtHandle(0));
+            } else{
+                assert(0);
+            }
+            */
+
+            aUDDUChains->insertDefUse(reachStmt,StmtHandle(0));
+            aUDDUChains->insertMemRefDefStmtUse(def,StmtHandle(0));
+
+        }// else if (loc->isaNamed()) {
+         // OA_ptr<NamedLoc> nloc = loc.convert<NamedLoc>();
+         // assert(0); // MMS 8/9/06, need to revamp without isRefParam
+
+          /*! temporarily commented out by PLM 08/22/06.
+           * This functionality is deprecated and I am not sure how to
+           * replace this: need to ask Michelle
           if (mIR->isRefParam(nloc->getSymHandle())) {
             if (debug) { std::cout << "line 325, inserting ";
               std::cout << "reachStmt = " << mIR->toString(reachStmt);
@@ -338,8 +373,9 @@ OA_ptr<UDDUChainsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
             }
             aUDDUChains->insertDefUse(reachStmt,StmtHandle(0));
             aUDDUChains->insertMemRefDefStmtUse(def,StmtHandle(0));
-          }
-        }
+//          }
+          */
+       // }
           
       }
     }
@@ -347,7 +383,7 @@ OA_ptr<UDDUChainsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
     // must or may defines from procedure calls
     OA_ptr<IRCallsiteIterator> callsiteItPtr = mIR->getCallsites(reachStmt);
     for ( ; callsiteItPtr->isValid(); ++(*callsiteItPtr)) {
-      ExprHandle expr = callsiteItPtr->current();
+      CallHandle expr = callsiteItPtr->current();
 
       OA_ptr<LocIterator> locIterPtr;
       
@@ -363,6 +399,10 @@ OA_ptr<UDDUChainsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
           }
           aUDDUChains->insertDefUse(reachStmt,StmtHandle(0));
         }
+         else if(modLoc->isaInvisible()) {
+            aUDDUChains->insertDefUse(reachStmt,StmtHandle(0));
+
+        }
       }
     }
   }
@@ -376,7 +416,7 @@ OA_ptr<UDDUChainsStandard> ManagerStandard::performAnalysis(ProcHandle proc,
 /*! Determines whether the given location is definitely referenced by the given
     memory reference.
 */
-bool ManagerStandard::locMustAliasMemRef(OA_ptr<Alias::Interface> alias,
+bool ManagerUDDUChainsStandard::locMustAliasMemRef(OA_ptr<Alias::Interface> alias,
                                         OA_ptr<Location> loc,
                                         MemRefHandle memref)
 {
@@ -395,7 +435,7 @@ bool ManagerStandard::locMustAliasMemRef(OA_ptr<Alias::Interface> alias,
 /*! Determines whether the given location can be referenced by the given
     memory reference.
 */
-bool ManagerStandard::locMayAliasMemRef(OA_ptr<Alias::Interface> alias,
+bool ManagerUDDUChainsStandard::locMayAliasMemRef(OA_ptr<Alias::Interface> alias,
                                         OA_ptr<Location> loc,
                                         MemRefHandle memref)
 {

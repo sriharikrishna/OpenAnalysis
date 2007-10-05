@@ -5,30 +5,28 @@
   \authors Michelle Strout
   \version $Id: ManagerICFGDep.cpp,v 1.2 2005/06/10 02:32:02 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "ManagerICFGDep.hpp"
+#include <Utils/Util.hpp>
 
 
 namespace OA {
   namespace Activity {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_ManagerICFGDep)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
 
 
 /*!
 */
 ManagerICFGDep::ManagerICFGDep(OA_ptr<ActivityIRInterface> _ir) : mIR(_ir)
 {
+    OA_DEBUG_CTRL_MACRO("DEBUG_ManagerICFGDep:ALL", debug);
     mSolver = new DataFlow::ICFGDFSolver(DataFlow::ICFGDFSolver::Forward,*this);
 }
 
@@ -37,9 +35,10 @@ ManagerICFGDep::ManagerICFGDep(OA_ptr<ActivityIRInterface> _ir) : mIR(_ir)
     In transfer function creates a DepDFSet for each stmt.
 */
 OA_ptr<ICFGDep> ManagerICFGDep::performAnalysis(
-                    OA_ptr<ICFG::ICFGStandard> icfg,
+                    OA_ptr<ICFG::ICFGInterface> icfg,
                     OA_ptr<DataFlow::ParamBindings> paramBind,
-                    OA_ptr<Alias::InterAliasInterface> interAlias)
+                    OA_ptr<Alias::InterAliasInterface> interAlias,
+                    DataFlow::DFPImplement algorithm)
 {
   if (debug) {
     std::cout << "In ManagerICFGDep::performAnalysis" << std::endl;
@@ -52,7 +51,7 @@ OA_ptr<ICFGDep> ManagerICFGDep::performAnalysis(
   mInterAlias = interAlias;
   
   // call iterative data-flow solver for ICFG
-  mSolver->solve(icfg);
+  mSolver->solve(icfg,algorithm);
 
   return mDep;
 
@@ -76,13 +75,13 @@ ManagerICFGDep::initializeTop()
    Not doing anything special at entries and exits.
  */
 OA_ptr<DataFlow::DataFlowSet> 
-ManagerICFGDep::initializeNodeIN(OA_ptr<ICFG::ICFGStandard::Node> n)
+ManagerICFGDep::initializeNodeIN(OA_ptr<ICFG::NodeInterface> n)
 {
     return initializeTop();
 }
 
 OA_ptr<DataFlow::DataFlowSet> 
-ManagerICFGDep::initializeNodeOUT(OA_ptr<ICFG::ICFGStandard::Node> n)
+ManagerICFGDep::initializeNodeOUT(OA_ptr<ICFG::NodeInterface> n)
 {
     return initializeTop();
 }
@@ -111,7 +110,7 @@ ManagerICFGDep::transfer(ProcHandle proc,
                          OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt) 
 {
     if (debug) {
-        std::cout << "In transfer, stmt(hval=" << stmt.hval() << ")= ";
+        std::cout << "\tIn transfer, stmt(hval=" << stmt.hval() << ")= ";
         mIR->dump(stmt,std::cout);
     }
 
@@ -130,11 +129,11 @@ ManagerICFGDep::transfer(ProcHandle proc,
     // set of expressions to analyze for differentiable uses
     std::set<ExprHandle> exprSet;
 
-    // iterate over memref = expr pairs if this is an EXPR_STMT
-    OA::Activity::IRStmtType sType = mIR->getActivityStmtType(stmt);
-    if (sType==EXPR_STMT) {
-        OA_ptr<ExprStmtPairIterator> espIterPtr 
-            = mIR->getExprStmtPairIterator(stmt);
+    OA_ptr<AssignPairIterator> espIterPtr 
+            = mIR->getAssignPairIterator(stmt);
+    
+    if(!espIterPtr.ptrEqual(0)) {
+        
         for ( ; espIterPtr->isValid(); ++(*espIterPtr)) {
             // unbundle pair
             MemRefHandle mref = espIterPtr->currentTarget();
@@ -156,50 +155,62 @@ ManagerICFGDep::transfer(ProcHandle proc,
             // keep track of def mustlocs
             OA_ptr<LocIterator> locIterPtr = alias->getMustLocs(mref);
             for ( ; locIterPtr->isValid(); (*locIterPtr)++ ) {
+              if (debug) {
+                std::cout << "Inserting into mustDefSet: ";
+                (locIterPtr->current())->output(*mIR);
+                std::cout << std::endl;
+              }
                 mustDefSet.insert(locIterPtr->current());
-                mDep->mapLocToMemRefSet(locIterPtr->current(), mref);
-                mDep->mapLocToStmtSet(locIterPtr->current(), stmt);
             }
             // maylocs need to be used for Dep pairs so that we get
             // conservative activity results
             locIterPtr = alias->getMayLocs(mref);
             for ( ; locIterPtr->isValid(); (*locIterPtr)++ ) {
+              if (debug) {
+                std::cout << "Inserting into mayDefSet: ";
+                (locIterPtr->current())->output(*mIR);
+                std::cout << std::endl;
+              }
                 mayDefSet.insert(locIterPtr->current());
-                mDep->mapLocToMemRefSet(locIterPtr->current(), mref);
-                mDep->mapLocToStmtSet(locIterPtr->current(), stmt);
             }
         }
     
     // all other statement types just get all uses and defs
     } else {
         if (debug) {
-            std::cout << "\tstmt is not EXPR_STMT, stmt = ";
+            std::cout << "\tstmt is not EXPR_STMT, stmt = "
+                      << mIR->toString(stmt) << std::endl;
         }
     
         OA_ptr<MemRefHandleIterator> mrIterPtr = mIR->getUseMemRefs(stmt);
+        
         for (; mrIterPtr->isValid(); (*mrIterPtr)++ ) {
             MemRefHandle mref = mrIterPtr->current();
+            if (debug) {
+              std::cout << "getting mayLocs for memrefHandle: "
+                        << mIR->toString(mref) << std::endl;
+            }
             OA_ptr<LocIterator> locIterPtr = alias->getMayLocs(mref);
             for ( ; locIterPtr->isValid(); (*locIterPtr)++ ) {
+              if (debug) {
+                std::cout << "Inserting into diffUseSet: ";
+                (locIterPtr->current())->output(*mIR);
+                std::cout << std::endl;
+              }
                 diffUseSet.insert(locIterPtr->current());
-                mDep->mapLocToMemRefSet(locIterPtr->current(), mref);
-                mDep->mapLocToStmtSet(locIterPtr->current(), stmt);
             }
         }
+        
         mrIterPtr = mIR->getDefMemRefs(stmt);
         for (; mrIterPtr->isValid(); (*mrIterPtr)++ ) {
             MemRefHandle mref = mrIterPtr->current();
             OA_ptr<LocIterator> locIterPtr = alias->getMustLocs(mref);
             for ( ; locIterPtr->isValid(); (*locIterPtr)++ ) {
                 mustDefSet.insert(locIterPtr->current());
-                mDep->mapLocToMemRefSet(locIterPtr->current(), mref);
-                mDep->mapLocToStmtSet(locIterPtr->current(), stmt);
             }
             locIterPtr = alias->getMayLocs(mref);
             for ( ; locIterPtr->isValid(); (*locIterPtr)++ ) {
                 mayDefSet.insert(locIterPtr->current());
-                mDep->mapLocToMemRefSet(locIterPtr->current(), mref);
-                mDep->mapLocToStmtSet(locIterPtr->current(), stmt);
             }
         }
     }
@@ -209,43 +220,19 @@ ManagerICFGDep::transfer(ProcHandle proc,
     // reference parameters
     OA_ptr<IRCallsiteIterator> callsiteItPtr = mIR->getCallsites(stmt);
     for ( ; callsiteItPtr->isValid(); ++(*callsiteItPtr)) {
-        ExprHandle call = callsiteItPtr->current();
+        CallHandle call = callsiteItPtr->current();
         if (debug) {
           std::cout << "\nhandling all callsite params, ";
           std::cout << "call = " << mIR->toString(call) << std::endl;
         }
 
-        // looping over actual params
+        // looping over actual params 
         OA_ptr<IRCallsiteParamIterator> cspIterPtr 
-            = mIR->getCallsiteParams(call);
-        for ( ; cspIterPtr->isValid(); ++(*cspIterPtr)) {
-            ExprHandle param = cspIterPtr->current();
-
-            // determine if dealing with a reference parameter
-            bool isRefParam = false;
-            OA_ptr<ExprTree> eTreePtr = mIR->getExprTree(param);
-            EvalToMemRefVisitor evalVisitor;
-            eTreePtr->acceptVisitor(evalVisitor);
-            if (debug) { eTreePtr->dump(std::cout,mIR); }
-            if ( evalVisitor.isMemRef() ) {
-                MemRefHandle memref = evalVisitor.getMemRef();
-                if (mParamBind->isRefParam(
-                        mParamBind->getCalleeFormal(call,memref)) )
-                {
-                  isRefParam = true;
-                }
-            }
-
-            // record expr for those that aren't reference parameters
-            if (isRefParam==false) {
-                exprSet.insert(param);
-                if (debug) { 
-                    std::cout << "Inserting param expr into exprSet" 
-                              << std::endl;
-                    eTreePtr->dump(std::cout,mIR); 
-                }
-            } 
-        }
+          = mIR->getCallsiteParams(call); 
+        for ( ; cspIterPtr->isValid(); ++(*cspIterPtr)) { 
+          ExprHandle param = cspIterPtr->current(); 
+          exprSet.insert(param); 
+        } 
     }
 
     // get differentiable locations from all expressions in stmt
@@ -258,7 +245,15 @@ ManagerICFGDep::transfer(ProcHandle proc,
         etree->acceptVisitor(dlVisitor);
         OA_ptr<LocIterator> locIterPtr 
             = dlVisitor.getDiffLocsIterator();
+        if (debug) {
+          std::cout << "getting diffLocsIterator\n";
+        }
         for ( ; locIterPtr->isValid(); (*locIterPtr)++ ) {
+          if (debug) {
+            std::cout << "Inserting into diffUseSet: ";
+            (locIterPtr->current())->output(*mIR);
+            std::cout << std::endl;
+          }
             diffUseSet.insert(locIterPtr->current());
         }
     }
@@ -283,9 +278,6 @@ ManagerICFGDep::transfer(ProcHandle proc,
 
     // map stmtDepDFSet to stmt in depResults
     mDep->mapStmtToDeps(stmt, stmtDepDFSet);
-
-    // map ProcHandle to stmt in depResults
-    mDep->mapStmtToProc(stmt, proc);
 
     return in;
 }

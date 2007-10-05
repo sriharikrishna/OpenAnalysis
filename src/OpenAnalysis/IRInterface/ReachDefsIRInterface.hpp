@@ -5,16 +5,17 @@
   \authors Michelle Strout
   \version $Id: ReachDefsIRInterface.hpp,v 1.10 2004/11/19 19:21:51 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
+
 
   The source IR will be responsible for ...
 
   Preliminary version of this interface so that Nathan can implement
   getVisibleSymIterator.
-
 */
 
 #ifndef ReachDefsIRInterface_h
@@ -25,6 +26,8 @@
 #include <string>
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
 #include <OpenAnalysis/IRInterface/IRHandles.hpp>
+#include <OpenAnalysis/IRInterface/AssignPairIterator.hpp>
+#include <OpenAnalysis/ExprTree/ExprTree.hpp>
 
 namespace OA {
   namespace ReachDefs {
@@ -65,9 +68,13 @@ class ReachDefsIRInterface : public virtual IRHandlesIRInterface {
   //! Return a list of all the target memory reference handles that appear
   //! in the given statement.
   virtual OA_ptr<MemRefHandleIterator> getDefMemRefs(StmtHandle stmt) = 0;
+
+  virtual OA_ptr<MemRefHandleIterator> getUseMemRefs(StmtHandle stmt) = 0;
   
   //! Return an iterator over all of the callsites in a given stmt
   virtual OA_ptr<IRCallsiteIterator> getCallsites(StmtHandle h) = 0;
+
+  virtual OA_ptr<ExprTree> getExprTree(ExprHandle h) = 0;
 
 };  
 

@@ -5,22 +5,20 @@
   \author Michelle Strout
   \version $Id: DepStandard.cpp,v 1.8 2005/06/10 02:32:02 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
 
 #include "DepStandard.hpp"
+#include <Utils/Util.hpp>
 
 namespace OA {
   namespace Activity {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_DepStandard)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
 
 
 //*****************************************************************
@@ -34,6 +32,7 @@ static bool debug = false;
 OA_ptr<LocIterator> 
 DepStandard::getMayDefIterator(StmtHandle stmt, const OA_ptr<Location> use)
 {
+    OA_DEBUG_CTRL_MACRO("DEBUG_DepStandard:ALL", debug);
     if (mDepDFSet[stmt].ptrEqual(0)) {
         mDepDFSet[stmt] = new DepDFSet;
     }

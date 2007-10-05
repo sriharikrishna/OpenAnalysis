@@ -6,8 +6,9 @@
            Port from 'Classic OpenAnalysis' to OpenAnalysis by Nathan Tallent
   \version $Id: DomTree.hpp,v 1.4 2005/04/14 20:04:22 eraxxon Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -29,7 +30,7 @@
 
 // OpenAnalysis headers
 #include <OpenAnalysis/Utils/Tree.hpp>
-#include <OpenAnalysis/Utils/DGraph/Interface.hpp>
+#include <OpenAnalysis/Utils/DGraph/DGraphInterface.hpp>
 
 //---------------------------------------------------------------------------
 
@@ -44,10 +45,10 @@ public:
   //-------------------------------------------------------------------------
   class Node : public Tree::Node {
   public:
-    Node(OA_ptr<DGraph::Interface::Node> n) : Tree::Node() 
+    Node(OA_ptr<DGraph::NodeInterface> n) : Tree::Node() 
       { graph_node_ptr = n; }
     ~Node() {}
-    OA_ptr<DGraph::Interface::Node> getGraphNode() { return graph_node_ptr; }
+    OA_ptr<DGraph::NodeInterface> getGraphNode() { return graph_node_ptr; }
 
     OA_ptr<DomFrontIterator> getDomFrontIterator() { 
       OA_ptr<DomFrontIterator> it; it = new DomFrontIterator(*this);
@@ -72,7 +73,7 @@ public:
   private:
     typedef std::set<OA_ptr<Node> > DomFrontSet;
 
-    OA_ptr<DGraph::Interface::Node> graph_node_ptr;
+    OA_ptr<DGraph::NodeInterface> graph_node_ptr;
     DomFrontSet dom_front;
     friend class DomTree;
     friend class DomTree::DomFrontIterator;
@@ -97,17 +98,17 @@ public:
   //-------------------------------------------------------------------------
 
 public:
-  DomTree(OA_ptr<DGraph::Interface> graph);
+  DomTree(OA_ptr<DGraph::DGraphInterface> graph);
   ~DomTree() {}
 
-  OA_ptr<Node> domtree_node(OA_ptr<DGraph::Interface::Node> n) 
+  OA_ptr<Node> domtree_node(OA_ptr<DGraph::NodeInterface> n) 
     { return dom_tree_node[n]; }
   void compute_dominance_frontiers();
   void dump(std::ostream& os);
 
 private:
-  OA_ptr<DGraph::Interface> graph;
-  std::map<OA_ptr<DGraph::Interface::Node>, OA_ptr<Node> > dom_tree_node;
+  OA_ptr<DGraph::DGraphInterface> graph;
+  std::map<OA_ptr<DGraph::NodeInterface>, OA_ptr<Node> > dom_tree_node;
 };
 //---------------------------------------------------------------------------
 

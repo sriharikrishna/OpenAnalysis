@@ -12,11 +12,11 @@
              Tallent (merged RIFG and OARIFG)
   \version $Id: RIFG.hpp,v 1.4 2005/06/10 02:32:05 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef RepresentationIndependentFlowGraph_H
@@ -26,7 +26,7 @@
 #include <map>
 
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
-#include <OpenAnalysis/Utils/DGraph/Interface.hpp>
+#include <OpenAnalysis/Utils/DGraph/DGraphInterface.hpp>
 
 //***************************************************************************
 
@@ -55,14 +55,14 @@ public:
   static unsigned int NIL;
 
   
-  typedef std::map<NodeId, OA::OA_ptr<OA::DGraph::Interface::Node> > 
+  typedef std::map<NodeId, OA::OA_ptr<OA::DGraph::NodeInterface> > 
     IdToNodeMap_t;
-  typedef std::map<OA::OA_ptr<OA::DGraph::Interface::Node>, NodeId>
+  typedef std::map<OA::OA_ptr<OA::DGraph::NodeInterface>, NodeId>
     NodeToIdMap_t;
   
-  typedef std::map<EdgeId, OA::OA_ptr<OA::DGraph::Interface::Edge> > 
+  typedef std::map<EdgeId, OA::OA_ptr<OA::DGraph::EdgeInterface> > 
     IdToEdgeMap_t;
-  typedef std::map<OA::OA_ptr<OA::DGraph::Interface::Edge>, EdgeId>
+  typedef std::map<OA::OA_ptr<OA::DGraph::EdgeInterface>, EdgeId>
     EdgeToIdMap_t;
 
 public:
@@ -78,7 +78,7 @@ public:
     ~NodesIterator() { }
     
     RIFG::NodeId current() const {
-      OA::OA_ptr<OA::DGraph::Interface::Node> node = it->current();
+      OA::OA_ptr<OA::DGraph::NodeInterface> node = it->current();
       return rifg.getNodeId(node);
     }
     void operator++() { ++(*it); }
@@ -87,7 +87,7 @@ public:
     
   private:
     const RIFG& rifg;
-    OA_ptr<OA::DGraph::Interface::NodesIterator> it;
+    OA_ptr<OA::DGraph::NodesIteratorInterface> it;
   };
 
 
@@ -96,13 +96,13 @@ public:
     IncomingEdgesIterator(const RIFG& rifg_, RIFG::NodeId nid)
       : rifg(rifg_) 
     {
-      OA::OA_ptr<OA::DGraph::Interface::Node> n = rifg.getNode(nid);
+      OA::OA_ptr<OA::DGraph::NodeInterface> n = rifg.getNode(nid);
       it = n->getIncomingEdgesIterator();
     }
     ~IncomingEdgesIterator() { }
     
     RIFG::EdgeId current() const {
-      OA::OA_ptr<OA::DGraph::Interface::Edge> edge = it->current();
+      OA::OA_ptr<OA::DGraph::EdgeInterface> edge = it->current();
       return rifg.getEdgeId(edge);
     }
     void operator++() { ++(*it); }
@@ -112,7 +112,7 @@ public:
     
   private:
     const RIFG& rifg;
-    OA_ptr<OA::DGraph::Interface::IncomingEdgesIterator> it;
+    OA_ptr<OA::DGraph::EdgesIteratorInterface> it;
   };
 
 
@@ -121,13 +121,13 @@ public:
     OutgoingEdgesIterator(const RIFG& rifg_, RIFG::NodeId nid) 
       : rifg(rifg_) 
     {
-      OA::OA_ptr<OA::DGraph::Interface::Node> n = rifg.getNode(nid);
+      OA::OA_ptr<OA::DGraph::NodeInterface> n = rifg.getNode(nid);
       it = n->getOutgoingEdgesIterator();
     }
     ~OutgoingEdgesIterator() { }
     
     RIFG::EdgeId current() const {
-      OA::OA_ptr<OA::DGraph::Interface::Edge> edge = it->current();
+      OA::OA_ptr<OA::DGraph::EdgeInterface> edge = it->current();
       return rifg.getEdgeId(edge);
     }
     void operator++() { ++(*it); }
@@ -137,17 +137,17 @@ public:
     
   private:
     const RIFG& rifg;
-    OA_ptr<OA::DGraph::Interface::OutgoingEdgesIterator> it;
+    OA_ptr<OA::DGraph::EdgesIteratorInterface> it;
   };
 
   
 public:
-  RIFG(OA_ptr<DGraph::Interface> graph, 
-       OA_ptr<DGraph::Interface::Node> source,
-       OA_ptr<DGraph::Interface::Node> sink);
+  RIFG(OA_ptr<DGraph::DGraphInterface> graph, 
+       OA_ptr<DGraph::NodeInterface> source,
+       OA_ptr<DGraph::NodeInterface> sink);
   ~RIFG();
   
-  OA_ptr<DGraph::Interface> getGraph() { return graph; }
+  OA_ptr<DGraph::DGraphInterface> getGraph() { return graph; }
   
   // largest node/edge id in the graph
   NodeId getHighWaterMarkNodeId() const { return highWaterMarkNodeId; }
@@ -158,31 +158,31 @@ public:
 
   // Map between nodes/edges and node-ids/edge-ids.  Ids can be tested
   // against RIFG::NULL for validity.
-  OA::OA_ptr<OA::DGraph::Interface::Node> 
+  OA::OA_ptr<OA::DGraph::NodeInterface> 
   getNode(const NodeId nid) const
   { 
-    OA::OA_ptr<OA::DGraph::Interface::Node> n;
+    OA::OA_ptr<OA::DGraph::NodeInterface> n;
     IdToNodeMap_t::const_iterator it = id_to_node_map.find(nid);
     if (it != id_to_node_map.end()) { n = (*it).second; }
     return n;
   }
-  OA::OA_ptr<OA::DGraph::Interface::Edge> 
+  OA::OA_ptr<OA::DGraph::EdgeInterface> 
   getEdge(const EdgeId eid) const
   { 
-    OA::OA_ptr<OA::DGraph::Interface::Edge> e;
+    OA::OA_ptr<OA::DGraph::EdgeInterface> e;
     IdToEdgeMap_t::const_iterator it = id_to_edge_map.find(eid);
     if (it != id_to_edge_map.end()) { e = (*it).second; }
     return e;
   }
 
   NodeId 
-  getNodeId(const OA::OA_ptr<OA::DGraph::Interface::Node> n) const
+  getNodeId(const OA::OA_ptr<OA::DGraph::NodeInterface> n) const
   { 
     NodeToIdMap_t::const_iterator it = node_to_id_map.find(n);
     return (it != node_to_id_map.end()) ? (*it).second : RIFG::NIL;
   }
   EdgeId 
-  getEdgeId(const OA::OA_ptr<OA::DGraph::Interface::Edge> e) const
+  getEdgeId(const OA::OA_ptr<OA::DGraph::EdgeInterface> e) const
   { 
     EdgeToIdMap_t::const_iterator it = edge_to_id_map.find(e);
     return (it != edge_to_id_map.end()) ? (*it).second : RIFG::NIL;
@@ -206,19 +206,19 @@ public:
   // may be used with the constructor, e.g.:
   //  RIFG(graph, RIFG::getEntryNode(graph), RIFG::getExitNode(graph))
 
-  static OA_ptr<DGraph::Interface::Node>
-    getSourceNode(OA_ptr<DGraph::Interface> graph);
+  static OA_ptr<DGraph::NodeInterface>
+    getSourceNode(OA_ptr<DGraph::DGraphInterface> graph);
 
-  static OA_ptr<DGraph::Interface::Node> 
-    getSinkNode(OA_ptr<DGraph::Interface> graph);
+  static OA_ptr<DGraph::NodeInterface> 
+    getSinkNode(OA_ptr<DGraph::DGraphInterface> graph);
 
 
   friend class NodesIterator;
 
 private:
-  OA_ptr<DGraph::Interface> graph;
-  OA_ptr<DGraph::Interface::Node> mSource; // graph source ('entry')
-  OA_ptr<DGraph::Interface::Node> mSink;   // graph sink ('exit')
+  OA_ptr<DGraph::DGraphInterface> graph;
+  OA_ptr<DGraph::NodeInterface> mSource; // graph source ('entry')
+  OA_ptr<DGraph::NodeInterface> mSink;   // graph sink ('exit')
 
   NodeId highWaterMarkNodeId;
   EdgeId highWaterMarkEdgeId;

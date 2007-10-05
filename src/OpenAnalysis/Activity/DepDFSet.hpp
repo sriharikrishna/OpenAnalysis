@@ -6,11 +6,11 @@
   \authors Michelle Strout 
   \version $Id: DepDFSet.hpp,v 1.2 2005/06/10 02:32:01 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef DepDDFSet_h
@@ -21,7 +21,7 @@
 
 // abstract interface that this class implements
 #include <OpenAnalysis/DataFlow/DataFlowSet.hpp>
-#include <OpenAnalysis/Location/Location.hpp>
+#include <OpenAnalysis/Location/Locations.hpp>
 #include <OpenAnalysis/DataFlow/LocDFSet.hpp>
 
 namespace OA {
@@ -33,7 +33,8 @@ class DepIterator;
    A set of differentiable dependence pairs, <useLoc,defLoc>.
    Dependences to self are implicit unless removed with removeDep.
  */
-class DepDFSet : public virtual DataFlow::DataFlowSet {
+    class DepDFSet : public virtual DataFlow::DataFlowSet,
+                     public virtual Annotation {
 public:
   DepDFSet();
   //! copy constructor
@@ -81,6 +82,11 @@ public:
 //  DepDFSet& setIntersect(DepDFSet &other);
 
 //  DepDFSet& setDifference(DepDFSet &other);
+
+  //*****************************************************************
+  // Annotation Interface
+  //*****************************************************************
+  void output(OA::IRHandlesIRInterface& ir);
 
   //*****************************************************************
   // Output

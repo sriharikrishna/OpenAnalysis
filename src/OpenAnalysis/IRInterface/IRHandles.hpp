@@ -5,12 +5,14 @@
          for the handles.
 
   \authors Nathan Tallent, Michelle Strout
-  \version $Id: IRHandles.hpp,v 1.30 2005/06/10 02:32:04 mstrout Exp $
+  \version $Id: IRHandles.hpp,v 1.30.6.2 2005/09/19 05:25:17 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
+
 
   Any iterator class over handles should be specified here.
   Otherwise, multiple analyses need to return the same type of
@@ -38,7 +40,6 @@
   Disadvantage:
   - Distinct types could lead to essentially duplicate templates.
     Possible Solution: Use IRHandle and dynamic casting.
-
 */
 
 #ifndef IRHandles_H
@@ -174,6 +175,17 @@ public:
 
   MemRefHandle(const MemRefHandle& x) : ExprHandle(x) { }
   MemRefHandle& operator=(const MemRefHandle& x) 
+    { IRHandle::operator=(x); return *this; }
+};
+
+class CallHandle : public ExprHandle {
+public:
+  CallHandle() { }
+  CallHandle(irhandle_t h_) : ExprHandle(h_) { }
+  ~CallHandle() { }
+
+  CallHandle(const CallHandle& x) : ExprHandle(x) { }
+  CallHandle& operator=(const CallHandle& x) 
     { IRHandle::operator=(x); return *this; }
 };
 
@@ -340,11 +352,6 @@ public:
   virtual void reset() = 0;
 };
 
-/*!
- * Enumerate over all procedure calls in a statement
- */
-typedef ExprHandleIterator IRCallsiteIterator;
-
 //! Enumerate all (actual) parameters within a callsite
 //! Iterator should visit parameters in called order
 typedef ExprHandleIterator IRCallsiteParamIterator;
@@ -393,6 +400,26 @@ public:
   virtual void reset() = 0;
 };
 
+//! Generic iterator over memory references
+class CallHandleIterator {
+public:
+  CallHandleIterator() { }
+  virtual ~CallHandleIterator() { };
+
+  virtual CallHandle current() const = 0;  // Returns the current item.
+  virtual bool isValid() const = 0;  // False when all items are exhausted.
+        
+  virtual void operator++() = 0;     // prefix
+  void operator++(int) { ++*this; }  // postfix
+
+  virtual void reset() = 0;
+};
+
+/*!
+ * Enumerate over all procedure calls in a statement
+ */
+typedef CallHandleIterator IRCallsiteIterator;
+
 //! An iterator over symbols
 class SymHandleIterator {
 public:
@@ -417,6 +444,8 @@ typedef SymHandleIterator IRFormalParamIterator;
 class IRHandlesIRInterface {
 
 public:
+  virtual ~IRHandlesIRInterface() {}
+
   //--------------------------------------------------------
   // create a string for the given handle, should be succinct
   // and there should be no newlines
@@ -426,6 +455,7 @@ public:
   virtual std::string toString(const ExprHandle h) = 0;
   virtual std::string toString(const OpHandle h) = 0;
   virtual std::string toString(const MemRefHandle h) = 0;
+  virtual std::string toString(const CallHandle h) = 0;
   virtual std::string toString(const SymHandle h) = 0;
   virtual std::string toString(const ConstSymHandle h) = 0;
   virtual std::string toString(const ConstValHandle h) = 0;
@@ -445,7 +475,7 @@ public:
 
   //! Cause Open64 to change its current global state to allow
   //! processing of arbitrary procedures (i.e., not all in a row)
-  virtual void currentProc(OA::ProcHandle p) = 0;
+  //virtual void currentProc(OA::ProcHandle p) = 0;
 
 };
 

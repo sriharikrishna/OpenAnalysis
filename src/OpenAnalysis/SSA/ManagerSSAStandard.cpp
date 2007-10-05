@@ -5,8 +5,9 @@
   \authors Arun Chauhan (2001 as part of Mint), Nathan Tallent, Michelle Strout
   \version $Id: ManagerSSAStandard.cpp,v 1.2 2005/04/07 17:33:26 eraxxon Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -44,7 +45,7 @@ static bool debug = false;
     
 
 OA_ptr<SSAStandard> 
-ManagerStandard::performAnalysis(ProcHandle proc, OA_ptr<CFG::Interface> cfg)
+ManagerStandard::performAnalysis(ProcHandle proc, OA_ptr<CFG::CFGInterface> cfg)
 {
   SymHandle procName = cfg->getName();
   mSSA = new SSAStandard(procName, mIR, cfg);
@@ -54,7 +55,7 @@ ManagerStandard::performAnalysis(ProcHandle proc, OA_ptr<CFG::Interface> cfg)
 
 
 void 
-ManagerStandard::build(OA_ptr<CFG::Interface> cfg)
+ManagerStandard::build(OA_ptr<CFG::CFGInterface> cfg)
 {
   // FIXME: move SSAStandard::SSAStandard to here
 }

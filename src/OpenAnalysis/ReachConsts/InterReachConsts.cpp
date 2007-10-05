@@ -5,11 +5,11 @@
   \authors Michelle Strout, Barbara Kreaseck
   \version $Id: InterReachConsts.cpp,v 1.2 2005/06/10 02:32:04 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "InterReachConsts.hpp"
@@ -26,6 +26,36 @@ OA_ptr<ReachConsts::Interface> InterReachConsts::getReachConsts(ProcHandle proc)
         }
         return mProcToReachConstsMap[proc];
       }
+
+
+//*****************************************************************
+// Annotation Interface
+//*****************************************************************
+void InterReachConsts::output(OA::IRHandlesIRInterface& ir) {
+
+  sOutBuild->mapStart("mProcToReachConstsMap","ProcHandle","ReachConsts"); {  
+    std::map<ProcHandle,OA_ptr<ReachConsts::Interface> >::iterator mapIter;
+    for (mapIter=mProcToReachConstsMap.begin();
+         mapIter!=mProcToReachConstsMap.end();
+         mapIter++) 
+      {
+        ProcHandle proc = mapIter->first;
+        OA_ptr<ReachConsts::Interface> rc = mapIter->second;
+
+        sOutBuild->mapEntryStart(); {
+          sOutBuild->mapKeyStart(); {
+            sOutBuild->outputIRHandle(proc,ir);
+          } sOutBuild->mapKeyEnd();
+          sOutBuild->mapValueStart(); {
+            sOutBuild->fieldStart("ReachConstStandard"); {
+            rc->output(ir);
+            } sOutBuild->fieldEnd("ReachConstStandard");
+          } sOutBuild->mapValueEnd();
+        } sOutBuild->mapEntryEnd();
+      }
+  } sOutBuild->mapEnd("mProcToReachConstsMap");
+
+}
 
 
 //*****************************************************************

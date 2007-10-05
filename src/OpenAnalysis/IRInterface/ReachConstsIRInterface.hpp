@@ -5,16 +5,17 @@
   \authors Michelle Strout, Barbara Kreaseck
   \version $Id: ReachConstsIRInterface.hpp,v 1.7 2005/03/17 21:47:46 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
+
 
   The source IR will be responsible for ...
 
   Preliminary version of this interface so that Nathan can implement
   some of the stuff we need.
-
 */
 
 #ifndef ReachConstsIRInterface_h
@@ -25,7 +26,9 @@
 #include <OpenAnalysis/ExprTree/ExprTree.hpp>
 #include <OpenAnalysis/IRInterface/ConstValBasicInterface.hpp>
 #include <OpenAnalysis/IRInterface/EvalToConstVisitorIRInterface.hpp>
-#include <OpenAnalysis/IRInterface/ExprStmtPairIterator.hpp>
+//#include <OpenAnalysis/IRInterface/ExprStmtPairIterator.hpp>
+#include <OpenAnalysis/IRInterface/AssignPairIterator.hpp>
+#include <OpenAnalysis/IRInterface/CalleeToCallerVisitorIRInterface.hpp>
 
 namespace OA {
   namespace ReachConsts {
@@ -45,7 +48,8 @@ enum IRStmtType {
 //! This is the primary interface for ReachConsts to the underlying
 //! intermediate representation.
 class ReachConstsIRInterface : public virtual IRHandlesIRInterface,
-                     public virtual EvalToConstVisitorIRInterface 
+                    public virtual EvalToConstVisitorIRInterface,
+                    public virtual DataFlow::CalleeToCallerVisitorIRInterface
 {
  public:
   ReachConstsIRInterface() { }
@@ -73,14 +77,11 @@ class ReachConstsIRInterface : public virtual IRHandlesIRInterface,
   //! in the given statement
   virtual OA_ptr<MemRefHandleIterator> getUseMemRefs(StmtHandle stmt) = 0;
   
-  //! Given a statement, return its ReachConsts::IRStmtType
-  virtual IRStmtType getReachConstsStmtType(StmtHandle h) = 0; 
- 
   //! Given a statement return a list to the pairs of 
   //! target MemRefHandle, ExprHandle where
   //! target = expr
-  virtual OA_ptr<ExprStmtPairIterator> 
-      getExprStmtPairIterator(StmtHandle h) = 0; 
+  virtual OA_ptr<AssignPairIterator> 
+      getAssignPairIterator(StmtHandle h) = 0; 
   
   //! Given an OpHandle and two operands (unary ops will just
   //! use the first operand and the second operand should be NULL)

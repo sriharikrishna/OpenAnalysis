@@ -3,13 +3,13 @@
   \brief Abstract visitor for MemRefExpr's
   
   \authors Michelle Strout
-  \version $Id: MemRefExprVisitor.hpp,v 1.2 2005/06/10 02:32:04 mstrout Exp $
+  \version $Id: MemRefExprVisitor.hpp,v 1.2.6.1 2005/11/04 16:24:12 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef MemRefExprVisitor_H
@@ -55,6 +55,7 @@ public:
   // direct subclasses for RefOp
   //virtual void visitRefOp(RefOp& ref) = 0;
 
+  virtual void visitAddressOf(AddressOf& ref) = 0;
   virtual void visitDeref(Deref& ref) = 0;
 
   // default SubSetRef base class so that visitors can handle 
@@ -66,7 +67,10 @@ public:
   // as default
   virtual void visitIdxAccess(IdxAccess& ref) 
     { visitSubSetRef(ref); }
-
+  virtual void visitIdxExprAccess(IdxExprAccess& ref) 
+    { visitSubSetRef(ref); }
+  virtual void visitFieldAccess(FieldAccess& ref) 
+    { visitSubSetRef(ref); }
 };
 
 

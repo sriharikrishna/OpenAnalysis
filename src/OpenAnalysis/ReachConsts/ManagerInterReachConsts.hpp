@@ -6,11 +6,11 @@
   \authors Michelle Strout, Barbara Kreaseck
   \version $Id: ManagerInterReachConsts.hpp,v 1.2 2005/06/10 02:32:04 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef ManagerInterReachConsts_h
@@ -32,7 +32,8 @@
 #include <OpenAnalysis/ReachConsts/Interface.hpp>
 #include <OpenAnalysis/ReachConsts/ManagerReachConstsStandard.hpp>
 #include <OpenAnalysis/ReachConsts/InterReachConsts.hpp>
-#include <OpenAnalysis/CallGraph/Interface.hpp>
+#include <OpenAnalysis/CallGraph/CallGraphInterface.hpp>
+#include <OpenAnalysis/CallGraph/CallGraph.hpp>
 
 namespace OA {
   namespace ReachConsts {
@@ -47,11 +48,12 @@ public:
   ~ManagerInterReachConsts () {}
 
   OA_ptr<InterReachConsts> performAnalysis(
-          OA_ptr<CallGraph::Interface> callGraph,
+          OA_ptr<CallGraph::CallGraphInterface> callGraph,
           // OA_ptr<DataFlow::ParamBindings> paramBind,
           OA_ptr<Alias::InterAliasInterface> interAlias,
           OA_ptr<SideEffect::InterSideEffectInterface> interSE,
-          OA_ptr<CFG::EachCFGInterface> eachCFG);
+          OA_ptr<CFG::EachCFGInterface> eachCFG,
+          DataFlow::DFPImplement algorithm);
 
 private: // member variables
 

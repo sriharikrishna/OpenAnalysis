@@ -5,11 +5,11 @@
   \authors Michelle Strout
   \version $Id: InterSideEffectStandard.hpp,v 1.7 2005/08/08 20:03:52 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef InterSideEffectStandard_hpp
@@ -21,6 +21,8 @@
 #include <OpenAnalysis/IRInterface/IRHandles.hpp>
 #include <OpenAnalysis/SideEffect/InterSideEffectInterface.hpp>
 #include <OpenAnalysis/SideEffect/SideEffectStandard.hpp>
+#include <OpenAnalysis/OABase/Annotation.hpp>
+#include <OpenAnalysis/Utils/GenOutputTool.hpp>
 
 
 namespace OA {
@@ -29,7 +31,9 @@ namespace OA {
 /* 
    
 */
-class InterSideEffectStandard : public InterSideEffectInterface {
+class InterSideEffectStandard : public InterSideEffectInterface,
+			        public virtual Annotation
+{
   public:
     InterSideEffectStandard();
     ~InterSideEffectStandard() {}
@@ -41,55 +45,55 @@ class InterSideEffectStandard : public InterSideEffectInterface {
     //! Return an iterator over all procedures for which interprocedural
     //! side effect information is available 
     OA_ptr<ProcIterator> getKnownProcIterator();
-
+    
     //*************************************************************************
 
     //! Return an iterator over all locations that may be
     //! modified locally within the called procedure.  
     //! Locations modified directly in the called procedure and not
     //! by a function call in the called procedure.
-    OA_ptr<LocIterator> getLMODIterator(ExprHandle call);
+    OA_ptr<LocIterator> getLMODIterator(CallHandle call);
 
     //! Return an iterator over all locations that are may be
     //! modified within the called procedure or within a procedure
     //! called by the called procedure.  
-    OA_ptr<LocIterator> getMODIterator(ExprHandle call);
+    OA_ptr<LocIterator> getMODIterator(CallHandle call);
 
     //! Return an iterator over all locations that are definitely
     //! modified locally within the called procedure.  
     //! Locations modified directly in the procedure and not
     //! by a function call in the procedure.
-    OA_ptr<LocIterator> getLDEFIterator(ExprHandle call);
+    OA_ptr<LocIterator> getLDEFIterator(CallHandle call);
 
     //! Return an iterator over all locations that are definitely
     //! modified within the called procedure or within a procedure
     //! called by the called procedure.  
-    OA_ptr<LocIterator> getDEFIterator(ExprHandle call);
+    OA_ptr<LocIterator> getDEFIterator(CallHandle call);
 
     //! Return an iterator over all locations that are 
     //! used locally within the called procedure before being
     //! definitely modified.  
     //! Locations used directly in the procedure and not
     //! by a function call in the procedure.
-    OA_ptr<LocIterator> getLUSEIterator(ExprHandle call);
+    OA_ptr<LocIterator> getLUSEIterator(CallHandle call);
 
     //! Return an iterator over all locations that may be 
     //! used before being defined within the called procedure or 
     //! within a procedure called by the called procedure.  
-    OA_ptr<LocIterator> getUSEIterator(ExprHandle call);
+    OA_ptr<LocIterator> getUSEIterator(CallHandle call);
 
     //! Return an iterator over all locations that are 
     //! used locally within the called procedure.
     //! Locations used directly in the procedure and not
     //! by a function call in the procedure.
-    OA_ptr<LocIterator> getLREFIterator(ExprHandle call);
+    OA_ptr<LocIterator> getLREFIterator(CallHandle call);
 
     //! Return an iterator over all locations that are 
     //! used within the called procedure or within a procedure
     //! called by the called procedure.  
-    OA_ptr<LocIterator> getREFIterator(ExprHandle call);
+    OA_ptr<LocIterator> getREFIterator(CallHandle call);
 
-    //*************************************************************************
+    //************************************************************************
     
     //! Return an iterator over all locations that are may be
     //! modified locally within the given procedure.  
@@ -137,33 +141,6 @@ class InterSideEffectStandard : public InterSideEffectInterface {
     OA_ptr<LocIterator> getREFIterator(ProcHandle p);
 
     //*****************************************************************
-    // Other informational methods
-    //*****************************************************************
-    //! Return true if the given location is in the LMOD set for given proc
-    //bool inLMOD(ProcHandle p, OA_ptr<Location> loc);
-
-    //! Return true if the given location is in the MOD set for given proc
-    //bool inMOD(ProcHandle p, OA_ptr<Location> loc);
-
-    //! Return true if the given location is in the LDEF set for given proc
-    //bool inLDEF(ProcHandle p, OA_ptr<Location> loc);
-
-    //! Return true if the given location is in the DEF set for given proc
-    //bool inDEF(ProcHandle p, OA_ptr<Location> loc);
-
-    //! Return true if the given location is in the LUSE set for given proc
-    //bool inLUSE(ProcHandle p, OA_ptr<Location> loc);
-
-    //! Return true if the given location is in the USE set for given proc
-    //bool inUSE(ProcHandle p, OA_ptr<Location> loc);
-
-    //! Return true if the given location is in the LREF set for given proc
-    //bool inLREF(ProcHandle p, OA_ptr<Location> loc);
-
-    //! Return true if the given location is in the REF set for given proc
-    //bool inREF(ProcHandle p, OA_ptr<Location> loc);
-
-    //*****************************************************************
     // Construction methods
     //*****************************************************************
     
@@ -178,7 +155,7 @@ class InterSideEffectStandard : public InterSideEffectInterface {
 
     //! Associate the given call with the given intraprocedural
     //! SideEffect information
-    void mapCallToSideEffect(ExprHandle call, 
+    void mapCallToSideEffect(CallHandle call, 
                          OA_ptr<OA::SideEffect::SideEffectStandard> sideEffect);
     
     
@@ -186,52 +163,58 @@ class InterSideEffectStandard : public InterSideEffectInterface {
     int getLocCount(ProcHandle proc);
     
     //! Insert a location into the LMOD set for the given call
-    void insertLMOD(ExprHandle call, OA_ptr<Location> loc);
+    void insertLMOD(CallHandle call, OA_ptr<Location> loc);
     
     //! Insert a location into the MOD set for the given call
-    void insertMOD(ExprHandle call, OA_ptr<Location> loc);
+    void insertMOD(CallHandle call, OA_ptr<Location> loc);
     
     //! Insert a location into the LDEF set for the given call
-    void insertLDEF(ExprHandle call, OA_ptr<Location> loc);
+    void insertLDEF(CallHandle call, OA_ptr<Location> loc);
     
     //! Insert a location into the DEF set for the given call
-    void insertDEF(ExprHandle call, OA_ptr<Location> loc);
+    void insertDEF(CallHandle call, OA_ptr<Location> loc);
     
     //! Insert a location into the LUSE set for the given call
-    void insertLUSE(ExprHandle call, OA_ptr<Location> loc);
+    void insertLUSE(CallHandle call, OA_ptr<Location> loc);
     
     //! Insert a location into the USE set for the given call
-    void insertUSE(ExprHandle call, OA_ptr<Location> loc);
+    void insertUSE(CallHandle call, OA_ptr<Location> loc);
     
     //! Insert a location into the LREF set for the given call
-    void insertLREF(ExprHandle call, OA_ptr<Location> loc);
+    void insertLREF(CallHandle call, OA_ptr<Location> loc);
     
     //! Insert a location into the REF set for the given call
-    void insertREF(ExprHandle call, OA_ptr<Location> loc);
+    void insertREF(CallHandle call, OA_ptr<Location> loc);
 
     //! Initialize the information for a particular call to have all
     //! empty sets
-    void initCallSideEffect(ExprHandle call);
+    void initCallSideEffect(CallHandle call);
 
    
     //*****************************************************************
     // Output
     //*****************************************************************
   public:
+
+    //! will use OutputBuilder to generate output
+    void output(IRHandlesIRInterface& ir);
+    
     void dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir);
 
   private:
 
-    typedef std::map<ProcHandle,OA_ptr<OA::SideEffect::SideEffectStandard> >  
+    OUTPUT 
+    
+    GENOUT typedef std::map<ProcHandle,OA_ptr<OA::SideEffect::SideEffectStandard> >  
             ProcToSideEffectMap;
-    typedef std::map<ExprHandle,OA_ptr<OA::SideEffect::SideEffectStandard> >  
+    GENOUT typedef std::map<CallHandle,OA_ptr<OA::SideEffect::SideEffectStandard> >  
             CallToSideEffectMap;
 
     // mappings of procedures to various sets
-    ProcToSideEffectMap mProcToSideEffectMap;
+    GENOUT ProcToSideEffectMap mProcToSideEffectMap;
 
     // mapping function calls to various sets
-    CallToSideEffectMap mCallToSideEffectMap;
+    GENOUT CallToSideEffectMap mCallToSideEffectMap;
 
     // default SideEffect results
     OA_ptr<OA::SideEffect::Interface> mDefaultSideEffect;

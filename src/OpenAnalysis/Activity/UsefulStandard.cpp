@@ -5,14 +5,15 @@
   \author Michelle Strout
   \version $Id: UsefulStandard.cpp,v 1.6 2005/06/10 02:32:03 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
-#include "UsefulStandard.hpp"
+#include <OpenAnalysis/Activity/UsefulStandard.hpp>
+
 
 namespace OA {
   namespace Activity {
@@ -20,8 +21,8 @@ namespace OA {
 UsefulStandard::UsefulStandard(ProcHandle p)
 { 
     mDepLocSet = new DataFlow::LocDFSet; 
-    mFinalInUseful = new DataFlow::LocDFSet;
-    //mNumIter = 0;
+    //mFinalInUseful = new DataFlow::LocDFSet;
+    mNumIter = 0;
 }
 
 OA_ptr<LocIterator> UsefulStandard::getDepSetIterator() 
@@ -41,29 +42,29 @@ OA_ptr<LocIterator> UsefulStandard::getInUsefulIterator(StmtHandle s)
     return retval;
 }
 
-OA_ptr<DataFlow::LocDFSet> UsefulStandard::getFinalUseful()
+OA_ptr<LocIterator> UsefulStandard::getOutUsefulIterator(StmtHandle s)
 {
-    return mFinalInUseful;
-}
-
-OA_ptr<DataFlow::LocDFSet> UsefulStandard::getOutUsefulSet(ExprHandle call)
-{
-    if (mOutUseful.find(call)!=mOutUseful.end()) {
-        return mOutUseful[call];
-    } else {
-        OA_ptr<DataFlow::LocDFSet> emptySet; 
-        emptySet = new DataFlow::LocDFSet;
-        return emptySet;
+    OA_ptr<LocIterator> retval;
+    if (mOutUseful[s].ptrEqual(0)) {
+        mOutUseful[s] = new DataFlow::LocDFSet;
     }
+    retval = new DataFlow::LocDFSetIterator(*mOutUseful[s]);
+    return retval;
 }
-//*****************************************************************
-// Construction methods 
-//*****************************************************************
 
-void UsefulStandard::mapFinalUseful(OA_ptr<DataFlow::LocDFSet> final)
-{
-    mFinalInUseful = final;
-}
+//OA_ptr<DataFlow::LocDFSet> UsefulStandard::getFinalUseful()
+//{
+//    return mFinalInUseful;
+//}
+
+  //void UsefulStandard::mapFinalUseful(OA_ptr<DataFlow::LocDFSet> final)
+  //{
+  //    mFinalInUseful = final;
+  //}
+
+//*****************************************************************
+// Output 
+//*****************************************************************
 
 //! incomplete output of info for debugging
 void UsefulStandard::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir)
@@ -84,6 +85,50 @@ void UsefulStandard::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir)
     }
 }
 
+//*****************************************************************
+// Annotation Interface
+//*****************************************************************
+void UsefulStandard::output(IRHandlesIRInterface &ir)
+{
+  sOutBuild->objStart("mNumIter"); {
+    ostringstream oss;
+    oss << mNumIter;
+    sOutBuild->outputString( oss.str() );
+  } sOutBuild->objEnd("mNumIter");
+
+  sOutBuild->objStart("mDepLocSet"); {
+    mDepLocSet->output(ir);
+  } sOutBuild->objEnd("mDepLocSet");
+
+  sOutBuild->mapStart("mStmtToUsefulSetsMap","StmtHandle","UsefulSets"); {
+    std::map<StmtHandle,
+      OA_ptr<DataFlow::LocDFSet> >::iterator mapIter;
+    for (mapIter = mInUseful.begin(); mapIter != mInUseful.end(); mapIter++) {
+      StmtHandle stmt = mapIter->first;
+      OA_ptr<DataFlow::LocDFSet> inUsefulSet = mapIter->second;
+      OA_ptr<DataFlow::LocDFSet> outUsefulSet = mOutUseful[stmt];
+      // should have a outUseful for every inUseful, but just in case ...
+      if (outUsefulSet.ptrEqual(0)) { 
+        outUsefulSet = new DataFlow::LocDFSet(); 
+      }
+
+      sOutBuild->mapEntryStart(); {
+        sOutBuild->mapKeyStart(); {
+          sOutBuild->outputIRHandle(stmt,ir);
+        } sOutBuild->mapKeyEnd();
+        sOutBuild->mapValueStart(); {
+          sOutBuild->fieldStart("InUsefulSet"); {
+            inUsefulSet->output(ir);
+          } sOutBuild->fieldEnd("InUsefulSet");
+          sOutBuild->fieldStart("OutUsefulSet"); {
+            outUsefulSet->output(ir);
+          } sOutBuild->fieldEnd("OutUsefulSet");
+        } sOutBuild->mapValueEnd();
+      } sOutBuild->mapEntryEnd();
+    }
+  } sOutBuild->mapEnd("mStmtToInUsefulSetMap");
+  
+}
 
 
   } // end of Activity namespace

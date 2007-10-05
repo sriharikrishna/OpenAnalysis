@@ -5,11 +5,11 @@
   \author Michelle Strout
   \version $Id: ActiveStandard.cpp,v 1.8 2005/06/10 02:32:01 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "ActiveStandard.hpp"
@@ -99,64 +99,16 @@ bool ActiveStandard::isActive(MemRefHandle memref)
 //! insert an active location
 void ActiveStandard::insertLoc(OA_ptr<Location> loc) 
 { 
+    // We only need Active Locations
+    // code for getting Active Symbols is deprecated.
+
     mActiveLocSet->insert(loc); 
 
-    // translate into a Symbol, right now only handle UnknownLoc, NamedLoc
-    // and InvisibleLoc for reference parameters
-    // FIXME: I have got to implement a visitor pattern for this kind of thing
-
-    // Unknown
-    if (loc->isaUnknown()) {
-      mUnknownLocActive = true;
-
-    // Named
-    } else if (loc->isaNamed()) {
-      OA_ptr<NamedLoc> nloc = loc.convert<NamedLoc>();
-      mActiveSymSet->insert( nloc->getSymHandle() );
-
-      OA_ptr<SymHandleIterator> symIter = nloc->getFullOverlapIter();
-      for ( ; symIter->isValid(); (*symIter)++) {
-          mActiveSymSet->insert(symIter->current());
-      }
-      symIter = nloc->getPartOverlapIter();
-      for ( ; symIter->isValid(); (*symIter)++) {
-          mActiveSymSet->insert(symIter->current());
-      }
- 
-    // Unnamed
-    } else if (loc->isaUnnamed()) {
-      assert(0);
-      // not handling this yet
-
-    // Invisible
-    } else if (loc->isaInvisible()) {
-      OA_ptr<InvisibleLoc> invLoc 
-          = loc.convert<InvisibleLoc>();
-      OA_ptr<MemRefExpr> mre = invLoc->getMemRefExpr();
-
-      // get symbol from memory reference expression if no derefs
-      // FIXME: here need another visitor for MemRefExpr, for now assuming
-      // only named ones
-      if (mre->isaNamed()) {
-          OA_ptr<NamedRef> namedRef 
-              = namedRef.convert<NamedRef>();
-          mActiveSymSet->insert( namedRef->getSymHandle() );
-      } else {
-          assert(0);
-      }
-
-    // LocSubSet
-    } else if (loc->isaSubSet()) {
+    if (loc->isaSubSet()) {
       OA_ptr<Location> baseLoc = loc->getBaseLoc();
-      // FIXME: now really want to call visitor on this guy but instead will just
-      // call this function recursively
       insertLoc(baseLoc);
 
-    } else {
-      assert(0);
     }
-
-      
 }
 
 //! insert an active Stmt

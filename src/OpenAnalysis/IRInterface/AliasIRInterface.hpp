@@ -2,18 +2,19 @@
   
   \brief Abstract IR interface for Alias analysis.  
   
-  \authors Michelle Strout
-  \version $Id: AliasIRInterface.hpp,v 1.15 2005/06/10 02:32:04 mstrout Exp $
+  \authors Michelle Strout, Brian White
+  \version $Id: AliasIRInterface.hpp,v 1.15.6.6 2005/11/23 05:01:04 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
+
 
   The source IR will be responsible for iterating over all the statements,
   iterating over top memory references for a stmt, and categorizing statements
   specifically for alias analysis.
-
 */
 
 #ifndef AliasIRInterface_h
@@ -23,7 +24,7 @@
 #include <string>
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
 #include <OpenAnalysis/IRInterface/IRHandles.hpp>
-#include <OpenAnalysis/Location/Location.hpp>
+#include <OpenAnalysis/Location/Locations.hpp>
 #include <OpenAnalysis/MemRefExpr/MemRefExpr.hpp>
 
 namespace OA {
@@ -44,9 +45,9 @@ class PtrAssignPairStmtIterator {
     virtual ~PtrAssignPairStmtIterator() {}
 
     //! right hand side
-    virtual MemRefHandle currentSource() const = 0;
+    virtual OA_ptr<MemRefExpr> currentSource() const = 0;
     //! left hand side
-    virtual MemRefHandle currentTarget() const = 0;
+    virtual OA_ptr<MemRefExpr> currentTarget() const = 0;
 
     virtual bool isValid() const = 0;
                     
@@ -54,6 +55,21 @@ class PtrAssignPairStmtIterator {
     void operator++(int) { ++*this; }
 };
 
+class ParamBindPtrAssignIterator {
+  public:
+    ParamBindPtrAssignIterator() {}
+    virtual ~ParamBindPtrAssignIterator() {}
+
+    //! right hand side
+    virtual OA_ptr<MemRefExpr> currentActual() const = 0;
+    //! left hand side
+    virtual int currentFormalId() const = 0;
+
+    virtual bool isValid() const = 0;
+                    
+    virtual void operator++() = 0;
+    void operator++(int) { ++*this; }
+};
 
 //! The AliasIRInterface abstract base class gives a set of methods
 //! for querying the source IR for information relevant to alias analysis.
@@ -81,6 +97,31 @@ class AliasIRInterface : public virtual IRHandlesIRInterface {
   virtual OA_ptr<PtrAssignPairStmtIterator>
       getPtrAssignStmtPairIterator(StmtHandle stmt) = 0;
 
+  //! Return an iterator over <int, MemRefExpr> pairs
+  //! where the integer represents which formal parameter 
+  //! and the MemRefExpr describes the corresponding actual argument. 
+  virtual OA_ptr<ParamBindPtrAssignIterator>
+      getParamBindPtrAssignIterator(CallHandle call) = 0;
+
+  //! Return the symbol handle for the nth formal parameter to proc
+  //! Number starts at 0 and implicit parameters should be given
+  //! a number in the order as well.  This number should correspond
+  //! to the number provided in getParamBindPtrAssign pairs
+  //! Should return SymHandle(0) if there is no formal parameter for 
+  //! given num
+  virtual SymHandle getFormalSym(ProcHandle,int) = 0;
+
+  //! Return an iterator over all of the callsites in a given stmt
+  virtual OA_ptr<IRCallsiteIterator> getCallsites(StmtHandle h) = 0;
+
+  //! Given a procedure call create a memory reference expression
+  //! to describe that call.  For example, a normal call is
+  //! a NamedRef.  A call involving a function ptr is a Deref.
+  virtual OA_ptr<MemRefExpr> getCallMemRefExpr(CallHandle h) = 0;
+
+  //! Given the callee symbol returns the callee proc handle
+  virtual ProcHandle getProcHandle(SymHandle sym) = 0;
+
   //! Given a procedure return associated SymHandle
   virtual SymHandle getSymHandle(ProcHandle h) = 0;
   
@@ -104,11 +145,6 @@ class AliasIRInterface : public virtual IRHandlesIRInterface {
   virtual OA_ptr<MemRefExprIterator> 
       getMemRefExprIterator(MemRefHandle h) = 0;
 
-  //! returns true if given symbol is a pass by reference parameter 
-  // FIXME: is this needed or can we take it out because 
-  // interprocedural analyses should use information in ParamBindings?
-  virtual bool isRefParam(SymHandle) = 0;
-               
   //! Given an Alias::IRStmtType, generate a string 
   virtual std::string toString(IRStmtType x) = 0;
 
@@ -123,6 +159,7 @@ class AliasIRInterface : public virtual IRHandlesIRInterface {
   virtual std::string toString(const SymHandle h) = 0;
   virtual std::string toString(const ConstSymHandle h) = 0;
   virtual std::string toString(const ConstValHandle h) = 0;
+  virtual std::string toString(const CallHandle h) = 0;
 
 };  
 

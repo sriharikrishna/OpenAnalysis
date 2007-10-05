@@ -5,16 +5,17 @@
   \authors Arun Chauhan (2001 was part of Mint)
   \version $Id: Graph.cpp,v 1.11 2005/03/18 18:45:55 ntallent Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
+
 
   Graph is the base class (the "interface") for a general undirected
   graph (Graph).  Algorithms that operate upon abstract undirected
   graphs should, normally, use only this base Graph class for maximum
   portability.
-
 */
 
 
@@ -28,21 +29,22 @@ namespace OA {
     each node, a pointer to the next node in DFS ordering. */
 OA_ptr<BaseGraph::Node>
 Graph::create_DFS_links (OA_ptr<BaseGraph::Node> n)
-{
-  NeighborNodesIterator neigh(*(n.convert<Node>()));
+{/* AIS - commented out in order to get OA to compile
+  OA_ptr<NodesIterator> neigh =
+    (n.convert<Node>())->getNeighborNodesIterator();;
   OA_ptr<BaseGraph::Node> last = n;
-  while (neigh.isValid()) {
-    if (neigh.current()->dfs_succ.ptrEqual(0)) {
-      OA_ptr<Node> n = neigh.current(); // Stupid Sun CC 5.4
+  while (neigh->isValid()) {
+    if (neigh->current()->dfs_succ.ptrEqual(0)) {
+      OA_ptr<Node> n = neigh->current(); // Stupid Sun CC 5.4
       // cast is needed to access protected member
       (last.convert<Node>())->dfs_succ = n.convert<BaseGraph::Node>();
-      last = create_DFS_links(neigh.current());
+      last = create_DFS_links(neigh->current());
     }
-    ++neigh;
+    ++(*neigh);
   }
   // cast is needed to access protected member
   (last.convert<Node>())->dfs_succ = 0;
-  return last;
+  return last;*/
 }
 //--------------------------------------------------------------------
 
@@ -104,12 +106,13 @@ Graph::removeEdge (OA_ptr<Graph::Edge> e)
 void
 Graph::removeNode (OA_ptr<Graph::Node> n)
 {
+/* AIS - temporarily commented out so I can get OA to compile.
   BaseGraph::removeNode(n);
 
   // remove all the edges incident on this node
-  IncidentEdgesIterator incident(*n);
-  while (incident.isValid()) {
-    OA_ptr<Edge> e = incident.current();
+  OA_ptr<EdgesIterator> incident = n->getIncidentEdgesIterator();
+  while (incident->isValid()) {
+    OA_ptr<Edge> e = incident->current();
     // remove this edge from the neighboring node's list of incident edges
     if (e->node1().ptrEqual(n)) {
       e->node2()->incident_edges->remove(e);
@@ -119,7 +122,7 @@ Graph::removeNode (OA_ptr<Graph::Node> n)
     // remove this edge
     BaseGraph::removeEdge(e);
     ++incident;
-  }
+  }*/
 }
 //--------------------------------------------------------------------
 

@@ -2,11 +2,12 @@
   
   \brief Declarations for the MemRefExpr abstraction.
 
-  \authors Michelle Strout
-  \version $Id: MemRefExpr.hpp,v 1.17 2005/06/10 02:32:04 mstrout Exp $
+  \authors Michelle Strout, Andy Stone
+  \version $Id: MemRefExpr.hpp,v 1.17.6.7 2005/11/04 16:24:12 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -23,24 +24,51 @@
 namespace OA {
 
 class MemRefExpr;
+class IdxExprAccess;
+class MemRefExpr;
+class NamedRef;
+class UnnamedRef;
+class UnknownRef;
+class RefOp;
+class Deref;
+class SubSetRef;
+class IdxAccess;
+class IdxExprAccess;
+class FieldAccess;
 
 class MemRefExprVisitor;
 
-class MemRefExprIterator {
-public:
-  MemRefExprIterator() { }
-  virtual ~MemRefExprIterator() { }
+// ----- Iterator classes -----
+template<class T>
+class MREIteratorClass {
+  public:
+    MREIteratorClass() { }
+    virtual ~MREIteratorClass() { }
 
-  virtual OA_ptr<MemRefExpr> current() const = 0;  // Returns the current item.
-  virtual bool isValid() const = 0;     // False when all items are exhausted.
-        
-  virtual void operator++() = 0;
-  void operator++(int) { ++*this; } ;
+    // Returns the current item.
+    virtual OA_ptr<T> current() const = 0;
 
-  virtual void reset() = 0;
+    // False when all items are exhausted.;
+    virtual bool isValid() const = 0;
+
+    virtual void operator++() = 0;
+    void operator++(int) { ++*this; } ;
+
+    virtual void reset() = 0;
 };
 
+typedef MREIteratorClass<MemRefExpr>    MemRefExprIterator;
+typedef MREIteratorClass<NamedRef>      NamedRefIterator;
+typedef MREIteratorClass<UnnamedRef>    UnnamedRefIterator;
+typedef MREIteratorClass<UnknownRef>    UnknownRefIterator;
+typedef MREIteratorClass<RefOp>         RefOpIterator;
+typedef MREIteratorClass<Deref>         DerefIterator;
+typedef MREIteratorClass<SubSetRef>     SubSetRefIterator;
+typedef MREIteratorClass<IdxAccess>     IdxAccessIterator;
+typedef MREIteratorClass<IdxExprAccess> IdxExprAccessIterator;
+typedef MREIteratorClass<FieldAccess>   FieldAccessIterator;
 
+// ------ MemRefExpr classes -----
 
 /*! abstract base class that has default implementations for the
     methods that all MemRefExpr's must provide
@@ -56,19 +84,17 @@ class MemRefExpr : public Annotation {
                // and then used (eg. i++)
     } MemRefType;
 
-    MemRefExpr(MemRefExpr::MemRefType mrType) 
-        : mAddressOf(false), mFullAccuracy(true), mMemRefType(mrType) {}
-    MemRefExpr(bool addressOf, bool fullAccuracy, MemRefType mrType) 
-        : mAddressOf(addressOf), mFullAccuracy(fullAccuracy), 
-          mMemRefType(mrType) {}
+    MemRefExpr(MemRefType mrType) : mMemRefType(mrType) {}
 
     //! copy constructor
-    MemRefExpr(MemRefExpr &mre) : mAddressOf(mre.mAddressOf),
-        mFullAccuracy(mre.mFullAccuracy), mMemRefType(mre.mMemRefType) {}
+    MemRefExpr(MemRefExpr &mre) : mMemRefType(mre.mMemRefType) {}
 
     virtual ~MemRefExpr() {}
 
     virtual void acceptVisitor(MemRefExprVisitor& pVisitor) = 0;
+
+    // return a ptr to a copy of self
+    virtual OA_ptr<MemRefExpr> clone() = 0;
 
     //*****************************************************************
     // Subclass type methods 
@@ -77,17 +103,22 @@ class MemRefExpr : public Annotation {
     virtual bool isaUnnamed() { return false; }
     virtual bool isaUnknown() { return false; }
     virtual bool isaRefOp() { return false; }
+    
+    virtual bool isaDeref() { return false; }
+    virtual bool isaAddressOf() { return false; }
+
+    virtual bool isaSubSetRef() { return false; }
+    virtual bool isaIdxAccess() { return false; }
+    virtual bool isaIdxExprAccess() { return false; }
+    virtual bool isaFieldAccess() { return false; }
 
     //*****************************************************************
     // Info methods 
     //*****************************************************************
-        
-    //! does the mem ref expr have its address taken
-    bool hasAddressTaken() { return mAddressOf; }
-
-    //! whether the memory reference expression full describes the ref
-    bool hasFullAccuracy() { return mFullAccuracy; }
     
+    //! whether USE/DEF MemRefExpr    
+    MemRefType getMRType() { return mMemRefType; }
+
     //! is this a def mem ref
     bool isDef() { return (mMemRefType==DEF 
                            || mMemRefType == USEDEF || mMemRefType == DEFUSE); }
@@ -96,16 +127,18 @@ class MemRefExpr : public Annotation {
     bool isUse() { return (mMemRefType==USE 
                           || mMemRefType == USEDEF || mMemRefType == DEFUSE); }
 
+    //! is this a defuse mem ref
+    bool isDefUse() { return (mMemRefType==DEFUSE); }
+
+    //! is this a usedef mem ref
+    bool isUseDef() { return (mMemRefType==USEDEF); }
+
     //*****************************************************************
     // Construction methods 
     //*****************************************************************
-        
-    //! specify that this MemRefExpr involves an address being taken
-    void setAddressTaken() { mAddressOf = true; }
 
-    //! specify that this MemRefExpr does not approximate the memory
-    //! reference with full accuracy
-    void setPartialAccuracy() { mFullAccuracy = false; }
+    //! specify the memory reference type
+    void setMemRefType(MemRefExpr::MemRefType mrType) { mMemRefType = mrType; }
 
     //*****************************************************************
     // Relationship methods 
@@ -125,9 +158,10 @@ class MemRefExpr : public Annotation {
     //*****************************************************************
     // Annotation Interface
     //*****************************************************************
-    void output(OA_ptr<IRHandlesIRInterface> ir); 
+    void output(IRHandlesIRInterface& ir); 
 
     // helper functions for output
+    virtual std::string typeString() { return "MemRefExpr"; }
     std::string toString(MemRefType);
 
     //*****************************************************************
@@ -137,9 +171,10 @@ class MemRefExpr : public Annotation {
     virtual void dump(std::ostream& os, IRHandlesIRInterface& pIR);
     virtual void dump(std::ostream& os);
 
+    virtual int getOrder() { assert(0); return sOrder; }
+
 private:
-    bool mAddressOf;
-    bool mFullAccuracy;
+    static const int sOrder = -100;
     MemRefType mMemRefType;
 };
 
@@ -149,19 +184,21 @@ private:
 */
 class NamedRef: public MemRefExpr {
   public:
-    NamedRef(MemRefType mrType, SymHandle sh) 
+
+    NamedRef(MemRefType mrType, SymHandle sh)
         : MemRefExpr(mrType), mSymHandle(sh) { }
-    NamedRef(bool addressTaken, bool fullAccuracy, MemRefType mrType, 
-             SymHandle sh) 
-        : MemRefExpr(addressTaken,fullAccuracy,mrType), mSymHandle(sh) { }
 
     //! copy constructor
-    NamedRef(NamedRef &mre) : MemRefExpr(mre), mSymHandle(mre.mSymHandle) {}
+    NamedRef(NamedRef &mre) : MemRefExpr(mre), mSymHandle(mre.mSymHandle) { }
+    
     NamedRef(MemRefExpr &mre, SymHandle sh) : MemRefExpr(mre), mSymHandle(sh) {}
 
     ~NamedRef() { }
 
     void acceptVisitor(MemRefExprVisitor& pVisitor);
+
+    //! return a ptr to a copy of self
+    OA_ptr<MemRefExpr> clone();
 
     //*****************************************************************
     // Subclass type methods 
@@ -172,6 +209,7 @@ class NamedRef: public MemRefExpr {
     // Info methods 
     //*****************************************************************
     SymHandle getSymHandle() { return mSymHandle; }
+    virtual std::string typeString() { return "NamedRef"; }
     
     //*****************************************************************
     // Relationship methods 
@@ -186,7 +224,7 @@ class NamedRef: public MemRefExpr {
     //*****************************************************************
     // Annotation Interface
     //*****************************************************************
-    void output(OA_ptr<IRHandlesIRInterface> ir); 
+    void output(IRHandlesIRInterface& ir); 
 
     //*****************************************************************
     // Debugging methods 
@@ -195,7 +233,10 @@ class NamedRef: public MemRefExpr {
     virtual void dump(std::ostream& os, IRHandlesIRInterface& pIR);
     virtual void dump(std::ostream& os);
 
+    virtual int getOrder() { return sOrder; }
+
   private:
+    static const int sOrder = 100;
     SymHandle mSymHandle;
 };
 
@@ -205,20 +246,35 @@ class NamedRef: public MemRefExpr {
 */
 class UnnamedRef: public MemRefExpr {
   public:
-    UnnamedRef(MemRefType mrType, StmtHandle sh) 
-        : MemRefExpr(mrType), mStmtHandle(sh) { }
-    UnnamedRef(bool addressTaken, bool fullAccuracy, MemRefType mrType, 
-               StmtHandle sh) 
-        : MemRefExpr(addressTaken,fullAccuracy,mrType), mStmtHandle(sh) { }
+
+    UnnamedRef(MemRefType mrType, ExprHandle sh, ProcHandle proc)
+        : MemRefExpr(mrType), mExprHandle(sh), mLocal(true), mProcHandle(proc) { }
+
+
+    UnnamedRef(MemRefType mrType, ExprHandle sh)
+        : MemRefExpr(mrType), mExprHandle(sh), mLocal(false) { }
+
 
     //! copy constructor
     UnnamedRef(UnnamedRef &mre) : MemRefExpr(mre), 
-                                  mStmtHandle(mre.mStmtHandle) {}
-    UnnamedRef(MemRefExpr &mre, StmtHandle s) : MemRefExpr(mre), mStmtHandle(s) {}
+                                  mExprHandle(mre.mExprHandle),
+                                  mLocal(mre.mLocal),
+                                  mProcHandle(mre.mProcHandle) {}
+    
+    UnnamedRef(MemRefExpr &mre, ExprHandle s, ProcHandle p)
+        : MemRefExpr(mre), mExprHandle(s), mLocal(true), mProcHandle(p) {}
+
+
+    UnnamedRef(MemRefExpr &mre, ExprHandle s)
+        : MemRefExpr(mre), mExprHandle(s), mLocal(false) {}
+
 
     ~UnnamedRef() { }
 
     void acceptVisitor(MemRefExprVisitor& pVisitor);
+
+    //! return a ptr to a copy of self
+    OA_ptr<MemRefExpr> clone();
 
     //*****************************************************************
     // Subclass type methods 
@@ -228,7 +284,11 @@ class UnnamedRef: public MemRefExpr {
     //*****************************************************************
     // Info methods 
     //*****************************************************************
-    StmtHandle getStmtHandle() { return mStmtHandle; }
+    ExprHandle getExprHandle() { return mExprHandle; }
+
+    bool isLocal() { return mLocal; }
+
+    ProcHandle getProcHandle() { return mProcHandle; }
     
     //*****************************************************************
     // Relationship methods 
@@ -243,7 +303,8 @@ class UnnamedRef: public MemRefExpr {
     //*****************************************************************
     // Annotation Interface
     //*****************************************************************
-    void output(OA_ptr<IRHandlesIRInterface> ir); 
+    void output(IRHandlesIRInterface& ir); 
+    virtual std::string typeString() { return "UnnamedRef"; }
 
     //*****************************************************************
     // Debugging methods 
@@ -252,8 +313,13 @@ class UnnamedRef: public MemRefExpr {
     virtual void dump(std::ostream& os, IRHandlesIRInterface& pIR);
     virtual void dump(std::ostream& os);
 
+    virtual int getOrder() { return sOrder; }
+
   private:
-    StmtHandle mStmtHandle;
+    static const int sOrder = 200;
+    ExprHandle mExprHandle;
+    bool mLocal;
+    ProcHandle mProcHandle;
 };
 
 /*!
@@ -263,9 +329,9 @@ class UnnamedRef: public MemRefExpr {
 */
 class UnknownRef: public MemRefExpr {
   public:
-    //! addressTaken is always true and accuracy is always partial
-    UnknownRef(MemRefType mrType) 
-        : MemRefExpr(true, false, mrType) { }
+
+    UnknownRef(MemRefType mrType)
+        : MemRefExpr(mrType) { }
 
     //! copy constructor
     UnknownRef(UnknownRef &mre) : MemRefExpr(mre) {}
@@ -273,6 +339,9 @@ class UnknownRef: public MemRefExpr {
     ~UnknownRef() { }
 
     void acceptVisitor(MemRefExprVisitor& pVisitor);
+
+    //! return a ptr to a copy of self
+    OA_ptr<MemRefExpr> clone();
 
     //*****************************************************************
     // Subclass type methods 
@@ -292,7 +361,8 @@ class UnknownRef: public MemRefExpr {
     //*****************************************************************
     // Annotation Interface
     //*****************************************************************
-    void output(OA_ptr<IRHandlesIRInterface> ir); 
+    void output(IRHandlesIRInterface& ir); 
+    virtual std::string typeString() { return "UnknownRef"; }
 
     //*****************************************************************
     // Debugging methods 
@@ -301,6 +371,10 @@ class UnknownRef: public MemRefExpr {
     virtual void dump(std::ostream& os, IRHandlesIRInterface& pIR);
     virtual void dump(std::ostream& os);
 
+    virtual int getOrder() { return sOrder; }
+
+  private:
+    static const int sOrder = 100000000;
 };
 
 
@@ -312,28 +386,35 @@ class UnknownRef: public MemRefExpr {
 */
 class RefOp: public MemRefExpr {
   public:
-    RefOp(OA_ptr<MemRefExpr> mre) : MemRefExpr(*mre), mMRE(mre) { }
+
+    RefOp( MemRefType mrType, OA_ptr<MemRefExpr> mre)
+        : MemRefExpr(mrType), mMRE(mre) { }
+ 
 
     //! copy constructor
     RefOp(RefOp & mre) : MemRefExpr(mre), mMRE(mre.mMRE) { }
 
     virtual ~RefOp() { }
-
+    
     //*****************************************************************
     // MemRefExpr subclass type methods 
     //*****************************************************************
     bool isaRefOp() { return true; }
 
     //*****************************************************************
-    // RefOp subclass type methods 
-    //*****************************************************************
-    virtual bool isaDeref() { return false; }
-    virtual bool isaSubSetRef() { return false; }
-    SymHandle getBaseSym();
-
-    //*****************************************************************
     // Info methods 
     //*****************************************************************
+    //! iterate up every decorating MRE until we find the base, then
+    //! return the symbol handle for this base.
+    SymHandle getBaseSym();
+
+    virtual std::string typeString() { return "RefOp"; }
+
+    //! iterate up through every decorating MRE until we find the base
+    //! and return it.
+    OA_ptr<MemRefExpr> getBase();
+
+    //! Return the MRE that decorating this object.
     OA_ptr<MemRefExpr> getMemRefExpr() { return mMRE; }
 
     //*****************************************************************
@@ -341,9 +422,16 @@ class RefOp: public MemRefExpr {
     //*****************************************************************
 
     //*****************************************************************
+    // Construction Method
+    //*****************************************************************
+    
+    //! Will make this Refop wrap the given mre and return the result
+    virtual OA_ptr<MemRefExpr> composeWith(OA_ptr<MemRefExpr> mre) = 0;
+    
+    //*****************************************************************
     // Annotation Interface
     //*****************************************************************
-    void output(OA_ptr<IRHandlesIRInterface> ir); 
+    virtual void output(IRHandlesIRInterface& ir); 
 
 
 private:
@@ -351,20 +439,92 @@ private:
 
 };
 
+
+/* AddressOf class: represents if MemRefExpr has AddressTaken*/
+class AddressOf: public RefOp { 
+  public: 
+
+    AddressOf(MemRefType mrType, OA_ptr<MemRefExpr> mre)
+        : RefOp(mrType, mre) { }
+  
+    //! copy constructor 
+    AddressOf(AddressOf & mre) : RefOp(mre) { } 
+ 
+    ~AddressOf() { } 
+
+    void acceptVisitor(MemRefExprVisitor& pVisitor);
+
+    //! return a ptr to a copy of self
+    OA_ptr<MemRefExpr> clone();
+
+    virtual std::string typeString() { return "AddressOf"; }
+
+    //*****************************************************************
+    // RefOp subclass type methods
+    //*****************************************************************
+    bool isaAddressOf() { return true; }
+
+    //*****************************************************************
+    // Relationship methods
+    //*****************************************************************
+
+    bool operator<(MemRefExpr & other);
+
+    //! check if two memory references are equal at the level of
+    //! accuracy provided by the MemRefExpr approximation
+    bool operator==(MemRefExpr& other);
+
+    //*****************************************************************
+    // Construction Method
+    //*****************************************************************
+    //! Will make this Refop wrap the given mre and return the result
+    OA_ptr<MemRefExpr> composeWith(OA_ptr<MemRefExpr> mre);
+
+    //*****************************************************************
+    // Annotation Interface
+    //*****************************************************************
+    void output(IRHandlesIRInterface& ir);
+
+    //*****************************************************************
+    // Debugging methods
+    //*****************************************************************
+    virtual void dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> pIR);
+    virtual void dump(std::ostream& os, IRHandlesIRInterface& pIR);
+    virtual void dump(std::ostream& os);
+
+    virtual int getOrder() { return sOrder; }
+
+ private: 
+    static const int sOrder = 350; 
+}; 
+
+
 /*!
    The Deref class indicates how many times a memory reference is 
    being dereferenced.
 */
 class Deref: public RefOp {
   public:
-    Deref(OA_ptr<MemRefExpr> mre, int numDeref) : RefOp(mre), mNumDeref(numDeref) { }
 
+    Deref(MemRefType mrType, OA_ptr<MemRefExpr> mre,
+          int numDeref)
+      : RefOp(mrType, mre), mNumDeref(numDeref) { }
+
+    
+    // default values
+    Deref(MemRefType mrType, OA_ptr<MemRefExpr> mre)
+      : RefOp(mrType, mre), mNumDeref(1) { }
+
+    
     //! copy constructor
     Deref(Deref &mre) : RefOp(mre), mNumDeref(mre.mNumDeref) {}
 
     ~Deref() { }
 
     void acceptVisitor(MemRefExprVisitor& pVisitor);
+
+    //! return a ptr to a copy of self
+    OA_ptr<MemRefExpr> clone();
 
     //*****************************************************************
     // RefOp subclass type methods 
@@ -375,6 +535,7 @@ class Deref: public RefOp {
     // Info methods 
     //*****************************************************************
     int getNumDerefs() { return mNumDeref; }
+    virtual std::string typeString() { return "Deref"; }
 
     //*****************************************************************
     // Relationship methods
@@ -387,9 +548,16 @@ class Deref: public RefOp {
     bool operator==(MemRefExpr& other);
     
     //*****************************************************************
+    // Construction Method
+    //*****************************************************************
+    
+    //! Will make this Refop wrap the given mre and return the result
+    OA_ptr<MemRefExpr> composeWith(OA_ptr<MemRefExpr> mre);
+    
+    //*****************************************************************
     // Annotation Interface
     //*****************************************************************
-    void output(OA_ptr<IRHandlesIRInterface> ir); 
+    void output(IRHandlesIRInterface& ir); 
 
     //*****************************************************************
     // Debugging methods 
@@ -398,7 +566,10 @@ class Deref: public RefOp {
     virtual void dump(std::ostream& os, IRHandlesIRInterface& pIR);
     virtual void dump(std::ostream& os);
 
+    virtual int getOrder() { return sOrder; }
+
 private:
+    static const int sOrder = 300;
     int mNumDeref;
 };
 
@@ -408,52 +579,64 @@ private:
    of SubSetRef it represents some operation such as a field 
    access or array access occuring.
    Many sub set reference operations are possible abstractions are possible.
-   Will never have a direct instance of this class because if don't 
-   use a more precise subclass will just use something like NamedRef
-   and specify partial accuracy.
 */
 class SubSetRef: public RefOp {
   public:
-    SubSetRef(OA_ptr<MemRefExpr> mre) : RefOp(mre) { }
+
+    SubSetRef( MemRefType mrType, OA_ptr<MemRefExpr> mre)
+      : RefOp(mrType, mre) {} //{ if (!mre.ptrEqual(0)) assert( ! mre->isaSubSetRef() ); }
 
     //! copy constructor
     SubSetRef(SubSetRef & mre) : RefOp(mre) { }
 
     virtual ~SubSetRef() { }
 
-    virtual void acceptVisitor(MemRefExprVisitor& pVisitor);
+    void acceptVisitor(MemRefExprVisitor& pVisitor);
+
+    //! return a ptr to a copy of self
+    OA_ptr<MemRefExpr> clone();
 
     //*****************************************************************
     // RefOp subclass type methods 
     //*****************************************************************
     virtual bool isaSubSetRef() { return true; }
-
-    //*****************************************************************
-    // SubSetRef subclass type methods 
-    //*****************************************************************
-
-    //! This needs to be logical OR of all isa methods below it
-    //! If a direct instance of this class then will return false
-    //bool isSubClassOfSubSetRef() { return isaIdxAccess(); }
-
-    virtual bool isaIdxAccess() { return false; }
-    //...
-
+    virtual bool isSubClassOfSubSetRef() { return false; }
+    
     //*****************************************************************
     // Relationship methods, will be defined in subclasses
     //*****************************************************************
     
-    virtual bool operator<(MemRefExpr & other) = 0;
+    virtual bool operator<(MemRefExpr & other);
 
     //! check if two memory references are equal at the level of
     //! accuracy provided by the MemRefExpr approximation
-    virtual bool operator==(MemRefExpr& other) = 0;
+    virtual bool operator==(MemRefExpr& other);
     
+    //*****************************************************************
+    // Construction Method
+    //*****************************************************************
+    
+    //! Will make this Refop wrap the given mre and return the result
+    OA_ptr<MemRefExpr> composeWith(OA_ptr<MemRefExpr> mre);
  
     //*****************************************************************
     // Annotation Interface
     //*****************************************************************
-    void output(OA_ptr<IRHandlesIRInterface> ir); 
+    void output(IRHandlesIRInterface& ir); 
+    virtual std::string typeString() { return "SubSetRef"; }
+
+    //*****************************************************************
+    // Debugging methods    
+    //****************************************************************    
+    virtual void dump(std::ostream& os, 
+                       OA_ptr<IRHandlesIRInterface> pIR);  
+
+    virtual void dump(std::ostream& os, IRHandlesIRInterface& pIR);
+    virtual void dump(std::ostream& os);
+    virtual int getOrder() { return sOrder; }          
+
+private:
+    static const int sOrder = 600;
 
 };
 
@@ -463,24 +646,31 @@ class SubSetRef: public RefOp {
 */
 class IdxAccess: public SubSetRef {
   public:
-    IdxAccess(OA_ptr<MemRefExpr> mre, int idx) : SubSetRef(mre), mIdx(idx) { }
-    
+
+    IdxAccess(MemRefType mrType, OA_ptr<MemRefExpr> mre, int idx)
+      : SubSetRef(mrType,mre), mIdx(idx) { }
+
     //! copy constructor
     IdxAccess(IdxAccess &mre) : SubSetRef(mre), mIdx(mre.mIdx) {}
 
     ~IdxAccess() { }
 
-    virtual void acceptVisitor(MemRefExprVisitor& pVisitor);
+    void acceptVisitor(MemRefExprVisitor& pVisitor);
+
+    //! return a ptr to a copy of self
+    OA_ptr<MemRefExpr> clone();
 
     //*****************************************************************
     // SubSetRef subclass type methods 
     //*****************************************************************
     bool isaIdxAccess() { return true; }
+    bool isSubClassOfSubSetRef() { return true; }
     
     //*****************************************************************
     // Info methods 
     //*****************************************************************
     int getIdx() { return mIdx; }
+    virtual std::string typeString() { return "IdxAccess"; }
 
     //*****************************************************************
     // Relationship methods
@@ -495,7 +685,7 @@ class IdxAccess: public SubSetRef {
     //*****************************************************************
     // Annotation Interface
     //*****************************************************************
-    void output(OA_ptr<IRHandlesIRInterface> ir); 
+    void output(IRHandlesIRInterface& ir); 
 
     //*****************************************************************
     // Debugging methods 
@@ -504,8 +694,144 @@ class IdxAccess: public SubSetRef {
     virtual void dump(std::ostream& os, IRHandlesIRInterface& pIR);
     virtual void dump(std::ostream& os);
 
+    virtual int getOrder() { return sOrder; }
+
 private:
+    static const int sOrder = 400;
     int mIdx;
+};
+
+/*!
+   The IdxExprAccess class indicates an array reference with an expression
+   being used for an index.
+
+   I'm assuming that all index expressions are affine.
+*/
+class IdxExprAccess : public SubSetRef {
+  public:
+
+    IdxExprAccess( MemRefType mrType, OA_ptr<MemRefExpr> mre,
+                   MemRefHandle hExpr)
+    : SubSetRef( mrType, mre)
+    {
+        mhExpr = hExpr;
+    }
+
+    //! copy constructor
+    IdxExprAccess(IdxExprAccess &mre)
+      : SubSetRef(mre),
+        mhExpr(mre.mhExpr)
+    {
+    }
+
+    ~IdxExprAccess() { }
+
+    virtual void acceptVisitor(MemRefExprVisitor& pVisitor);
+
+    //! return a ptr to a copy of self
+    OA_ptr<MemRefExpr> clone();
+
+    //*****************************************************************
+    // SubSetRef subclass type methods 
+    //*****************************************************************
+    bool isaIdxExprAccess() { return true; }
+    bool isSubClassOfSubSetRef() { return true; }
+
+    //*****************************************************************
+    // Info methods 
+    //*****************************************************************
+    MemRefHandle getExpr() { return mhExpr; }
+    virtual std::string typeString() { return "IdxExprAccess"; }
+
+    //*****************************************************************
+    // Relationship methods
+    //*****************************************************************
+    bool operator<(MemRefExpr & other);
+
+    //! check if two memory references are equal at the level of
+    //! accuracy provided by the MemRefExpr approximation
+    bool operator==(MemRefExpr& other);
+
+    //*****************************************************************
+    // Annotation Interface
+    //*****************************************************************
+    void output(IRHandlesIRInterface& ir); 
+
+    //*****************************************************************
+    // Debugging methods
+    //*****************************************************************
+    virtual void dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> pIR);
+    virtual void dump(std::ostream& os, IRHandlesIRInterface& pIR);
+    virtual void dump(std::ostream& os);
+
+    virtual int getOrder() { return sOrder; }
+
+  private:
+    static const int sOrder = 450;
+    MemRefHandle mhExpr;
+};
+
+/*!
+   The FieldAccess class indicates a field access to an object or struct,
+   that is, a.b or a.foo(), not a->b nor b->foo().
+*/
+class FieldAccess: public SubSetRef {
+  public:
+
+    FieldAccess( MemRefType mrType,
+            OA_ptr<MemRefExpr> mre, std::string field)
+      : SubSetRef(mrType,mre), mFieldName(field) { }
+
+   
+    //! copy constructor
+    FieldAccess(FieldAccess &mre) : SubSetRef(mre), mFieldName(mre.mFieldName) {}
+
+    ~FieldAccess() { }
+
+    void acceptVisitor(MemRefExprVisitor& pVisitor);
+
+    //! return a ptr to a copy of self
+    OA_ptr<MemRefExpr> clone();
+
+    //*****************************************************************
+    // SubSetRef subclass type methods 
+    //*****************************************************************
+    bool isaFieldAccess() { return true; }
+    bool isSubClassOfSubSetRef() { return true; }
+    
+    //*****************************************************************
+    // Info methods 
+    //*****************************************************************
+    std::string getFieldName() { return mFieldName; }
+    virtual std::string typeString() { return "FieldAccess"; }
+
+    //*****************************************************************
+    // Relationship methods
+    //*****************************************************************
+    
+    bool operator<(MemRefExpr & other);
+
+    //! check if two memory references are equal at the level of
+    //! accuracy provided by the MemRefExpr approximation
+    bool operator==(MemRefExpr& other);
+    
+    //*****************************************************************
+    // Annotation Interface
+    //*****************************************************************
+    void output(IRHandlesIRInterface& ir); 
+
+    //*****************************************************************
+    // Debugging methods 
+    //*****************************************************************
+    virtual void dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> pIR);
+    virtual void dump(std::ostream& os, IRHandlesIRInterface& pIR);
+    virtual void dump(std::ostream& os);
+
+    virtual int getOrder() { return sOrder; }
+
+private:
+    static const int sOrder = 500;
+    std::string mFieldName;
 };
 
 

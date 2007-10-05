@@ -1,22 +1,27 @@
 /*! \file
   
-  \brief Abstract visitor for Location's
+  \brief Abstract visitor for locations
   
   \authors Michelle Strout
-  \version $Id: LocationVisitor.hpp,v 1.2 2005/06/10 02:32:04 mstrout Exp $
+  \version $Id: LocationVisitor.hpp,v 1.2.6.1 2005/11/04 16:24:12 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef LocationVisitor_H
 #define LocationVisitor_H
 
-#include <OpenAnalysis/Location/Location.hpp>
-
+#include "NamedLoc.hpp"
+#include "UnnamedLoc.hpp"
+#include "InvisibleLoc.hpp"
+#include "UnknownLoc.hpp"
+#include "LocSubSet.hpp"
+#include "LocIdxSubSet.hpp"
+#include "LocFieldSubSet.hpp"
 namespace OA {
 
 //--------------------------------------------------------------------
@@ -59,11 +64,9 @@ public:
 
   // each subclass of LocSubSet should call visitLocSubSet
   // as default
-  virtual void visitLocIdxSubSet(LocIdxSubSet& loc) 
-    { visitLocSubSet(loc); }
-
+  virtual void visitLocIdxSubSet(LocIdxSubSet& loc);
+  virtual void visitLocFieldSubSet(LocFieldSubSet& loc);
 };
-
 
 } // end of OA namespace
 

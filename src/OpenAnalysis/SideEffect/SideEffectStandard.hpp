@@ -5,8 +5,9 @@
   \authors Michelle Strout
   \version $Id: SideEffectStandard.hpp,v 1.9 2005/06/10 02:32:05 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -19,7 +20,8 @@
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
 #include <OpenAnalysis/IRInterface/IRHandles.hpp>
 #include <OpenAnalysis/SideEffect/SideEffectInterface.hpp>
-
+#include <OpenAnalysis/OABase/Annotation.hpp>
+#include <OpenAnalysis/Utils/GenOutputTool.hpp>
 
 namespace OA {
   namespace SideEffect {
@@ -27,16 +29,11 @@ namespace OA {
 /* 
    Maps procedures to USE, DEF, MOD, and REF sets and their local versions.
 */
-class SideEffectStandard : public Interface {
+class SideEffectStandard : public Interface,
+                            public virtual Annotation
+{
   public:
-    SideEffectStandard() 
-        { mUnknownLocSet = new LocSet;
-          OA_ptr<Location> uLoc; 
-          //uLoc = dynamic_cast<Location*>(new UnknownLoc());
-          //MMS, even the SGI compiler shouldn't need the above
-          uLoc = new UnknownLoc();
-          mUnknownLocSet->insert(uLoc);
-        }
+    SideEffectStandard() ;
     ~SideEffectStandard() {}
 
     //*****************************************************************
@@ -171,21 +168,27 @@ class SideEffectStandard : public Interface {
     // Output
     //*****************************************************************
 
+    //! will use OutputBuilder to generate output
+    void output(IRHandlesIRInterface& ir);
+    
     void dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir);
 
   private:
+
+    OUTPUT
+
     // various sets
-    OA_ptr<LocSet> mLMODSet;
-    OA_ptr<LocSet> mMODSet;
-    OA_ptr<LocSet> mLDEFSet;
-    OA_ptr<LocSet> mDEFSet;
-    OA_ptr<LocSet> mLUSESet;
-    OA_ptr<LocSet> mUSESet;
-    OA_ptr<LocSet> mLREFSet;
-    OA_ptr<LocSet> mREFSet;
+    GENOUT OA_ptr<std::set<OA_ptr<Location> > > mLMODSet;
+    GENOUT OA_ptr<std::set<OA_ptr<Location> > > mMODSet;
+    GENOUT OA_ptr<std::set<OA_ptr<Location> > > mLDEFSet;
+    GENOUT OA_ptr<std::set<OA_ptr<Location> > > mDEFSet;
+    GENOUT OA_ptr<std::set<OA_ptr<Location> > > mLUSESet;
+    GENOUT OA_ptr<std::set<OA_ptr<Location> > > mUSESet;
+    GENOUT OA_ptr<std::set<OA_ptr<Location> > > mLREFSet;
+    GENOUT OA_ptr<std::set<OA_ptr<Location> > > mREFSet;
 
     // default set returned to be conservative
-    OA_ptr<LocSet> mUnknownLocSet;
+    GENOUT OA_ptr<std::set<OA_ptr<Location> > > mUnknownLocSet;
 
 };
 

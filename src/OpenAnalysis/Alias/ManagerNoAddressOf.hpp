@@ -5,11 +5,11 @@
   \authors Michelle Strout
   \version $Id: ManagerNoAddressOf.hpp,v 1.7 2004/11/19 19:21:50 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef ALIASMANAGERNOADDRESSOF_H
@@ -22,7 +22,7 @@
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
 #include <OpenAnalysis/Alias/EquivSets.hpp>
 #include <OpenAnalysis/MemRefExpr/MemRefExpr.hpp>
-#include <OpenAnalysis/Location/Location.hpp>
+#include <OpenAnalysis/Location/Locations.hpp>
 #include <OpenAnalysis/IRInterface/AliasIRInterface.hpp>
 
 namespace OA {

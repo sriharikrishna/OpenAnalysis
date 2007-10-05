@@ -6,8 +6,9 @@
            Port from 'Classic OpenAnalysis' to OpenAnalysis by Nathan Tallent
   \version $Id: DomTree.cpp,v 1.5 2005/04/16 17:23:18 eraxxon Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
 */
@@ -46,7 +47,7 @@ namespace OA {
     FIXME: Use RIFG instead of computing node ids in first step
 */
 
-DomTree::DomTree(OA_ptr<DGraph::Interface> graph_)
+DomTree::DomTree(OA_ptr<DGraph::DGraphInterface> graph_)
   : Tree(), graph(graph_)
 {
   int i;
@@ -55,14 +56,14 @@ DomTree::DomTree(OA_ptr<DGraph::Interface> graph_)
   // graph g and number them for easy reference
   int S = graph->getNumNodes();
   std::vector<OA_ptr<Node> > tree_node_vec(S);
-  std::vector<OA_ptr<DGraph::Interface::Node> > graph_node_vec(S);
+  std::vector<OA_ptr<DGraph::NodeInterface> > graph_node_vec(S);
   std::vector<std::set<int> > dom_set(S);
-  std::map<OA_ptr<DGraph::Interface::Node>, int> graph_node_num;
+  std::map<OA_ptr<DGraph::NodeInterface>, int> graph_node_num;
   
   int count = 0;
-  OA_ptr<DGraph::Interface::DFSIterator> dfs_iter = graph->getDFSIterator();
+  OA_ptr<DGraph::NodesIteratorInterface> dfs_iter = graph->getDFSIterator();
   for ( ; dfs_iter->isValid(); ++(*dfs_iter)) {
-    OA_ptr<DGraph::Interface::Node> n = dfs_iter->current();
+    OA_ptr<DGraph::NodeInterface> n = dfs_iter->current();
     tree_node_vec[count] = new Node(n);
     graph_node_vec[count] = n;
     graph_node_num[n] = count;
@@ -83,7 +84,7 @@ DomTree::DomTree(OA_ptr<DGraph::Interface> graph_)
       // intersect the dom sets of each of the predecessors
       tmp_dom.clear();
 
-      OA_ptr<DGraph::Interface::SourceNodesIterator> src_iter = 
+      OA_ptr<DGraph::NodesIteratorInterface> src_iter = 
 	graph_node_vec[i]->getSourceNodesIterator();
       while (src_iter->isValid() && 
 	     dom_set[graph_node_num[src_iter->current()]].empty())
@@ -156,15 +157,15 @@ DomTree::DomTree(OA_ptr<DGraph::Interface> graph_)
 void
 DomTree::compute_dominance_frontiers ()
 {
-  OA_ptr<DGraph::Interface::NodesIterator> nodes_iter = 
+  OA_ptr<DGraph::NodesIteratorInterface> nodes_iter = 
     graph->getNodesIterator();
   while (nodes_iter->isValid()) {
-    OA_ptr<DGraph::Interface::Node> b = nodes_iter->current();
+    OA_ptr<DGraph::NodeInterface> b = nodes_iter->current();
     if (b->num_incoming() > 1) {
-      OA_ptr<DGraph::Interface::SourceNodesIterator> p = 
+      OA_ptr<DGraph::NodesIteratorInterface> p = 
 	b->getSourceNodesIterator();
       while (p->isValid()) {
-	OA_ptr<DGraph::Interface::Node> runner = p->current();
+	OA_ptr<DGraph::NodeInterface> runner = p->current();
 	// this parent may be unreachable in the control flow graph and, hence, may have no corresponding Dominator
 	// Tree node
 	if (dom_tree_node.find(runner) != dom_tree_node.end()) {
@@ -242,7 +243,7 @@ DomTree::dump (ostream& os)
 void 
 DomTree::Node::dump(std::ostream& os)
 {
-  OA_ptr<DGraph::Interface::Node> n = getGraphNode();
+  OA_ptr<DGraph::NodeInterface> n = getGraphNode();
   n->dumpbase(os);
   
   DomFrontSet::iterator it = dom_front.begin();

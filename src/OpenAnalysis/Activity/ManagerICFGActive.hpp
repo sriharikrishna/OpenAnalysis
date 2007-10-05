@@ -6,11 +6,11 @@
   \authors Michelle Strout
   \version $Id: ManagerICFGActive.hpp,v 1.3 2005/07/01 02:49:56 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef ManagerICFGActive_h
@@ -22,15 +22,15 @@
 #include <OpenAnalysis/Activity/ManagerActiveStandard.hpp>
 #include <OpenAnalysis/Activity/ManagerICFGDep.hpp>
 #include <OpenAnalysis/Activity/ManagerICFGUseful.hpp>
-#include <OpenAnalysis/Activity/ManagerICFGVaryInActive.hpp>
-#include <OpenAnalysis/Activity/InActivePerStmt.hpp>
+#include <OpenAnalysis/Activity/ManagerICFGVaryActive.hpp>
+#include <OpenAnalysis/Activity/ActivePerStmt.hpp>
 #include <OpenAnalysis/IRInterface/ActivityIRInterface.hpp>
 
 #include <OpenAnalysis/Activity/InterActive.hpp>
-#include <OpenAnalysis/CFG/EachCFGInterface.hpp>
+//#include <OpenAnalysis/CFG/EachCFGInterface.hpp>
 #include <OpenAnalysis/Alias/InterAliasInterface.hpp>
 #include <OpenAnalysis/SideEffect/InterSideEffectInterface.hpp>
-#include <OpenAnalysis/CallGraph/Interface.hpp>
+#include <OpenAnalysis/CallGraph/CallGraphInterface.hpp>
 
 namespace OA {
   namespace Activity {
@@ -45,12 +45,11 @@ public:
   ~ManagerICFGActive () {}
 
   OA_ptr<InterActive> performAnalysis(
-          OA_ptr<CallGraph::Interface> callGraph,
-          OA_ptr<ICFG::ICFGStandard> icfg,
+          OA_ptr<ICFG::ICFGInterface> icfg,
           OA_ptr<DataFlow::ParamBindings> paramBind,
           OA_ptr<Alias::InterAliasInterface> interAlias,
           OA_ptr<SideEffect::InterSideEffectInterface> interSE,
-          OA_ptr<CFG::EachCFGInterface> eachCFG);
+          DataFlow::DFPImplement algorithm);
 
 private:
   //========================================================
@@ -65,9 +64,9 @@ private:
   
   //! Should generate an in and out DataFlowSet for node
   OA_ptr<DataFlow::DataFlowSet> 
-      initializeNodeIN(OA_ptr<ICFG::ICFGStandard::Node> n);
+      initializeNodeIN(OA_ptr<ICFG::NodeInterface> n);
   OA_ptr<DataFlow::DataFlowSet> 
-      initializeNodeOUT(OA_ptr<ICFG::ICFGStandard::Node> n);
+      initializeNodeOUT(OA_ptr<ICFG::NodeInterface> n);
  
   //--------------------------------------------------------
   // solver callbacks 
@@ -98,25 +97,27 @@ private:
 
   //! Propagate a data-flow set from caller to callee
   OA_ptr<DataFlow::DataFlowSet> callerToCallee(ProcHandle caller,
-    OA_ptr<DataFlow::DataFlowSet> dfset, ExprHandle call, ProcHandle callee);
+    OA_ptr<DataFlow::DataFlowSet> dfset, CallHandle call, ProcHandle callee);
   
   //! Propagate a data-flow set from callee to caller
   OA_ptr<DataFlow::DataFlowSet> calleeToCaller(ProcHandle callee,
-    OA_ptr<DataFlow::DataFlowSet> dfset, ExprHandle call, ProcHandle caller);
+    OA_ptr<DataFlow::DataFlowSet> dfset, CallHandle call, ProcHandle caller);
 
+ //! Propagate a data-flow set from call node to return node
+ OA_ptr<DataFlow::DataFlowSet> callToReturn(ProcHandle caller,
+    OA_ptr<DataFlow::DataFlowSet> dfset, CallHandle call, ProcHandle callee);
 
 private: // member variables
 
   OA_ptr<Activity::ActivityIRInterface> mIR;
   std::map<ProcHandle,OA_ptr<ActiveStandard> > mActiveMap;
-  OA_ptr<InterActive> mInterActive;
 
   OA_ptr<DataFlow::ParamBindings> mParamBind;
   OA_ptr<ICFGDep> mICFGDep;
   OA_ptr<Alias::InterAliasInterface> mInterAlias;
   OA_ptr<DataFlow::ICFGDFSolver> mSolver;
-  OA_ptr<ICFG::ICFGStandard> mICFG;
-  OA_ptr<InActivePerStmt> mInActive;
+  OA_ptr<ICFG::ICFGInterface> mICFG;
+  OA_ptr<ActivePerStmt> mActive;
 };
 
   } // end of Activity namespace

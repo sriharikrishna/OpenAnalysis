@@ -5,38 +5,59 @@
   \authors Nathan Tallent, Michelle Strout
   \version $Id: ExprTree.hpp,v 1.17 2005/03/17 22:35:29 ntallent Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef ExprTree_H
 #define ExprTree_H
-
+#include<set>
 #include <map>
 
 // OpenAnalysis headers
 #include <OpenAnalysis/IRInterface/IRHandles.hpp>
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
 #include <OpenAnalysis/Utils/Tree.hpp>
-#include <OpenAnalysis/ReachConsts/Interface.hpp>
+//#include <OpenAnalysis/ReachConsts/Interface.hpp>
 #include <OpenAnalysis/IRInterface/ConstValBasicInterface.hpp>
 
+
 namespace OA {
+using namespace std;
+
+class ExprTree;
 
 // to avoid circular reference in header files
 class ExprTreeVisitor;
+
+typedef std::set<OA_ptr<ExprTree> > ExprTreeSet;
+
+/*!  Function that intersects sets of ExprTrees */
+OA_ptr<std::set<OA_ptr<ExprTree> > >
+intersectExprTreeSets(std::set<OA_ptr<ExprTree> >& set1,
+                 std::set<OA_ptr<ExprTree> >& set2);
+
+/*!  Function the unions sets of ExprTrees */
+OA_ptr<std::set<OA_ptr<ExprTree> > >
+    unionExprTreeSets(
+        std::set<OA_ptr<ExprTree> >& set1,
+        std::set<OA_ptr<ExprTree> >& set2);
+
+
 
 //--------------------------------------------------------------------
 /*! ExprTree is a Tree with enhanced nodes.  
     It represents expressions involving various IRHandles.
 */
-class ExprTree : public Tree {
+  class ExprTree : public Tree {
 public:
   class Node;
   class Edge;
+private:
+static const int sOrder = -200;
 
 public:
   ExprTree();
@@ -46,6 +67,7 @@ public:
     OA_ptr<Tree::Node> n = Tree::getRoot();
     return n.convert<Node>(); 
   }
+
 
   //! visit root and then accept visitor on tree
   void acceptVisitor(ExprTreeVisitor& pVisitor);
@@ -57,6 +79,16 @@ public:
       { OA_ptr<Edge> e; e = new Edge(src,dst); addEdge(e); }
   void disconnect(OA_ptr<Edge> e) { removeEdge(e.convert<Tree::Edge>()); }
   void copyAndConnectSubTree(OA_ptr<Node> src, OA_ptr<ExprTree> subtree);
+  
+   //! an ordering for expression trees, needed for use within STL containers
+  bool operator<(ExprTree &other);
+
+
+   //! check if two memory references are equal at the level of
+   //! accuracy provided by the MemRefExpr approximation
+  bool operator==(ExprTree &other);
+  virtual int getOrder() { return sOrder; }
+
 
   //--------------------------------------------------------
   class Node : public Tree::Node {
@@ -85,14 +117,28 @@ public:
     // have ExprTree visitors have default implementation for nodes
     // they don't know about
     virtual void acceptVisitor(ExprTreeVisitor&) = 0;
-
     virtual void dump(std::ostream& os) { Tree::Node::dump(os); }
     virtual void dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir);
 
+    //*****************************************************************
+    // Annotation Interface
+    //*****************************************************************
+    virtual void output(IRHandlesIRInterface& ir) { Tree::Node::output(ir); }
+   //! an ordering for expression trees, needed for use within STL containers
+  virtual bool operator<(Node& other);
+
+   //! check if two memory references are equal at the level of
+   //! accuracy provided by the MemRefExpr approximation
+  virtual bool operator==(Node& other);
+
+  virtual int getOrder() { return sOrder; }
+
+
   private:
+    static const int sOrder = -100;
     std::string mName;
     //std::string mAttr;
-  };
+  }; // end of Node
 
   class OpNode : public Node {
   public:
@@ -111,7 +157,20 @@ public:
 
     void acceptVisitor(ExprTreeVisitor& pVisitor);
 
+    //*****************************************************************
+    // Annotation Interface
+    //*****************************************************************
+    void output(IRHandlesIRInterface& ir) ;
+    //! an ordering for expression trees, needed for use within STL containers
+   bool operator<(Node& other);
+
+   //! check if two memory references are equal at the level of
+   //! accuracy provided by the MemRefExpr approximation
+   bool operator==(Node& other);
+   virtual int getOrder() { return sOrder; }
+
   private:
+    static const int sOrder = 100;
     OpHandle mHandle;
 
   };
@@ -119,7 +178,7 @@ public:
   class CallNode : public Node {
   public:
     CallNode() : Node("CallNode") { }
-    CallNode(ExprHandle h) : Node("CallNode"), mHandle(h) {}
+    CallNode(CallHandle h) : Node("CallNode"), mHandle(h) {}
     virtual ~CallNode() { }
 
     //! return a copy of self
@@ -127,14 +186,28 @@ public:
       { OA_ptr<Node> ret; ret = new CallNode(mHandle); return ret; }
 
     bool isaCallNode() { return true; }
-    ExprHandle getHandle() { return mHandle; }
+    CallHandle getHandle() { return mHandle; }
     void dump(std::ostream& os) { Node::dump(os); }
     void dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir);
 
     void acceptVisitor(ExprTreeVisitor& pVisitor);
 
+    //*****************************************************************
+    // Annotation Interface
+    //*****************************************************************
+    void output(IRHandlesIRInterface& ir) ;
+     //! an ordering for expression trees, needed for use within STL containers
+    bool operator<(Node& other);
+
+    //! check if two memory references are equal at the level of
+    //! accuracy provided by the MemRefExpr approximation
+    bool operator==(Node& other);
+    virtual int getOrder() { return sOrder; }
+
   private:
-    ExprHandle mHandle;
+    //Changed from ExprHandle to CallHandle by LMR. 6.8.06
+     static const int sOrder = 500;
+    CallHandle mHandle;
   };
 
   class MemRefNode : public Node {
@@ -154,7 +227,20 @@ public:
 
     void acceptVisitor(ExprTreeVisitor& pVisitor);
 
+    //*****************************************************************
+    // Annotation Interface
+    //*****************************************************************
+    void output(IRHandlesIRInterface& ir) ;
+   //! an ordering for expression trees, needed for use within STL containers
+   bool operator<(Node& other);
+
+   //! check if two memory references are equal at the level of
+   //! accuracy provided by the MemRefExpr approximation
+   bool operator==(Node& other);
+   virtual int getOrder() { return sOrder; }
+
   private:
+   static const int sOrder = 200;
     MemRefHandle mHandle;
   };
 
@@ -175,7 +261,20 @@ public:
 
     void acceptVisitor(ExprTreeVisitor& pVisitor);
 
+    //*****************************************************************
+    // Annotation Interface
+    //*****************************************************************
+    void output(IRHandlesIRInterface& ir) ;
+     //! an ordering for expression trees, needed for use within STL containers
+    bool operator<(Node& other);
+
+    //! check if two memory references are equal at the level of
+    //! accuracy provided by the MemRefExpr approximation
+    bool operator==(Node& other);
+    virtual int getOrder() { return sOrder; }
+
   private:
+ static const int sOrder = 300;
     ConstSymHandle mHandle;
   };
 
@@ -196,7 +295,20 @@ public:
 
     void acceptVisitor(ExprTreeVisitor& pVisitor);
 
+    //*****************************************************************
+    // Annotation Interface
+    //*****************************************************************
+    void output(IRHandlesIRInterface& ir) ;
+     //! an ordering for expression trees, needed for use within STL containers
+   bool operator<(Node& other);
+
+   //! check if two memory references are equal at the level of
+   //! accuracy provided by the MemRefExpr approximation
+   bool operator==(Node& other);
+   virtual int getOrder() { return sOrder; }
+
   private:
+ static const int sOrder = 400;
     ConstValHandle mHandle;
   };
   
@@ -296,6 +408,11 @@ public:
   void dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir);
   //void dump() { dump(std::cout); }
 
+  //*****************************************************************
+  // Annotation Interface
+  //*****************************************************************
+  void output(IRHandlesIRInterface& ir) ;
+
   //------------------------------------------------------------------
   /*! Pre-order iterator enumerates the nodes in pre-order (a node is 
       visited before all its sub-trees). 
@@ -338,6 +455,7 @@ public:
  //--------------------------------------------------------------------
 
 };
+
 
 } // end of OA namespace
 

@@ -5,10 +5,12 @@
   \authors Michelle Strout
   \version $Id: AliasMapXAIF.hpp,v 1.4 2005/03/18 18:14:17 ntallent Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
+
 
   Each map set has an id and a set of virtual storage locations 
   that memory reference in the set might reference.
@@ -29,9 +31,10 @@
 #include <OpenAnalysis/Alias/Interface.hpp>
 #include <OpenAnalysis/Alias/AliasMap.hpp>
 #include <OpenAnalysis/MemRefExpr/MemRefExpr.hpp>
-#include <OpenAnalysis/Location/Location.hpp>
+#include <OpenAnalysis/Location/Locations.hpp>
 
 #include <OpenAnalysis/IRInterface/IRHandles.hpp>
+#include <OpenAnalysis/OABase/Annotation.hpp>
 
 namespace OA {
   namespace XAIF {
@@ -40,20 +43,28 @@ typedef std::set<MemRefHandle> MemRefSet;
 //typedef std::set<OA_ptr<Location::Location> > LocSet;
 
 //! Numeric range to indicate a number of locations in an array
-class LocRange {
+class LocRange : public virtual Annotation {
   public:
     LocRange(int start, int end) : mStart(start), mEnd(end) {}
     ~LocRange() {}
 
     int getStart() const { return mStart; }
     int getEnd() const { return mEnd; }
+
+    void output(IRHandlesIRInterface& ir)
+    {
+        sOutBuild->objStart("LocRange");
+        sOutBuild->field("mStart", OA::int2string(mStart) );
+        sOutBuild->field("mEnd", OA::int2string(mEnd) );
+        sOutBuild->objEnd("LocRange");
+    }
   private:
     int mStart, mEnd;
 };
 
 //! A range and a bit to indicate whether the access is to the full range
 //! or just some unknown part of the range
-class LocTuple {
+class LocTuple : public virtual Annotation {
   public:
     LocTuple() : mRange(0,0), mFullOverlap(false) {}
     LocTuple(int start, int end, bool fullOverlap) 
@@ -82,7 +93,17 @@ class LocTuple {
       else if (mFullOverlap == true) { return true; }
       else { return false; }
     }
-      
+
+    void output(IRHandlesIRInterface& ir) 
+    {
+        sOutBuild->objStart("LocTuple");
+        sOutBuild->fieldStart("mRange");
+        mRange.output(ir);
+        sOutBuild->fieldEnd("mRange");
+        sOutBuild->field("mFullOverlap",OA::bool2string(mFullOverlap));
+        sOutBuild->objEnd("LocTuple");
+    }
+       
   private:
     LocRange mRange;
     bool mFullOverlap;
@@ -133,7 +154,7 @@ class LocTupleIterator {
 };
 
 
-class AliasMapXAIF {
+class AliasMapXAIF : public virtual Annotation {
   public:
     AliasMapXAIF(ProcHandle p);
     ~AliasMapXAIF() {}
@@ -183,6 +204,8 @@ class AliasMapXAIF {
     //*****************************************************************
     // Output
     //*****************************************************************
+
+    void output(IRHandlesIRInterface& ir);
 
     //! incomplete output of info for debugging, just lists map 
     //! set Ids and associated set of locations and mapping of 

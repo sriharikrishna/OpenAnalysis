@@ -5,30 +5,28 @@
   \authors Michelle Strout
   \version $Id: ManagerICFGActive.cpp,v 1.3 2005/07/01 02:49:56 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include <iostream>
 #include "ManagerICFGActive.hpp"
+#include <Utils/Util.hpp>
 
 
 
 namespace OA {
   namespace Activity {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_ManagerICFGActive)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
 
 ManagerICFGActive::ManagerICFGActive(
     OA_ptr<Activity::ActivityIRInterface> _ir) : mIR(_ir)
 {
+    OA_DEBUG_CTRL_MACRO("DEBUG_ManagerICFGActive:ALL", debug);
     mSolver = new DataFlow::ICFGDFSolver(DataFlow::ICFGDFSolver::Backward,*this);
 }
 
@@ -40,12 +38,11 @@ ManagerICFGActive::ManagerICFGActive(
 */
 OA_ptr<InterActive> 
 ManagerICFGActive::performAnalysis(
-        OA_ptr<CallGraph::Interface> callGraph,
-        OA_ptr<ICFG::ICFGStandard> icfg,
+        OA_ptr<ICFG::ICFGInterface> icfg,
         OA_ptr<DataFlow::ParamBindings> paramBind,
         OA_ptr<Alias::InterAliasInterface> interAlias,
         OA_ptr<SideEffect::InterSideEffectInterface> interSE,
-        OA_ptr<CFG::EachCFGInterface> eachCFG)
+        DataFlow::DFPImplement algorithm)
 {
   OA_ptr<InterActive> retval;
   retval = new InterActive;
@@ -55,9 +52,10 @@ ManagerICFGActive::performAnalysis(
   OA_ptr<ManagerICFGDep> depman;
   depman = new ManagerICFGDep(mIR);
   OA_ptr<ICFGDep> icfgDep = depman->performAnalysis(icfg, paramBind,
-                                                    interAlias);
+                                                    interAlias,
+                                                    algorithm);
 
-  if (debug) { icfgDep->dump(std::cout, mIR); }
+  if (debug) { icfgDep->output(*mIR); }
 
  
   if (debug) {
@@ -67,27 +65,28 @@ ManagerICFGActive::performAnalysis(
 
   OA_ptr<ManagerICFGUseful> usefulman;
   usefulman = new ManagerICFGUseful(mIR);
-  OA_ptr<InterUseful> interUseful = usefulman->performAnalysis(icfg, 
-          paramBind, interAlias, icfgDep);
+  OA_ptr<InterUseful> 
+    interUseful = usefulman->performAnalysis(icfg, paramBind, interAlias, 
+                                             interSE, icfgDep,
+                                             algorithm);
 
   retval->setNumIterUseful(interUseful->getNumIter());
-  if (debug) { interUseful->dump(std::cout, mIR); }
+  if (debug) { interUseful->output(*mIR); }
   
-  // ManagerICFGVary does vary analysis and determines which
-  // locations are active coming into a stmt
+  // ManagerICFGVaryActive does vary analysis and determines which
+  // locations are active coming Into a stmt and Outof a stmt
   if (debug) {
       std::cout << "Calling varyman->performAnalysis() ...\n";
       std::cout.flush();
   }
 
-  OA_ptr<ManagerICFGVaryInActive> varyman;
-  varyman = new ManagerICFGVaryInActive(mIR);
-  OA_ptr<InActivePerStmt> inActive = varyman->performAnalysis(icfg, paramBind,
-          interAlias, icfgDep, interUseful);
+  OA_ptr<ManagerICFGVaryActive> varyman;
+  varyman = new ManagerICFGVaryActive(mIR);
+  OA_ptr<ActivePerStmt> active = varyman->performAnalysis(icfg, paramBind,
+          interAlias, icfgDep, interUseful,algorithm);
 
-  //FIXME: there is no getNumIter method to in InActivePerStmt
-  //retval->setNumIterVary(inActive->getNumIter());
-  if (debug) { inActive->dump(std::cout, mIR); }
+  retval->setNumIterVary(active->getNumIter());
+  if (debug) { active->output(*mIR); }
   
   
   //-------------------------------------------------------------
@@ -99,15 +98,165 @@ ManagerICFGActive::performAnalysis(
   mParamBind = paramBind;
   mICFGDep = icfgDep;
   mInterAlias = interAlias;
-  mInActive = inActive;
-
-  // create an empty InterActive
-  mInterActive = new InterActive();
+  mActive = active;
 
   // call iterative data-flow solver for ICFG
-  mSolver->solve(icfg);
+  mSolver->solve(icfg,algorithm);
 
   // then iterate over each statement to find active use memrefs
+
+  /*! Merge Conflict PLM 08/24/06
+  // For each ICFG node:
+  OA_ptr<ICFG::ICFGStandard::NodesIterator> nodeIter = 
+    icfg->getNodesIterator();
+  for ( ; nodeIter->isValid(); (*nodeIter)++) {
+
+    OA_ptr<ICFG::ICFGStandard::Node> icfgNode = nodeIter->current();
+
+    // get alias and active results for current procedure
+    ProcHandle proc = icfgNode->getProc();
+    OA_ptr<Alias::Interface> alias = interAlias->getAliasResults(proc);
+    OA_ptr<ActiveStandard> active = mActiveMap[proc];
+
+    // For each stmt in the ICFG node:
+    OA_ptr<CFG::Interface::NodeStatementsIterator> stmtIter =
+      icfgNode->getNodeStatementsIterator();
+    for ( ; stmtIter->isValid(); (*stmtIter)++) {
+      StmtHandle stmt = stmtIter->current();
+
+      // if this is an active statement, mark all inVaryMemRefs as active
+      if (active->isActive(stmt)) {
+
+        OA_ptr<MemRefHandleIterator> useIter = mIR->getUseMemRefs(stmt);
+        for (; useIter->isValid(); (*useIter)++ ) {
+          MemRefHandle use = useIter->current();
+          if (debug) {
+            std::cout << "\tuse = ";
+            mIR->dump(use,std::cout);
+          }
+          
+          // iterate over locations that are active anywhere
+          // in procedure, flow-insensitive active locations
+          OA_ptr<LocIterator> procActiveLocIter 
+            = active->getActiveLocsIterator();
+          for ( ; procActiveLocIter->isValid(); (*procActiveLocIter)++ ) {
+            OA_ptr<Location> activeLoc = procActiveLocIter->current();
+            if (debug) { 
+              std::cout << "\t activeLoc = ";
+              activeLoc->dump(std::cout,mIR);
+            }
+            
+            // iterate over may locs for use
+            OA_ptr<LocIterator> mayLocIter = alias->getMayLocs(use);
+            for ( ; mayLocIter->isValid(); (*mayLocIter)++ ) {
+              OA_ptr<Location> useLoc = mayLocIter->current();
+              if (debug) { 
+                std::cout << "\t\t may loc for use, useLoc = ";
+                useLoc->dump(std::cout,mIR);
+              }
+              if (activeLoc->mayOverlap(*useLoc)) {
+                active->insertMemRef(use);
+                if (debug) {
+                  std::cout << "\t\tinserting active memref use = ";
+                  mIR->dump(use,std::cout);
+                  std::cout << std::endl;
+                }
+
+              } // if active loc mayOverlap the mayloc of the use memref
+                // then use memref is set active
+
+            } // for each mayloc of the use memref
+
+          } // for each active locations anywhere in the procedure
+
+        } // iterate over use memrefs
+        
+      } // if active stmt
+       
+    } // for each stmt in the icfg node 
+
+  } // for each icfg node
+
+*/
+
+
+
+
+  // For each ICFG node:
+  OA_ptr<ICFG::NodesIteratorInterface> nodeIter = 
+    icfg->getICFGNodesIterator();
+  for ( ; nodeIter->isValid(); (*nodeIter)++) {
+
+    OA_ptr<ICFG::NodeInterface> icfgNode = nodeIter->currentICFGNode();
+
+    // get alias and active results for current procedure
+    ProcHandle proc = icfgNode->getProc();
+    OA_ptr<Alias::Interface> alias = interAlias->getAliasResults(proc);
+    OA_ptr<ActiveStandard> active = mActiveMap[proc];
+
+    // For each stmt in the ICFG node:
+    OA_ptr<CFG::NodeStatementsIteratorInterface> stmtIter =
+      icfgNode->getNodeStatementsIterator();
+    for ( ; stmtIter->isValid(); (*stmtIter)++) {
+      StmtHandle stmt = stmtIter->current();
+
+      // if this is an active statement, mark all inVaryMemRefs as active
+      if (active->isActive(stmt)) {
+
+        OA_ptr<MemRefHandleIterator> useIter = mIR->getUseMemRefs(stmt);
+        for (; useIter->isValid(); (*useIter)++ ) {
+          MemRefHandle use = useIter->current();
+          if (debug) {
+            std::cout << "\tuse = ";
+            mIR->dump(use,std::cout);
+          }
+          
+          // iterate over locations that are active anywhere
+          // in procedure, flow-insensitive active locations
+          OA_ptr<LocIterator> procActiveLocIter 
+            = active->getActiveLocsIterator();
+          for ( ; procActiveLocIter->isValid(); (*procActiveLocIter)++ ) {
+            OA_ptr<Location> activeLoc = procActiveLocIter->current();
+            if (debug) { 
+              std::cout << "\t activeLoc = ";
+              activeLoc->dump(std::cout,mIR);
+            }
+            
+            // iterate over may locs for use
+            OA_ptr<LocIterator> mayLocIter = alias->getMayLocs(use);
+            for ( ; mayLocIter->isValid(); (*mayLocIter)++ ) {
+              OA_ptr<Location> useLoc = mayLocIter->current();
+              if (debug) { 
+                std::cout << "\t\t may loc for use, useLoc = ";
+                useLoc->dump(std::cout,mIR);
+              }
+              if (activeLoc->mayOverlap(*useLoc)) {
+                active->insertMemRef(use);
+                if (debug) {
+                  std::cout << "\t\tinserting active memref use = ";
+                  mIR->dump(use,std::cout);
+                  std::cout << std::endl;
+                }
+
+              } // if active loc mayOverlap the mayloc of the use memref
+                // then use memref is set active
+
+            } // for each mayloc of the use memref
+
+          } // for each active locations anywhere in the procedure
+
+        } // iterate over use memrefs
+        
+      } // if active stmt
+       
+    } // for each stmt in the icfg node 
+
+  } // for each icfg node
+
+
+
+
+
 
   // assign activity results for each procedure into InterActive
   std::map<ProcHandle,OA_ptr<ActiveStandard> >::iterator mapIter;
@@ -115,22 +264,15 @@ ManagerICFGActive::performAnalysis(
     retval->mapProcToActive(mapIter->first,mapIter->second);
   }
 
-  // iterate over all symbols to determine the size
-  OA_ptr<SymHandleIterator> symIter = retval->getActiveSymIterator();
-  int bytes = 0;
-  for ( ; symIter->isValid(); (*symIter)++ ) {
-      SymHandle sym = symIter->current();
+  // how many iterations did this take?
+  if (debug) 
+    {
+      std::cout << "ICFGActive took " << mSolver->getNumIter()
+                << " iterations.\n";
+    }
 
-      bytes += mIR->getSizeInBytes(sym);
+  retval->setNumIterActive(mSolver->getNumIter());
 
-      if (debug) {
-          std::cout << "ManagerICFGActive: sym = " << mIR->toString(sym)
-                    << ", size = " << mIR->getSizeInBytes(sym) << ", bytes = "
-                    << bytes << std::endl;
-      }
-  }
-  retval->setActiveSizeInBytes(bytes);
- 
   return retval;
 }
 
@@ -142,33 +284,31 @@ ManagerICFGActive::performAnalysis(
 //--------------------------------------------------------
 
 /*!
-   Data-flow set passed around on the call graph is an
+   Data-flow set passed around on the icfg is a
    LocDFSet.  The top value for this is an empty set.
 */
 OA_ptr<DataFlow::DataFlowSet> ManagerICFGActive::initializeTop()
 {
-    OA_ptr<DataFlow::LocDFSet> retval;
-    retval = new DataFlow::LocDFSet;
-    return retval;
+  OA_ptr<DataFlow::LocDFSet> retval;
+  retval = new DataFlow::LocDFSet;
+  return retval;
 }
 
 OA_ptr<DataFlow::DataFlowSet> 
-ManagerICFGActive::initializeNodeIN(OA_ptr<ICFG::ICFGStandard::Node> n)
+ManagerICFGActive::initializeNodeIN(OA_ptr<ICFG::NodeInterface> n)
 {
-    OA_ptr<DataFlow::LocDFSet> retval;
-    retval = new DataFlow::LocDFSet;
-    
-    return retval;
+  OA_ptr<DataFlow::LocDFSet> retval;
+  retval = new DataFlow::LocDFSet;
+  return retval;
 }
 
 OA_ptr<DataFlow::DataFlowSet> 
-ManagerICFGActive::initializeNodeOUT(OA_ptr<ICFG::ICFGStandard::Node> n)
+ManagerICFGActive::initializeNodeOUT(OA_ptr<ICFG::NodeInterface> n)
 {
-    OA_ptr<DataFlow::LocDFSet> retval;
-    retval = new DataFlow::LocDFSet;
-    
-    return retval;
- }
+  OA_ptr<DataFlow::LocDFSet> retval;
+  retval = new DataFlow::LocDFSet;
+  return retval;
+}
 
 
 //--------------------------------------------------------
@@ -181,29 +321,8 @@ OA_ptr<DataFlow::DataFlowSet>
 ManagerICFGActive::meet(OA_ptr<DataFlow::DataFlowSet> set1, 
                       OA_ptr<DataFlow::DataFlowSet> set2)
 {
-    if (debug) {
-        std::cout << "ManagerICFGActive::meet" << std::endl;
-    }
-    OA_ptr<DataFlow::LocDFSet> remapSet1 = set1.convert<DataFlow::LocDFSet>();
-    OA_ptr<DataFlow::LocDFSet> remapSet2 = set2.convert<DataFlow::LocDFSet>();
-    if (debug) {
-        std::cout << "\tremapSet1 = ";
-        remapSet1->dump(std::cout, mIR);
-        std::cout << "\tremapSet2 = ";
-        remapSet2->dump(std::cout, mIR);
-    }
-
-    // making sure we don't trounce set1 just in case
-    OA_ptr<DataFlow::LocDFSet> retval;
-    OA_ptr<DataFlow::DataFlowSet> temp = remapSet1->clone();
-    retval = temp.convert<DataFlow::LocDFSet>();
-    *retval = retval->setUnion(*remapSet2);
-    if (debug) {
-        std::cout << "\tretval = ";
-        OA_ptr<DataFlow::LocDFSet> temp = retval.convert<DataFlow::LocDFSet>();
-        temp->dump(std::cout, mIR);
-    }
-    return retval;
+    // just return in set
+    return set1;
 }
 
 //! OK to modify in set and return it again as result because
@@ -212,15 +331,16 @@ OA_ptr<DataFlow::DataFlowSet>
 ManagerICFGActive::transfer(ProcHandle proc,
                         OA_ptr<DataFlow::DataFlowSet> out, OA::StmtHandle stmt)
 {    
-    // convert incoming set to more specific subclass
-    OA_ptr<DataFlow::LocDFSet> outRecast = out.convert<DataFlow::LocDFSet>();
+  
+  // ignoring data flow, using outActiveSet from previous analysis
+    OA_ptr<DataFlow::LocDFSet> outRecast =  mActive->getOutActiveSet(stmt);
+
     if (debug) {
         std::cout << "In transfer, stmt(hval=" << stmt.hval() << ")= ";
         mIR->dump(stmt,std::cout);
         std::cout << "\toutRecast = ";
         outRecast->dump(std::cout,mIR);
     }
-
 
     // will be storing activity results for stmt and memrefs in
     // ActiveStandard for current procedure
@@ -244,73 +364,49 @@ ManagerICFGActive::transfer(ProcHandle proc,
           mIR->dump(def,std::cout);
         }
 
+        bool activeMemRef = false;
         // loop over may locs for the memref
         OA_ptr<LocIterator> locIter = alias->getMayLocs(def);
-        for ( ; locIter->isValid(); (*locIter)++ ) {
+        for ( ; locIter->isValid()&&!activeMemRef; (*locIter)++ ) {
           OA_ptr<Location> loc = locIter->current();
           if (debug) { 
             std::cout << "\t\t mayloc for def = ";
             loc->dump(std::cout,mIR);
           }
- 
+
+          // if at least one may loc of this def overlaps with
+          // something in the active set ... then we know
+          // that this def is active, and we know
+          // that this stmt is active as well.
           if (outRecast->hasOverlapLoc(loc)) {
             active->insertMemRef(def);
-            active->insertStmt(stmt);
-            activeStmt = true;
+
+            // don't need to look at any more mayLocs, since we
+            // already know that this def is active ... set flag
+            activeMemRef = true;
+
+            if (!activeStmt) { 
+              // now we know it is, insert and set flag
+              active->insertStmt(stmt);
+              activeStmt = true;
+            }
           }
         }
     } 
 
-    // if this is an active statement then check the uses to
-    // see if they are active
-    if (activeStmt) {
-      OA_ptr<MemRefHandleIterator> useIter = mIR->getUseMemRefs(stmt);
-      for (; useIter->isValid(); (*useIter)++ ) {
-          MemRefHandle use = useIter->current();
-          if (debug) {
-            std::cout << "\tuse = ";
-            mIR->dump(use,std::cout);
-          }
-
-          // iterate over locations that are active anywhere
-          // in procedure, flow-insensitive active locations
-          OA_ptr<LocIterator> procActiveLocIter 
-              = active->getActiveLocsIterator();
-          for ( ; procActiveLocIter->isValid(); (*procActiveLocIter)++ ) {
-            OA_ptr<Location> activeLoc = procActiveLocIter->current();
-            if (debug) { 
-              std::cout << "\t activeLoc = ";
-              activeLoc->dump(std::cout,mIR);
-            }
-                  
-            // iterate over may locs for use
-            OA_ptr<LocIterator> mayLocIter = alias->getMayLocs(use);
-            for ( ; mayLocIter->isValid(); (*mayLocIter)++ ) {
-              OA_ptr<Location> useLoc = mayLocIter->current();
-              if (debug) { 
-                std::cout << "\t\t may loc for use, useLoc = ";
-                useLoc->dump(std::cout,mIR);
-              }
-              if (activeLoc->mayOverlap(*useLoc)) {
-                  active->insertMemRef(use);
-              }
-            }
-          } 
-      } // iterate over uses
-
-    } // if activestmt
-
+    // since we are ignoring in/out data flow sets, only one iteration
     // iterate through all of the active locations that come into this
     // statement and insert those locations as active within the
     // procedure
-    OA_ptr<DataFlow::LocDFSet> inActiveSet = mInActive->getInActiveSet(stmt);
+    OA_ptr<DataFlow::LocDFSet> inActiveSet = mActive->getInActiveSet(stmt);
     OA_ptr<LocIterator> locIter = inActiveSet->getLocIterator();
     for ( ; locIter->isValid(); (*locIter)++ ) {
         active->insertLoc(locIter->current());
     } 
 
-    // return the inActive for this stmt
-    return mInActive->getInActiveSet(stmt);
+    // If we are ignoring the incoming set (see comments at top of transfer)
+    // upshot:  cuts the iterations by one. (no impact on correct output)
+    return out;
 }
 
 /*!
@@ -335,22 +431,29 @@ ManagerICFGActive::exitTransfer(ProcHandle proc, OA_ptr<DataFlow::DataFlowSet> o
 //! Propagate a data-flow set from caller to callee
 OA_ptr<DataFlow::DataFlowSet> 
 ManagerICFGActive::callerToCallee(ProcHandle caller,
-    OA_ptr<DataFlow::DataFlowSet> dfset, ExprHandle call, ProcHandle callee)
+    OA_ptr<DataFlow::DataFlowSet> dfset, CallHandle call, ProcHandle callee)
 {
-    OA_ptr<DataFlow::LocDFSet> inRecast = dfset.convert<DataFlow::LocDFSet>();
-    return inRecast->callerToCallee(call, caller, mInterAlias, mParamBind);
+  // no data flow for this analysis ... returning in set
+  return dfset;
 }
   
 //! Propagate a data-flow set from callee to caller
 OA_ptr<DataFlow::DataFlowSet> 
 ManagerICFGActive::calleeToCaller(ProcHandle callee,
-    OA_ptr<DataFlow::DataFlowSet> dfset, ExprHandle call, ProcHandle caller)
+    OA_ptr<DataFlow::DataFlowSet> dfset, CallHandle call, ProcHandle caller)
 {
-    OA_ptr<DataFlow::LocDFSet> inRecast = dfset.convert<DataFlow::LocDFSet>();
-    return inRecast->calleeToCaller(call, caller, mInterAlias, mParamBind);
+  // no data flow for this analysis ... returning in set
+  return dfset;
 }
 
-
+//! Propagate a data-flow set from call node to return node
+OA_ptr<DataFlow::DataFlowSet>
+ManagerICFGActive::callToReturn(ProcHandle caller,
+    OA_ptr<DataFlow::DataFlowSet> dfset, CallHandle call, ProcHandle callee)
+{
+  // no data flow for this analysis ... returning in set
+  return dfset;
+}
 
   } // end of namespace Activity
 } // end of namespace OA

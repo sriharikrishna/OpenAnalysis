@@ -3,33 +3,32 @@
   \brief The AnnotationManager that generates DepStandard.
 
   \authors Michelle Strout
-  \version $Id: ManagerDepStandard.cpp,v 1.10 2005/06/10 02:32:02 mstrout Exp $
+  \version $Id: ManagerDepStandard.cpp,v 1.10.6.1 2005/09/19 05:25:17 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "ManagerDepStandard.hpp"
+#include <Utils/Util.hpp>
 
 
 namespace OA {
   namespace Activity {
 
-#if defined(DEBUG_ALL) || defined(DEBUG_ManagerDepStandard)
-static bool debug = true;
-#else
 static bool debug = false;
-#endif
 
 
 /*!
 */
 ManagerDepStandard::ManagerDepStandard(OA_ptr<ActivityIRInterface> _ir) 
-    : DataFlow::CFGDFProblem( DataFlow::Forward ), mIR(_ir)
+    : mIR(_ir)
 {
+    OA_DEBUG_CTRL_MACRO("DEBUG_ManagerDepStandard:ALL", debug);
+    mSolver = new DataFlow::CFGDFSolver(DataFlow::CFGDFSolver::Forward,*this);
 }
 
 OA_ptr<DataFlow::DataFlowSet> ManagerDepStandard::initializeTop()
@@ -55,8 +54,9 @@ OA_ptr<DataFlow::DataFlowSet> ManagerDepStandard::initializeBottom()
 */
 OA_ptr<DepStandard> ManagerDepStandard::performAnalysis(ProcHandle proc, 
         OA_ptr<Alias::Interface> alias,
-        OA_ptr<CFG::Interface> cfg, OA_ptr<InterDep> interDep,
-        OA_ptr<DataFlow::ParamBindings> paramBind)
+        OA_ptr<CFG::CFGInterface> cfg, OA_ptr<InterDep> interDep,
+        OA_ptr<DataFlow::ParamBindings> paramBind,
+        DataFlow::DFPImplement algorithm)
 {
   if (debug) {
     std::cout << "In ManagerDepStandard::performAnalysis" << std::endl;
@@ -71,12 +71,13 @@ OA_ptr<DepStandard> ManagerDepStandard::performAnalysis(ProcHandle proc,
   // store CFG for use in initialization
   mCFG = cfg;
   if (debug) {
-      cfg->dump(std::cout,mIR);
+  //    cfg->dump(std::cout,mIR);
   }
 
   // use the dataflow solver to get the In and Out sets for the BBs
-  OA_ptr<DataFlow::DataFlowSet> finalDep = DataFlow::CFGDFProblem::solve(cfg);
-
+//  OA_ptr<DataFlow::DataFlowSet> finalDep = DataFlow::CFGDFSolver::solve(cfg);
+  OA_ptr<DataFlow::DataFlowSet> finalDep = mSolver->solve(cfg,algorithm);
+  
   if (debug) {
       std::cout << "ManagerDepStandard::performAnalysis, finalDep = ";
       finalDep->dump(std::cout,mIR);
@@ -90,11 +91,33 @@ OA_ptr<DepStandard> ManagerDepStandard::performAnalysis(ProcHandle proc,
 //------------------------------------------------------------------
 // Implementing the callbacks for CFGDFProblem
 //------------------------------------------------------------------
-void ManagerDepStandard::initializeNode(OA_ptr<CFG::Interface::Node> n)
+//void ManagerDepStandard::initializeNode(OA_ptr<CFG::Interface::Node> n)
+//{
+//    mNodeInSetMap[n] = initializeTop();
+//    mNodeOutSetMap[n] = initializeTop();
+//}
+
+
+/*!
+ *    Not doing anything special at entries and exits.
+ *     */
+OA_ptr<DataFlow::DataFlowSet>
+ManagerDepStandard::initializeNodeIN(OA_ptr<CFG::NodeInterface> n)
 {
-    mNodeInSetMap[n] = initializeTop();
-    mNodeOutSetMap[n] = initializeTop();
+     OA_ptr<DataFlow::LocDFSet> retval;
+     retval = new DataFlow::LocDFSet;
+     return retval;
 }
+
+OA_ptr<DataFlow::DataFlowSet>
+ManagerDepStandard::initializeNodeOUT(OA_ptr<CFG::NodeInterface> n)
+{
+      OA_ptr<DataFlow::LocDFSet> retval;
+      retval = new DataFlow::LocDFSet;
+      return retval;
+}
+
+
 
 OA_ptr<DataFlow::DataFlowSet> 
 ManagerDepStandard::meet (OA_ptr<DataFlow::DataFlowSet> set1orig, 
@@ -150,11 +173,10 @@ ManagerDepStandard::transfer(OA_ptr<DataFlow::DataFlowSet> in,
     // set of expressions to analyze for differentiable uses
     std::set<ExprHandle> exprSet;
 
-    // iterate over memref = expr pairs if this is an EXPR_STMT
-    OA::Activity::IRStmtType sType = mIR->getActivityStmtType(stmt);
-    if (sType==EXPR_STMT) {
-        OA_ptr<ExprStmtPairIterator> espIterPtr 
-            = mIR->getExprStmtPairIterator(stmt);
+    OA_ptr<AssignPairIterator> espIterPtr 
+         = mIR->getAssignPairIterator(stmt);
+    if(!espIterPtr.ptrEqual(0)) {
+        
         for ( ; espIterPtr->isValid(); ++(*espIterPtr)) {
             // unbundle pair
             MemRefHandle mref = espIterPtr->currentTarget();
@@ -221,7 +243,7 @@ ManagerDepStandard::transfer(OA_ptr<DataFlow::DataFlowSet> in,
     // reference parameters
     OA_ptr<IRCallsiteIterator> callsiteItPtr = mIR->getCallsites(stmt);
     for ( ; callsiteItPtr->isValid(); ++(*callsiteItPtr)) {
-        ExprHandle call = callsiteItPtr->current();
+        CallHandle call = callsiteItPtr->current();
         if (debug) {
           std::cout << "\nhandling all callsite params and side-effects, ";
           std::cout << "call = " << mIR->toString(call) << std::endl;
@@ -255,11 +277,12 @@ ManagerDepStandard::transfer(OA_ptr<DataFlow::DataFlowSet> in,
             if (debug) { eTreePtr->dump(std::cout,mIR); }
             if ( evalVisitor.isMemRef() ) {
                 MemRefHandle memref = evalVisitor.getMemRef();
-                if (mParamBind->isRefParam(
-                        mParamBind->getCalleeFormal(call,memref)) )
-                {
-                  isRefParam = true;
-                }
+                assert(0); // need to rewrite alg, see MMS
+                //if (mParamBind->isRefParam(
+                //        mParamBind->getCalleeFormal(call,memref)) )
+                //{
+                //  isRefParam = true;
+               // }
             }
 
             // record expr for those that aren't reference parameters

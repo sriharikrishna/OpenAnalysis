@@ -3,22 +3,20 @@
   \brief Abstract interface that the CFG AnnotationManagers require.
 
   \authors Michelle Strout
-  \version $Id: CFGIRInterface.hpp,v 1.12 2004/11/19 19:21:50 mstrout Exp $
+  \version $Id: CFGIRInterface.hpp,v 1.12.10.1 2005/12/01 04:48:29 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
+
 
   A CFG AnnotationManager generates a CFG representation of the program.
   The analysis engine within the CFG AnnotationManager requires that
   the CFGIRInterface be implemented so that queries can be made to
   the Source IR relevant to constructing control flow graphs.  Some of
   the methods in this interface return an IRRegionStmtIterator.
-  this interface 
-
-  To use the CFG AnnotationManager to 
-
 */
 
 #ifndef CFGIRInterface_h
@@ -96,11 +94,11 @@ class CFGIRInterface : public virtual IRHandlesIRInterface {
   //! Given a statement, return its CFG::IRStmtType
   virtual IRStmtType getCFGStmtType(StmtHandle h) = 0; 
 
-  //! Given a statement, return a label (or NULL if
+  //! Given a statement, return a label (or StmtHandle(0) if
   //! there is no label associated with the statement).
   virtual StmtLabel getLabel(StmtHandle h) = 0; 
 
-  //! Given a compound statement, return an IRRegionStmtIterator* for the
+  //! Given a compound statement, return an IRRegionStmtIterator for the
   //! statements.  
   //! A compound is a list of statements.
   virtual OA_ptr<IRRegionStmtIterator> getFirstInCompound(StmtHandle h) = 0;  
@@ -109,7 +107,7 @@ class CFGIRInterface : public virtual IRHandlesIRInterface {
   // Loops
   //--------------------------------------------------------
 
-  //! Given a loop statement, return an IRRegionStmtIterator* for the
+  //! Given a loop statement, return an IRRegionStmtIterator for the
   //! loop body.  
   virtual OA_ptr<IRRegionStmtIterator> loopBody(StmtHandle h) = 0; 
 
@@ -172,12 +170,12 @@ class CFGIRInterface : public virtual IRHandlesIRInterface {
   //--------------------------------------------------------
 
   //! Given a structured two-way conditional statement, return an
-  //! IRRegionStmtIterator* for the "true" part (i.e., the statements under
+  //! IRRegionStmtIterator for the "true" part (i.e., the statements under
   //! the "if" clause). 
   virtual OA_ptr<IRRegionStmtIterator> trueBody(StmtHandle h) = 0; 
 
   //! Given a structured two-way conditional statement, return an
-  //! IRRegionStmtIterator* for the "else" part (i.e., the statements under
+  //! IRRegionStmtIterator for the "else" part (i.e., the statements under
   //! the "else" clause). 
   virtual OA_ptr<IRRegionStmtIterator> elseBody(StmtHandle h) = 0; 
   
@@ -189,7 +187,7 @@ class CFGIRInterface : public virtual IRHandlesIRInterface {
   //! The count does not include the default/catchall case.
   virtual int numMultiCases(StmtHandle h) = 0; 
 
-  //! Given a structured multi-way branch, return an IRRegionStmtIterator* for
+  //! Given a structured multi-way branch, return an IRRegionStmtIterator for
   //! the body corresponding to target 'bodyIndex'. The n targets are 
   //! indexed [0..n-1].  
   virtual OA_ptr<IRRegionStmtIterator> 
@@ -207,7 +205,7 @@ class CFGIRInterface : public virtual IRHandlesIRInterface {
   //! corresponding to target 'bodyIndex' is the default/catchall/ case.
   virtual bool isCatchAll(StmtHandle h, int bodyIndex) = 0;
 
-  //! Given a structured multi-way branch, return an IRRegionStmtIterator*
+  //! Given a structured multi-way branch, return an IRRegionStmtIterator
   //! for the body corresponding to default/catchall case.  
   virtual OA_ptr<IRRegionStmtIterator> getMultiCatchall (StmtHandle h) = 0;
   
@@ -274,7 +272,8 @@ class CFGIRInterface : public virtual IRHandlesIRInterface {
   // Symbol Handles
   //--------------------------------------------------------
 
-  virtual SymHandle getProcSymHandle(ProcHandle h) = 0;
+  // Currently never used. This might be deprecated in the future.
+  // virtual SymHandle getProcSymHandle(ProcHandle h) = 0;
   
 };
 

@@ -5,11 +5,11 @@
   \authors Arun Chauhan (2001 was part of Mint)
   \version $Id: Tree.hpp,v 1.15 2005/06/10 02:32:05 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef Tree_H
@@ -20,6 +20,7 @@
 #include <set>
 
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
+#include <OpenAnalysis/OABase/Annotation.hpp>
 
 // Mint headers
 #include "Iterator.hpp"
@@ -64,7 +65,7 @@ namespace OA {
    methods within the Graph class.  
 */
 //--------------------------------------------------------------------
-class Tree {
+class Tree : public virtual Annotation {
  public:
   class Node ;
   class Edge;
@@ -210,7 +211,7 @@ class Tree {
       of outgoing (children) nodes and links for
       different traversal orders. 
   */
-  class Node  {
+  class Node : public virtual Annotation {
   public:
     Node() 
         { in_use = false; 
@@ -245,6 +246,15 @@ class Tree {
     virtual bool operator<(Node& other) { return this<&other; }
     virtual void dump (std::ostream& os) { os << this; }
     
+    //*****************************************************************
+    // Annotation Interface
+    //*****************************************************************
+    virtual void output(IRHandlesIRInterface& ir) {
+      ostringstream label;
+      label << this; // what does this print, anyway?
+      sOutBuild->outputString( label.str() );
+    }
+
     // Iterators
     OA_ptr<OutEdgesIterator> 
     getOutEdgesIterator() const {
@@ -463,6 +473,11 @@ public:
   void removeNode(OA_ptr<Node> ) 
       throw (NonexistentNode, DeletingRootOfNonSingletonTree, EmptyNode);
   //OA_ptr<Node>  clone (OA_ptr<Node> );
+
+  //*****************************************************************
+  // Annotation Interface
+  //*****************************************************************
+  virtual void output(IRHandlesIRInterface& ir) { }
 
 
   //------------------------------------------------------------------

@@ -3,13 +3,13 @@
   \brief Implementation of InterActive
 
   \author Michelle Strout
-  \version $Id: InterActive.cpp,v 1.6 2005/06/10 02:32:02 mstrout Exp $
+  \version $Id: InterActive.cpp,v 1.6.6.1 2005/08/23 18:19:14 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #include "InterActive.hpp"
@@ -43,19 +43,6 @@ OA_ptr<ProcHandleIterator> InterActive::getKnownProcIterator()
     OA_ptr<ActivityProcIter> retval;
     retval = new ActivityProcIter(procSet);
     return retval;
-}
-
-//! Indicate whether the given symbol is active or not within any procedure
-bool InterActive::isActive(SymHandle sym)
-{
-  // an unknown location is active, therefore all symbols are active
-  if (mUnknownLocActive) {
-    return true;
-  } else if (mActiveSymSet.find(sym) != mActiveSymSet.end()) {
-    return true;
-  } else {
-    return false;
-  }  
 }
 
 //! Indicate whether the given stmt is active or not within given proc
@@ -123,19 +110,36 @@ InterActive::getActiveMemRefIterator(ProcHandle proc)
     return retval;
 }
 
+int InterActive::getNumIterUseful() 
+{ 
+  return mNumIterUseful; 
+}
+
+int InterActive::getNumIterVary()
+{
+  return mNumIterVary;
+}
+
+int InterActive::getNumIterActive()
+{
+  return mNumIterActive;
+}
+
+int InterActive::getActiveSizeInBytes()
+{
+  return mSizeInBytes;
+}
+
+// *****************************************************************
+// Construction methods 
+// *****************************************************************
+
 //! Associate the given procedure with the given Activity info
 void InterActive::mapProcToActive(ProcHandle proc, 
     OA_ptr<Activity::ActiveStandard> active)
 {
     mProcToActiveMap[proc] = active;
 
-    // get all known active symbols from the procedure so we know all active
-    // symbols in program
-    OA_ptr<SymHandleIterator> symIter = active->getActiveSymIterator();
-    for ( ; symIter->isValid(); (*symIter)++) {
-        mActiveSymSet.insert(symIter->current());
-    }
- 
     // if the procedure has an UnknownLoc that is active then must indicate
     // that for whole program
     if (active->getUnknownLocActive()==true) {
@@ -143,22 +147,102 @@ void InterActive::mapProcToActive(ProcHandle proc,
     }
 }
 
-//! Return an iterator for set of active symbols
-OA_ptr<SymHandleIterator> InterActive::getActiveSymIterator() 
+void InterActive::setNumIterUseful(int n)
 {
-  OA_ptr<SymHandleIterator> retval;
-  OA_ptr<std::set<SymHandle> > retSet;
-  retSet = new std::set<SymHandle>;
-  std::set<SymHandle>::iterator symIter;
-  for (symIter = mActiveSymSet.begin(); symIter!=mActiveSymSet.end();
-       symIter++) 
-  {
-    retSet->insert(*symIter);
-  }
-  retval = new ActiveSymIterator(retSet);
-  return retval;
+  mNumIterUseful = n;
 }
 
+void InterActive::setNumIterVary(int n)
+{
+  mNumIterVary = n;
+}
+
+void InterActive::setNumIterActive(int n)
+{
+  mNumIterActive = n;
+}
+
+void InterActive::setActiveSizeInBytes(int n)
+{
+  mSizeInBytes = n;
+}
+
+
+//*****************************************************************
+// Annotation Interface
+//*****************************************************************
+void InterActive::output(IRHandlesIRInterface &ir){
+
+  sOutBuild->objStart("InterActive"); {
+
+    // Loop through all known procedures
+    OA_ptr<ProcHandleIterator> procIterPtr = getKnownProcIterator();
+    for (; procIterPtr->isValid(); (*procIterPtr)++) {
+      ProcHandle proc = procIterPtr->current();
+      ostringstream oss;
+      oss << "Procedure( " << ir.toString(proc) << " )";
+      sOutBuild->fieldStart(oss.str()); {
+
+        sOutBuild->objStart("ActiveLocSet"); {
+          sOutBuild->listStart(); {
+            OA_ptr<LocIterator> locIterPtr;
+            locIterPtr = getActiveLocsIterator(proc);
+            for ( ; locIterPtr->isValid(); (*locIterPtr)++ ) {
+              sOutBuild->listItemStart(); {
+                (locIterPtr->current())->output(ir);
+              }sOutBuild->listItemEnd();
+            }
+          }sOutBuild->listEnd();
+        }sOutBuild->objEnd("ActiveLocSet");
+
+        sOutBuild->objStart("ActiveStmtSet"); {
+          sOutBuild->listStart(); {
+            ostringstream oss;
+            oss << indt;
+            OA_ptr<StmtHandleIterator> stmtIterPtr;
+            stmtIterPtr= getActiveStmtIterator(proc);
+            for ( ; stmtIterPtr->isValid(); (*stmtIterPtr)++ ) {
+              sOutBuild->outputString(oss.str());
+              sOutBuild->listItemStart(); {
+                sOutBuild->outputIRHandle(stmtIterPtr->current(),ir);
+              }sOutBuild->listItemEnd();
+            }
+          }sOutBuild->listEnd();
+        }sOutBuild->objEnd("ActiveStmtSet");
+
+        sOutBuild->objStart("ActiveMemRefSet"); {
+          sOutBuild->listStart(); {
+            ostringstream oss;
+            oss << indt;
+            OA_ptr<MemRefHandleIterator> memrefIterPtr;
+            memrefIterPtr = getActiveMemRefIterator(proc);
+            for ( ; memrefIterPtr->isValid(); (*memrefIterPtr)++ ) {
+              sOutBuild->outputString(oss.str());
+              sOutBuild->listItemStart(); {
+                sOutBuild->outputIRHandle(memrefIterPtr->current(),ir);
+              }sOutBuild->listItemEnd();
+            }
+          }sOutBuild->listEnd();
+        }sOutBuild->objEnd("ActiveMemRefSet");
+
+      }sOutBuild->fieldEnd("Procedure");
+    }
+
+    sOutBuild->fieldStart("mNumIterUseful"); {
+      ostringstream oss; oss << mNumIterUseful;
+      sOutBuild->outputString(oss.str());
+    }sOutBuild->fieldEnd("mNumIterUseful");
+    sOutBuild->fieldStart("mNumIterVary"); {
+      ostringstream oss; oss << mNumIterVary;
+      sOutBuild->outputString(oss.str());
+    }sOutBuild->fieldEnd("mNumIterVary");
+    sOutBuild->fieldStart("mNumIterActive"); {
+      ostringstream oss; oss << mNumIterActive;
+      sOutBuild->outputString(oss.str());
+    }sOutBuild->fieldEnd("mNumIterActive");
+  } sOutBuild->objEnd("InterActive");
+  
+}
 
 //! incomplete output of info for debugging
 void InterActive::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir)
@@ -169,7 +253,6 @@ void InterActive::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir)
     OA_ptr<ProcHandleIterator> procIterPtr = getKnownProcIterator();
     for (; procIterPtr->isValid(); (*procIterPtr)++) {
         ProcHandle proc = procIterPtr->current();
-        ir->currentProc(proc);
 
         // print all sets for each procedure
         os << "Procedure( " << ir->toString(proc) << " )" << std::endl;
@@ -196,16 +279,6 @@ void InterActive::dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir)
             os << ir->toString(memrefIterPtr->current()) << std::endl;
         }
         os << std::endl;
-    }
-
-    os << "\tActiveSymList" << std::endl;
-    std::set<SymHandle>::iterator symIter;
-    for (symIter = mActiveSymSet.begin(); symIter!=mActiveSymSet.end();
-         symIter++) 
-    {
-        os << "\t\t" << ir->toString(*symIter) << " hval = " 
-           << (*symIter).hval() 
-           << ", active = " << isActive(*symIter) << std::endl;
     }
 
     os << "\tgetActiveSizeInBytes() = " << getActiveSizeInBytes() << std::endl;

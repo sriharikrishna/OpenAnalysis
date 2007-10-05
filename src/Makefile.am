@@ -34,6 +34,8 @@
 ## if advised of the possibility of such damage. 
 ## 
 ## ******************************************************* EndRiceCopyright *
+##
+## Copyright (c) 2006 Contributors
 
 #############################################################################
 #

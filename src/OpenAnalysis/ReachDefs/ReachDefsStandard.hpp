@@ -6,11 +6,11 @@
   \authors Michelle Strout
   \version $Id: ReachDefsStandard.hpp,v 1.14 2004/12/21 21:15:19 mstrout Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
+  Copyright (c) 2002-2005, Rice University <br>
+  Copyright (c) 2004-2005, University of Chicago <br>
+  Copyright (c) 2006, Contributors <br>
   All rights reserved. <br>
   See ../../../Copyright.txt for details. <br>
-
 */
 
 #ifndef ReachDefsStandard_hpp
@@ -24,17 +24,22 @@
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
 #include <OpenAnalysis/IRInterface/IRHandles.hpp>
 #include <OpenAnalysis/ReachDefs/Interface.hpp>
-//#include <OpenAnalysis/Utils/SetIterator.hpp>
+#include <OpenAnalysis/OABase/Annotation.hpp>
+#include <OpenAnalysis/Utils/GenOutputTool.hpp>
 
 namespace OA {
   namespace ReachDefs {
 
 
 
-class ReachDefsStandard : public ReachDefs::Interface {
+class ReachDefsStandard : public virtual ReachDefs::Interface,
+                          public virtual Annotation 
+{
   public:
     ReachDefsStandard(ProcHandle p) 
-      { mExitReachDefs = new std::set<StmtHandle>; }
+      {
+          mExitReachDefs = new std::set<StmtHandle>; 
+      }
     ~ReachDefsStandard() {}
 
     //! Return an iterator that will iterate over the set of reaching
@@ -68,20 +73,15 @@ class ReachDefsStandard : public ReachDefs::Interface {
     // Output
     //*****************************************************************
 
-    //! set a different OutputBuilder, encapsulates stream and 
-    //! format (txt, xml, etc)
-    //void configOutput(OutputBuilder& ob) { mOB = ob; }
-    //! will use OutputBuilder to generate output with persistent handles
-    //void output(& pIR);
-    //! will use OutputBuilder to generate output with string reps of handles
-    //void outputPretty(& pIR);
+    //! will use OutputBuilder to generate output 
+    void output(IRHandlesIRInterface& pIR);
 
     //! incomplete output of info for debugging, just lists stmts
     //! and associated set of stmts that are reaching defs for the given
     //! stmt
     void dump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir);
 
-  private:
+  protected:
     // data members
     std::map<StmtHandle,OA_ptr<std::set<StmtHandle> > >  mReachDefs;
     OA_ptr<std::set<StmtHandle> > mExitReachDefs;

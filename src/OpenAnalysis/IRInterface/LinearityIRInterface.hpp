@@ -43,14 +43,6 @@ enum LinOpType {
   OPR_NONE
 };
 
-// Statements are classified into one of the following types:
-enum IRStmtType {
-  ANY_STMT,           // Anything not covered below.
-  EXPR_STMT,          // A statement involving only target = expression
-                      // pairs
-  NONE
-};
-
 //! The ReachDefIRInterface abstract base class gives a set of methods
 //! for querying the source IR for information relevant to reaching definition
 //! Analysis.
@@ -63,9 +55,6 @@ class LinearityIRInterface : public virtual IRHandlesIRInterface {
  
   //! Given a OpHandle, return its Linearity::LinOpType
   virtual LinOpType getLinearityOpType(OpHandle op) = 0;
-
-  //! Given a statement, return its Linearity::IRStmtType
-  virtual IRStmtType getLinearityStmtType(StmtHandle h) = 0;
 
   //! Given a statement return a list to the pairs of 
   //! target MemRefHandle, ExprHandle where

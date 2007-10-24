@@ -152,16 +152,16 @@ void NotationGenerator::outputPtrAssignPairs(OA::StmtHandle stmt)
 
     // if a statement is not of type PTR_ASSIGN_STMT then it can not
     // contain a PTRASSIGNPAIRS clause.
-    
-    OA::Alias::IRStmtType type = mIR->getAliasStmtType(stmt);
-    if(type != OA::Alias::PTR_ASSIGN_STMT) { 
-        return; 
-    }
+   
+    OA::OA_ptr<OA::Alias::PtrAssignPairStmtIterator> ii;
+    ii = mIR->getPtrAssignStmtPairIterator(stmt);
 
-    mCodeStream << indt << "PTRASSIGNPAIRS = { ";
-      outputHandle(stmt);
-      mCodeStream << " =>" << pushIndt;
-    mCodeStream << indt << "[" << pushIndt;
+    if(ii->isValid()) {
+       mCodeStream << indt << "PTRASSIGNPAIRS = { ";
+         outputHandle(stmt);
+         mCodeStream << " =>" << pushIndt;
+       mCodeStream << indt << "[" << pushIndt;
+    }
 
     OA::OA_ptr<OA::Alias::PtrAssignPairStmtIterator> i;
     i = mIR->getPtrAssignStmtPairIterator(stmt);
@@ -173,8 +173,12 @@ void NotationGenerator::outputPtrAssignPairs(OA::StmtHandle stmt)
           mCodeStream << " >";
     }
 
-    mCodeStream << popIndt << indt << "] }" << popIndt;
-    
+
+    OA::OA_ptr<OA::Alias::PtrAssignPairStmtIterator> iii;
+    iii = mIR->getPtrAssignStmtPairIterator(stmt);
+    if(iii->isValid()) {
+       mCodeStream << popIndt << indt << "] }" << popIndt;
+    } 
 }
     
 void NotationGenerator::outputCallSites(OA::StmtHandle stmt)

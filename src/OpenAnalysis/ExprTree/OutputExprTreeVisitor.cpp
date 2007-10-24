@@ -39,46 +39,31 @@ void OutputExprTreeVisitor::visitOpNode(ExprTree::OpNode& n)
   ostringstream label;
   label << "ET OpNode ( " << mIR.toString(opH) << " )";
   sOutBuild->graphNodeStart(mId);
-    sOutBuild->graphNodeLabel(label.str());
-      //sOutBuild->graphNodeLabelStart();
-      //sOutBuild->graphNodeLabelEnd();
-  //sOutBuild->graphNodeEnd();
+  sOutBuild->graphNodeLabel(label.str());
   mId++;
 
-  if ( n.num_children() <= 2 ) {
 
+  if(n.num_children() >= 1)
+  {
     // if so then visit each child
     OA_ptr<ExprTree::Node> cetNodePtr;
     ExprTree::ChildNodesIterator cNodesIter(n);
 
-    // child1
-    if (cNodesIter.isValid()) {
+    for(;cNodesIter.isValid(); ++cNodesIter, ++mId) {
       cetNodePtr = cNodesIter.current();
-
-      //sOutBuild->graphEdgeLabelStart();
+ 
       sOutBuild->graphEdgeStart();
         sOutBuild->graphEdgeLabelStart();
         sOutBuild->graphEdgeSourceNode(Id);
           cetNodePtr->acceptVisitor(*this);
-        sOutBuild->graphEdgeLabelEnd(); 
-      //sOutBuild->graphEdgeEnd();
+        sOutBuild->graphEdgeLabelEnd();
     }
-    ++cNodesIter;
-    ++mId;
-
-    // child2
-    if (cNodesIter.isValid()) {
-      cetNodePtr = cNodesIter.current();
-
-      sOutBuild->graphEdgeStart();
-        sOutBuild->graphEdgeLabelStart();
-        sOutBuild->graphEdgeSourceNode(Id);
-          cetNodePtr->acceptVisitor(*this);
-        sOutBuild->graphEdgeLabelEnd(); 
-      //sOutBuild->graphEdgeEnd();
-    }
+    
+  } else {
+      assert(0);
   }
 
+  mId--;
 }
 
 void OutputExprTreeVisitor::visitCallNode(ExprTree::CallNode& n)
@@ -88,10 +73,7 @@ void OutputExprTreeVisitor::visitCallNode(ExprTree::CallNode& n)
     label << "ET CallNode ( " << mIR.toString(call) << " )";
 
     sOutBuild->graphNodeStart(mId);
-      sOutBuild->graphNodeLabel(label.str());
-        //sOutBuild->graphNodeLabelStart();
-        //sOutBuild->graphNodeLabelEnd();
-    //sOutBuild->graphNodeEnd();
+    sOutBuild->graphNodeLabel(label.str());
 }
 
 void OutputExprTreeVisitor::visitMemRefNode(ExprTree::MemRefNode& n)
@@ -101,11 +83,7 @@ void OutputExprTreeVisitor::visitMemRefNode(ExprTree::MemRefNode& n)
     label << "ET MemRefNode ( " << mIR.toString(memref) << " )";
 
     sOutBuild->graphNodeStart(mId);
-      sOutBuild->graphNodeLabel(label.str());
-        //sOutBuild->graphNodeLabelStart();
-        //sOutBuild->graphNodeLabelEnd();
-    //sOutBuild->graphNodeEnd();
-
+    sOutBuild->graphNodeLabel(label.str());
 }
 
 void OutputExprTreeVisitor::visitConstSymNode(ExprTree::ConstSymNode& n)
@@ -115,10 +93,7 @@ void OutputExprTreeVisitor::visitConstSymNode(ExprTree::ConstSymNode& n)
     label << "ET ConstSymNode ( " << mIR.toString(simnode) << " )";
 
     sOutBuild->graphNodeStart(mId);
-      sOutBuild->graphNodeLabel(label.str());
-        //sOutBuild->graphNodeLabelStart();
-        //sOutBuild->graphNodeLabelEnd();
-    //sOutBuild->graphNodeEnd();
+    sOutBuild->graphNodeLabel(label.str());
 }
 
 void OutputExprTreeVisitor::visitConstValNode(ExprTree::ConstValNode& n)
@@ -128,11 +103,7 @@ void OutputExprTreeVisitor::visitConstValNode(ExprTree::ConstValNode& n)
     label << "ET ConstValNode ( " << mIR.toString(constval) << " )";
 
     sOutBuild->graphNodeStart(mId);
-      sOutBuild->graphNodeLabel(label.str());
-        //sOutBuild->graphNodeLabelStart();
-        //sOutBuild->graphNodeLabelEnd();
-    //sOutBuild->graphNodeEnd();
-
+    sOutBuild->graphNodeLabel(label.str());
 }
 
 void OutputExprTreeVisitor::output(IRHandlesIRInterface&)

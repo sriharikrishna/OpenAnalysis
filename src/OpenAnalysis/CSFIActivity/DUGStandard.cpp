@@ -682,16 +682,16 @@ void
 Node::markVaried(std::list<CallHandle>& callStack,
                               OA_ptr<Activity::ActivityIRInterface> ir,
                               std::set<OA_ptr<EdgeInterface> >& visited,
-                              std::set<unsigned>& onPath,
+                              std::set<std::pair<unsigned,unsigned> >& onPath,
                               ProcHandle proc,
                               unsigned prevId, 
                               OA_ptr<EdgeInterface> parenEdge)
 { 
 
-  std::set<unsigned>::iterator pIter;
-  for (pIter=onPath.begin(); pIter!=onPath.end(); pIter++ ) {
-    unsigned in = *pIter;
-  }  
+//   std::set<unsigned>::iterator pIter;
+//   for (pIter=onPath.begin(); pIter!=onPath.end(); pIter++ ) {
+//     unsigned in = *pIter;
+//   }  
 
   
   unsigned currId = getId();
@@ -733,17 +733,35 @@ Node::markVaried(std::list<CallHandle>& callStack,
     SymHandle s = sn->getSym();
 
     unsigned succId = succNode->getId();
+    EdgeType etype = succEdge->getType();
+
+    std::pair<unsigned, unsigned> pathNode;
+    switch(etype) {
+      case CALL_EDGE: 
+        pathNode = std::pair<unsigned,unsigned>
+          (succEdge->getCall().hval(),succId); break;
+      case RETURN_EDGE:
+      case PARAM_EDGE:
+        if (callStack.empty())
+          pathNode = std::pair<unsigned,unsigned>(1,succId); 
+        else
+          pathNode = std::pair<unsigned,unsigned>
+            (callStack.front().hval(),succId); break;
+      case CFLOW_EDGE:
+        pathNode = std::pair<unsigned,unsigned>
+          (1,succId); break;
+      default: assert(0);
+    }
 
     if (succId != prevId || parenCall != succEdge->getCall()) nonParentSuccessors++;
 
     if (visited.find(succEdge) != visited.end() ||
-        onPath.find(succId)    != onPath.end()  ) 
+        onPath.find(pathNode)  != onPath.end()  ) 
     {
         continue;
     }
 
-    onPath.insert(succId);
-    EdgeType etype = succEdge->getType();
+    onPath.insert(pathNode);
 
 #ifdef DEBUG_DUAA_LAST
     if (succEdge->getType() != RETURN_EDGE || 
@@ -822,7 +840,7 @@ Node::markVaried(std::list<CallHandle>& callStack,
         break;
     }
 
-    onPath.erase(succId);
+    onPath.erase(pathNode);
   }
 
   // Actual or formal parameters without any outgoing edges shouldn't be
@@ -845,7 +863,7 @@ void
 Node::markUseful(std::list<CallHandle>& callStack,
                               OA_ptr<Activity::ActivityIRInterface> ir,
                               std::set<OA_ptr<EdgeInterface> >& visited,
-                              std::set<unsigned>& onPath,
+                              std::set<std::pair<unsigned,unsigned> >& onPath,
                               ProcHandle proc,
                               unsigned prevId, 
                               OA_ptr<EdgeInterface> parenEdge)
@@ -901,6 +919,25 @@ Node::markUseful(std::list<CallHandle>& callStack,
     OA_ptr<EdgeInterface> predEdge = predIterPtr->currentDUGEdge();
     OA_ptr<NodeInterface> predNode = predEdge->getDUGSource();
     unsigned predId = predNode->getId();
+    EdgeType etype = predEdge->getType();
+
+    std::pair<unsigned, unsigned> pathNode;
+    switch(etype) {
+      case RETURN_EDGE:
+        pathNode = std::pair<unsigned,unsigned>
+          (predEdge->getCall().hval(),predId); break;
+      case CALL_EDGE: 
+      case PARAM_EDGE:
+        if (callStack.empty())
+          pathNode = std::pair<unsigned,unsigned>(1,predId); 
+        else
+          pathNode = std::pair<unsigned,unsigned>
+            (callStack.front().hval(),predId); break;
+      case CFLOW_EDGE:
+        pathNode = std::pair<unsigned,unsigned>
+          (1,predId); break;
+      default: assert(0);
+    }
 #ifdef DEBUG_DUAA_LAST
     if (display){
       std::cout << "CONTINUE: visited(" << (visited.find(predEdge) != visited.end()) 
@@ -909,9 +946,8 @@ Node::markUseful(std::list<CallHandle>& callStack,
 #endif  
     if (predId != prevId || parenCall != predEdge->getCall()) nonChildAncestors++;
     if (visited.find(predEdge) != visited.end() ||
-        onPath.find(predId)    != onPath.end()  ) continue;
-    onPath.insert(predId);
-    EdgeType etype = predEdge->getType();
+        onPath.find(pathNode)  != onPath.end()  ) continue;
+    onPath.insert(pathNode);
 
 #ifdef DEBUG_DUAA_LAST
     if (predEdge->getType() != CALL_EDGE || 
@@ -968,7 +1004,7 @@ Node::markUseful(std::list<CallHandle>& callStack,
         break;
     }
 
-    onPath.erase(predId);
+    onPath.erase(pathNode);
   }
 
 #ifdef DEBUG_DUAA_LAST

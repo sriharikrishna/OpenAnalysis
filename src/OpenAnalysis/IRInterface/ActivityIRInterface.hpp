@@ -30,15 +30,6 @@ typedef IRCallsiteParamIterator ExprHandleIterator;
 
   namespace Activity {
 
-// Statements are classified into one of the following types:
-enum IRStmtType {
-  ANY_STMT,           // Anything not covered below.
-  EXPR_STMT,          // A statement involving only target = expression
-                      // pairs
-  NONE
-};
-
-
 //! The ActivityIRInterface abstract base class gives a 
 //! set of methods for querying the source IR for information relevant 
 //! to the Dep phase of activity analysis.

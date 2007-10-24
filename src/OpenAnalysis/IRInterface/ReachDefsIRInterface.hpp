@@ -32,17 +32,6 @@
 namespace OA {
   namespace ReachDefs {
 
-/*
-// Statements are classified into one of the following types:
-enum IRStmtType {
-  ANY_STMT,                     // Anything not covered below.
-  PTR_ASSIGN,                   // assigning one pointer to another
-  PROC_CALL,                    // a procedure call
-  STMT_WITH_FUNC_CALL,          // the statement includes a function call
-  NONE
-};
-*/
-
 //! The ReachDefIRInterface abstract base class gives a set of methods
 //! for querying the source IR for information relevant to reaching definition
 //! Analysis.

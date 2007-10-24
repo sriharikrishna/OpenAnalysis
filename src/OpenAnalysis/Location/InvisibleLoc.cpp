@@ -169,10 +169,10 @@ class InvisibleLocMayOverlapVisitor : public virtual LocationVisitor {
     void visitUnnamedLoc(UnnamedLoc& loc) { mMayOverlap = false; }
 
     // only overlap with other Invisibles that have an equivalent MemRefExpr
+    // InvisibleLocs overlap if they have the same number of dereferences
+    // and the same base symbol
     void visitInvisibleLoc(InvisibleLoc& loc) 
       { 
-          //if (mThisLoc.getMemRefExpr() == loc.getMemRefExpr())
-          //{ mMayOverlap = true; } else { mMayOverlap = false; }
 
          mMayOverlap = false;
 

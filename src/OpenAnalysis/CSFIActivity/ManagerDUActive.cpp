@@ -42,7 +42,7 @@ ManagerDUActive::markVaried()
 {
   std::list<CallHandle> callStack;
   std::set<OA_ptr<DUG::EdgeInterface> > visited;
-  std::set<unsigned> onPath;
+  std::set<std::pair<unsigned,unsigned> > onPath;
 
   // iterate over independent variables
   std::list<std::pair<SymHandle, ProcHandle> >& indepSyms = mDUG->getIndepSyms();
@@ -59,10 +59,11 @@ ManagerDUActive::markVaried()
                 << ")" << std::endl;
 #endif
       OA_ptr<DUG::NodeInterface> node = mDUG->getNode(sym, proc);
-      onPath.insert(node->getId());
+      std::pair<unsigned, unsigned> pathNode(1, node->getId());
+      onPath.insert(pathNode);
       node->markVaried(callStack, mIR, visited, onPath, node->getProc(), 
                        (unsigned)-1, OA_ptr<DUG::EdgeInterface>());
-      onPath.erase(node->getId());
+      onPath.erase(pathNode);
     }
   }
   
@@ -75,7 +76,7 @@ ManagerDUActive::markUseful()
 {
   std::list<CallHandle> callStack;
   std::set<OA_ptr<DUG::EdgeInterface> > visited;
-  std::set<unsigned> onPath;
+  std::set<std::pair<unsigned,unsigned> > onPath;
 
 
   // iterate over dependent variables
@@ -93,13 +94,14 @@ ManagerDUActive::markUseful()
                 << ")" << std::endl;
 #endif
       OA_ptr<DUG::NodeInterface> node = mDUG->getNode(sym, proc);
-      onPath.insert(node->getId());
+      std::pair<unsigned, unsigned> pathNode(1, node->getId());
+      onPath.insert(pathNode);
 
 
       
       node->markUseful(callStack, mIR, visited, onPath, node->getProc(), 
                        (unsigned)-1, OA_ptr<DUG::EdgeInterface>());
-      onPath.erase(node->getId());
+      onPath.erase(pathNode);
     }
   }
 }

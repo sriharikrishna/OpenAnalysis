@@ -32,13 +32,6 @@ namespace OA {
   //! Namespace for all Alias Analysis interfaces and implementations.
   namespace Alias {
 
-// Statements are classified into one of the following types:
-enum IRStmtType {
-  ANY_STMT,           // Anything not covered below.
-  PTR_ASSIGN_STMT,    // assigning one pointer to another or to unnamed dyn alloc
-  NONE
-};
-
 class PtrAssignPairStmtIterator {
   public:
     PtrAssignPairStmtIterator() {}
@@ -89,9 +82,6 @@ class AliasIRInterface : public virtual IRHandlesIRInterface {
   //! over can be arbitrary.
   virtual OA_ptr<MemRefHandleIterator> getAllMemRefs(StmtHandle stmt) = 0;
   
-  //! Given a statement, return its Alias::IRStmtType
-  virtual IRStmtType getAliasStmtType(StmtHandle h) = 0; 
-
   //! If this is a PTR_ASSIGN_STMT then return an iterator over MemRefHandle
   //! pairs where there is a source and target such that target
   virtual OA_ptr<PtrAssignPairStmtIterator>
@@ -144,22 +134,6 @@ class AliasIRInterface : public virtual IRHandlesIRInterface {
   //! MemRefExprs that describe this memory reference
   virtual OA_ptr<MemRefExprIterator> 
       getMemRefExprIterator(MemRefHandle h) = 0;
-
-  //! Given an Alias::IRStmtType, generate a string 
-  virtual std::string toString(IRStmtType x) = 0;
-
-  // Since I have the toString for IRStmtType I have to duplicate
-  // all of these guys here to do a full override of methods 
-  // in IRHandlesIRInterface
-  virtual std::string toString(const ProcHandle h) = 0;
-  virtual std::string toString(const StmtHandle h) = 0;
-  virtual std::string toString(const ExprHandle h) = 0;
-  virtual std::string toString(const OpHandle h) = 0;
-  virtual std::string toString(const MemRefHandle h) = 0;
-  virtual std::string toString(const SymHandle h) = 0;
-  virtual std::string toString(const ConstSymHandle h) = 0;
-  virtual std::string toString(const ConstValHandle h) = 0;
-  virtual std::string toString(const CallHandle h) = 0;
 
 };  
 

@@ -30,16 +30,6 @@
 namespace OA {
   namespace UDDUChains {
 
-/*
-// Statements are classified into one of the following types:
-enum IRStmtType {
-  ANY_STMT,                     // Anything not covered below.
-  PROC_CALL,                    // a procedure call
-  STMT_WITH_FUNC_CALL,          // the statement includes a function call
-  NONE
-};
-*/
-
 //! The UDDUChainsIRInterface abstract base class gives a set of methods
 //! for querying the source IR for information relevant to computing
 //! UD and DU chains.

@@ -74,13 +74,13 @@ namespace OA {
     void markVaried(std::list<CallHandle>&, 
                     OA_ptr<Activity::ActivityIRInterface>,
                     std::set<OA_ptr<EdgeInterface> >&,
-                    std::set<unsigned>&,
+                    std::set<std::pair<unsigned,unsigned> >&,
                     ProcHandle, unsigned,
                     OA_ptr<EdgeInterface>);
     void markUseful(std::list<CallHandle>&, 
                     OA_ptr<Activity::ActivityIRInterface>,
                     std::set<OA_ptr<EdgeInterface> >&,
-                    std::set<unsigned>&,
+                    std::set<std::pair<unsigned,unsigned> >&,
                     ProcHandle, unsigned,
                     OA_ptr<EdgeInterface>);
 

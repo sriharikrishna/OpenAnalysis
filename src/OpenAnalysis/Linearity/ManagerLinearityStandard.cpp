@@ -235,30 +235,12 @@ ManagerLinearity::transfer(OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt
       inRecast->output(*mIR);
     }
 
-    OA::Linearity::IRStmtType sType = mIR->getLinearityStmtType(stmt);
-
-    switch (sType) {
-
-    case ANY_STMT:
-      if (debug) {
-         std::cout << "\n--||||||ANY_STMT||||||--\n";
-         std::cout << "Statement:\n" << mIR->toString(stmt);
-      }
-      break; // ANY_STMT does not necessarily define anything.
-
-    case EXPR_STMT:
-      // EXPR_STMT defines something, 
-      // Use LinearityLocsVisitor to visit this expression
-      { 
-      if (debug) {
-         std::cout << "\n--||||||EXPR_STMT||||||--\n";
-         std::cout << "Statement:\n" << mIR->toString(stmt);
-      }
-         // get statement type
-         OA_ptr<AssignPairIterator> espIterPtr 
+    OA_ptr<AssignPairIterator> espIterPtr
             = mIR->getAssignPairIterator(stmt);
-         
-         for ( ; espIterPtr->isValid(); (*espIterPtr)++) {
+
+    if(!espIterPtr.ptrEqual(0)) {
+
+        for ( ; espIterPtr->isValid(); ++(*espIterPtr)) {
            // unbundle pair
            MemRefHandle mref = espIterPtr->currentTarget();
            ExprHandle expr = espIterPtr->currentSource();
@@ -287,17 +269,7 @@ ManagerLinearity::transfer(OA_ptr<DataFlow::DataFlowSet> in, OA::StmtHandle stmt
              //mLM->putDepsSet(lPtr,linearityVisitor.getDepsSet());
              inRecast->putDepsSet(lPtr,linearityVisitor.getDepsSet());
            }
-         }
-         
-      }
-      break;
-    case NONE:
-      break;
-    default:
-      std::cout << "Shouldn't get here!\n";
-      std::cout.flush();
-      assert(0);
-      break;
+        }
     }
 
     if (debug) {

@@ -273,18 +273,21 @@ OA_ptr<LocIterator> AliasMap::getMayLocs(MemRefExpr &ref, ProcHandle proc)
     }
     */
 
+   if(!mreClone->isaSubSetRef()) {
+      OA::OA_ptr<OA::SubSetRef> subset_mre;
+      OA::OA_ptr<OA::MemRefExpr> nullMRE;
+      OA::OA_ptr<OA::MemRefExpr> composed_mre;
 
-   OA::OA_ptr<OA::SubSetRef> subset_mre;
-   OA::OA_ptr<OA::MemRefExpr> nullMRE;
-   OA::OA_ptr<OA::MemRefExpr> composed_mre;
+      subset_mre = new OA::SubSetRef(
+                                     OA::MemRefExpr::USE,
+                                     nullMRE
+                                    );
 
-   subset_mre = new OA::SubSetRef(
-                                  OA::MemRefExpr::USE,
-                                  nullMRE
-                                 );
-
-   mreClone = subset_mre->composeWith(mreClone->clone());
-
+      mreClone = subset_mre->composeWith(mreClone->clone());
+    } else {     
+      mreClone = mreClone.convert<RefOp>()->getMemRefExpr();   
+    }
+   
     
     if( mMREToIdMap.find(mreClone) != mMREToIdMap.end() ) {
       int id = mMREToIdMap[mreClone];

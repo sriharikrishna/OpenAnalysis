@@ -2,7 +2,7 @@
 # Testing: set -x: line by line (set -n: syntax)
 # set -x
 
-# $Header: /Volumes/cvsrep/developer/shared/config/hpcguess,v 1.3 2006/05/26 19:09:05 eraxxon Exp $
+# $Id$
 
 ## **************************************************************************
 ##
@@ -118,22 +118,38 @@ f_getoptions $*
 
 cononical_host=""
 case $1 in
-  alpha*-*-osf*)
-    cononical_host="alpha-OSF1" ;;
-  i386*-*-linux* | i686*-*-linux*)
-    cononical_host="x86-Linux" ;;
+  # Cygwin
   i386*-*-cygwin* | i686*-*-cygwin*)
     cononical_host="x86-Cygwin" ;;
+
+  # IRIX
+  mips*-*-irix*)
+    cononical_host="mips-IRIX64" ;;
+
+  # Linux 
+  i386*-*-linux* | i686*-*-linux*)
+    cononical_host="x86-Linux" ;;
   ia64*-*-linux*)
     cononical_host="ia64-Linux" ;;
   x86_64*-*-linux*)
     cononical_host="x86_64-Linux" ;;
-  mips*-*-irix*)
-    cononical_host="mips-IRIX64" ;;
+  mips64el*-*-linux*)
+    cononical_host="mips64el-Linux" ;; 
+
+  # MacOS
   powerpc*-*-darwin*)
     cononical_host="powerpc-MacOS" ;;
+  i386*-*-darwin* | i686*-*-darwin*)
+    cononical_host="x86-MacOS" ;;
+
+  # Solaris
   sparc*-*-solaris*)
     cononical_host="sparc-SunOS" ;;
+
+  # Tru64
+  alpha*-*-osf*)
+    cononical_host="alpha-OSF1" ;;
+
   *)
     ;;
 esac
@@ -145,3 +161,4 @@ f_error_on_nil "${cononical_host}" "${error_pfx} unknown host string!\n";
 # success
 printf "${cononical_host}\n"
 exit 0
+

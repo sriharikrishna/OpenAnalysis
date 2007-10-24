@@ -771,5 +771,12 @@
 08/20/07   OpenAnalysis svn tag trunk r469 Priyadarshini Malusare
    - Fixed the bug in ManagerFIAlias for UnnamedRef.
 
-   
+08/20/07   OpenAnalysis svn tag trunk r469 Priyadarshini Malusare
+   - SubSetRef::composedWith is modified and thus AliasMap::getMayLocs
+     needed trivial modification.
+   - OuputBuilderText::Graph output needed trivial modification
+
+10/04/07   OpenAnalysis svn tag trunk r494 Priyadarshini Malusare
+   - Modified Output of ExprTree, so that OpNode can print multiple
+     children (i.e. more than 2)
 

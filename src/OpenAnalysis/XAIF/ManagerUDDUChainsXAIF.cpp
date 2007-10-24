@@ -59,9 +59,10 @@ namespace OA {
 	  OA::StmtHandle stmt = stmtIterPtr->current();
 	  // mapping of statement to CFG nodes
 	  mStmtToBBMap[stmt] = node;
-	  if (debug) { std::cout << "mapping stmt: "
-				 << mIR->toString(stmt)
-				 << " to CFG node >"; 
+	  if (debug && !donotfilterBB) { 
+            std::cout << "mapping stmt: "
+		      << mIR->toString(stmt)
+		      << " to CFG node >"; 
 	    node->output(*mIR);
 	    std::cout << "< end of CFG node and the following memrefs are mapped to this statement: " << std::endl;
 	  }
@@ -89,7 +90,7 @@ namespace OA {
 	// get the BB in which the use occurs
 	OA_ptr<CFG::NodeInterface> useBB = mStmtToBBMap[mMemRefToStmt[use]];
 	if (debug) {
-	  std::cout << "occurs in useBB = " << useBB << std::endl;
+	  std::cout << " occurs in useBB = " << useBB << std::endl;
 	}
 	StmtSet subSet;
 	OA_ptr<UDDUChains::Interface::ChainStmtIterator> defStmtIterPtr;
@@ -98,14 +99,14 @@ namespace OA {
 	for (; defStmtIterPtr->isValid(); (*defStmtIterPtr)++) {
 	  StmtHandle defStmt = defStmtIterPtr->current();
 	  if (debug) {
-	    std::cout << "def stmt (" << defStmt.hval() << ") = " 
+	    std::cout << "  def stmt (" << defStmt.hval() << ") = " 
 		      << mIR->toString(defStmt) << std::endl;
-	    std::cout << "mStmtToBBMap[defStmt] = " << mStmtToBBMap[defStmt] 
+	    std::cout << "    mStmtToBBMap[defStmt] = " << mStmtToBBMap[defStmt] 
 		      << std::endl;
 	  }
 	  if (donotfilterBB) {
 	    subSet.insert(defStmt);
-	    if (debug) { std::cout << "Filter off - inserting def stmt" << std::endl; }
+	    if (debug) { std::cout << "    Filter off - inserting def stmt" << std::endl; }
 	  }
 	  else { // do filter 
 	    // determine the subset of the def statements that are
@@ -113,7 +114,7 @@ namespace OA {
 	    // a def statement is not within the same basic block
 	    // or comes after the use statement
 	    if (mStmtToBBMap[defStmt]==useBB) {
-	      if (debug) { std::cout << "Filter on - stmts are in same basic block" << std::endl; }
+	      if (debug) { std::cout << "  Filter on - stmts are in same basic block" << std::endl; }
 	      // iterate over statements in this basic block, if hit def
 	      // first then insert it, if hit use first then insert StmtHandle(0)
 	      OA_ptr<CFG::NodeStatementsIteratorInterface> stmtIterPtr 
@@ -128,7 +129,7 @@ namespace OA {
 		  break;
 		} 
 		if (stmt == defStmt) {
-		  if (debug) { std::cout << "Filter on - inserting def stmt" << std::endl; }
+		  if (debug) { std::cout << "    Filter on - inserting def stmt" << std::endl; }
 		  subSet.insert(defStmt);
 		  haveDefinitionBeforeUse=true;
 		  break;
@@ -136,7 +137,7 @@ namespace OA {
 	      }
 	      // not in same basic block
 	    } else {
-	      if (debug) { std::cout << "Filter on - outside def - inserting StmtHandle(0)" << std::endl; }
+	      if (debug) { std::cout << "    Filter on - outside def - inserting StmtHandle(0)" << std::endl; }
 	      subSet.insert(StmtHandle(0));
 	      haveDefinitionBeforeUse=true;
 	    }
@@ -147,13 +148,13 @@ namespace OA {
 	if (chainId != UDDUChainsXAIF::CHAIN_ID_NONE) {
 	  // if it is then insert the use memory reference into that chain
 	  aUDDUChainsXAIF->insertInto(use, chainId);
-	  if (debug) { std::cout << "found as existing chain id: " << chainId << std::endl; }
+	  if (debug) { std::cout << "  found as existing chain id: " << chainId << std::endl; }
 	} else {
 	  // if it isn't then make a new chain in the UDDUChainsXAIF 
 	  // and add the subset of statements into that chain
 	  int newChainId = getNextChainId();
 	  aUDDUChainsXAIF->insertInto(use,newChainId);
-	  if (debug) { std::cout << "make new chain id: " << newChainId << std::endl; }
+	  if (debug) { std::cout << "  make new chain id: " << newChainId << std::endl; }
 	  aUDDUChainsXAIF->addStmtSet(subSet,newChainId);
 	}
       } // end for use stmts
@@ -171,7 +172,7 @@ namespace OA {
 	OA_ptr<CFG::NodeInterface> defBB 
 	  = mStmtToBBMap[mMemRefToStmt[def]];
 	if (debug) {
-	  std::cout << "occurs in defBB = " << defBB << std::endl;
+	  std::cout << " occurs in defBB = " << defBB << std::endl;
 	}
 	// determine the subset of the use statements that are
 	// within the same basic block, include the StmtHandle(0) if
@@ -182,14 +183,14 @@ namespace OA {
 	for (; useStmtIterPtr->isValid(); (*useStmtIterPtr)++) {
 	  StmtHandle useStmt = useStmtIterPtr->current();
 	  if (debug) {
-	    std::cout << "useStmt (" << useStmt.hval() << ") = " 
+	    std::cout << "  useStmt (" << useStmt.hval() << ") = " 
 		      << mIR->toString(useStmt) << std::endl; 
-	    std::cout << "mStmtToBBMap[useStmt] = " << mStmtToBBMap[useStmt];
+	    std::cout << "    mStmtToBBMap[useStmt] = " << mStmtToBBMap[useStmt];
 	    std::cout << std::endl;
 	  }
 	  if (donotfilterBB) { 
 	    subSet.insert(useStmt);
-	    if (debug) { std::cout << "Filter off - inserting use stmt" << std::endl; }
+	    if (debug) { std::cout << "    Filter off - inserting use stmt" << std::endl; }
 	  } 
 	  else { // filtered
 	    // determine the subset of use statements that are
@@ -197,7 +198,7 @@ namespace OA {
 	    // a use statement is not within the same basic block
 	    // or comes before the def statement
 	    if (mStmtToBBMap[useStmt]==defBB) { // in same basic block
-	      if (debug) { std::cout << "Filter on - stmts are in same basic block" << std::endl; }
+	      if (debug) { std::cout << "    Filter on - stmts are in same basic block" << std::endl; }
 	      // iterate over statements in this basic block, if hit def
 	      // first then insert use, if hit use first then insert StmtHandle(0)
 	      OA_ptr<CFG::NodeStatementsIteratorInterface> stmtIterPtr 
@@ -206,13 +207,13 @@ namespace OA {
 	      for (; stmtIterPtr->isValid(); ++(*stmtIterPtr)) {
 		OA::StmtHandle stmt = stmtIterPtr->current();
 		if (!haveUseAfterDefinition && stmt == useStmt) {
-		  if (debug) { std::cout << "Filter on - out of order - inserting StmtHandle(0)" << std::endl; }
+		  if (debug) { std::cout << "    Filter on - out of order - inserting StmtHandle(0)" << std::endl; }
 		  subSet.insert(StmtHandle(0));
 		  haveUseAfterDefinition=true;
 		  break;
 		} 
 		if (stmt == mMemRefToStmt[def]) {
-		  if (debug) { std::cout << "Filter on - inserting use stmt" << std::endl; }
+		  if (debug) { std::cout << "    Filter on - inserting use stmt" << std::endl; }
 		  subSet.insert(useStmt);
 		  haveUseAfterDefinition=true;
 		  break;
@@ -220,7 +221,7 @@ namespace OA {
 	      }
 	    } 
 	    else { //  not in same basic block
-	      if (debug) { std::cout << "Filter on - outside use - inserting StmtHandle(0)" << std::endl; }
+	      if (debug) { std::cout << "    Filter on - outside use - inserting StmtHandle(0)" << std::endl; }
 	      subSet.insert(StmtHandle(0));
 	      haveUseAfterDefinition=true;
 	    }
@@ -231,6 +232,7 @@ namespace OA {
 	if (chainId != UDDUChainsXAIF::CHAIN_ID_NONE) {
 	  // if it is then insert the use memory reference into that chain
 	  aUDDUChainsXAIF->insertInto(def, chainId);
+          if (debug) { std::cout << "  found as existing chain id: " << chainId << std::endl; }
 	} 
 	else {
 	  // if it isn't then make a new chain in the UDDUChainsXAIF 
@@ -238,6 +240,7 @@ namespace OA {
 	  int newChainId = getNextChainId();
 	  aUDDUChainsXAIF->insertInto(def,newChainId);
 	  aUDDUChainsXAIF->addStmtSet(subSet,newChainId);
+          if (debug) { std::cout << "  make new chain id: " << newChainId << std::endl; }
 	}
       } // def stmts
       // insert an empty chain as chain 0 because that is the default chain in XAIF

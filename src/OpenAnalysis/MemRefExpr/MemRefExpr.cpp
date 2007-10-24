@@ -421,17 +421,19 @@ OA_ptr<MemRefExpr> AddressOf::composeWith(OA_ptr<MemRefExpr> mre)
     clone_mre = mre->clone();
 
    if(clone_mre->isaRefOp()) {
-       
-     OA_ptr<RefOp> ref = clone_mre.convert<RefOp>();   
-     
-     if (ref->isaDeref()) {
+
+       OA_ptr<RefOp> ref = clone_mre.convert<RefOp>();
+
+       if (ref->isaDeref()) {
            OA_ptr<MemRefExpr> child_mre = ref->getMemRefExpr();
            return child_mre;
        }
-   }    
+       if (ref->isaAddressOf()) {
+           return clone_mre;
+       }
+   }
 
    retval = new AddressOf(this->getMRType(), clone_mre);
-
    return retval;
 }
 
@@ -548,12 +550,6 @@ OA_ptr<MemRefExpr> Deref::composeWith(OA_ptr<MemRefExpr> mre)
       }
     }   
           
-         /* PLM 1/23/07 deprecated hasFullAccuracy 
-         retval = 
-             new Deref(this->hasFullAccuracy(), this->getMRType(), 
-             mre, this->getNumDerefs());
-         */
-
     retval = new Deref(this->getMRType(), clone_mre, 1);
 
     return retval;
@@ -607,18 +603,16 @@ void SubSetRef::acceptVisitor(MemRefExprVisitor& pVisitor)
 }
 
 
+
 OA_ptr<MemRefExpr> SubSetRef::composeWith(OA_ptr<MemRefExpr> mre)
 {
-  //    assert(! mre->isaAddressOf() );
     OA_ptr<MemRefExpr> clone_mre = mre->clone();
-    OA_ptr<MemRefExpr> retval;     
-    if(mre->isaSubSetRef()){
-        OA_ptr<RefOp> refOp = mre.convert<RefOp>();
-        return refOp->getMemRefExpr();
-    } 
+    OA_ptr<MemRefExpr> retval;
+
     retval = new SubSetRef(clone_mre->getMRType(), clone_mre);
     return retval;
 }
+
 
 
 void SubSetRef::output(IRHandlesIRInterface& pIR)

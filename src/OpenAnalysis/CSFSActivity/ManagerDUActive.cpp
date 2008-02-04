@@ -1,20 +1,21 @@
 /*! \file
   
-\brief The AnnotationManager that generates InterActive 
-INTERprocedurally.
+  \brief The AnnotationManager that generates InterActive 
+  INTERprocedurally.
 
-\authors Jaewook Shin
-\version $Id: ManagerDUActive.cpp,v 1.0 2005/04/10
+  \authors Jaewook Shin
+  \version $Id: ManagerDUActive.cpp,v 1.0 2005/04/10
 
-Copyright (c) 2002-2004, Rice University <br>
-Copyright (c) 2004, University of Chicago <br>  
-All rights reserved. <br>
-See ../../../Copyright.txt for details. <br>
+  Copyright (c) 2002-2004, Rice University <br>
+  Copyright (c) 2004, University of Chicago <br>  
+  All rights reserved. <br>
+  See ../../../Copyright.txt for details. <br>
 
 */
 
 #include <iostream>
 #include "ManagerDUActive.hpp"
+
 
 
 
@@ -54,13 +55,15 @@ ManagerDUActive::markVaried()
 	std::pair<SymHandle, ProcHandle> indepPair = *indepIter;
 	SymHandle sym = indepPair.first;
 	ProcHandle proc = indepPair.second;
+
 #ifdef DEBUG_DUAA
-	std::cout << "ManagerDUActive::markVaried: Independent(" << mIR->toString(sym) 
-		  << "), isNode(" << mDUG->isNode(sym, proc) << ")" << std::endl;
+	std::cout << "ManagerDUActive::markVaried: Independent(" << mIR->toString(sym)
+		  << ")" << std::endl;
 #endif
-    
-	if (mDUG->isNode(sym, proc)){
-	    OA_ptr<DUG::NodeInterface> node = mDUG->getNode(sym, proc);
+	std::set<OA_ptr<DUG::Node> >& nodeSet = mDUG->getInDepSymNodeSet(sym);
+	std::set<OA_ptr<DUG::Node> >::iterator setIter = nodeSet.begin();
+	for (; setIter != nodeSet.end(); setIter++){
+	    OA_ptr<DUG::NodeInterface> node = *setIter;
 	    std::pair<unsigned, unsigned> pathNode(1, node->getId());
 	    onPath.insert(pathNode);
 	    node->markVaried(callStack, mIR, visited, onPath, node->getProc(), 
@@ -92,18 +95,17 @@ ManagerDUActive::markUseful()
 	std::pair<SymHandle, ProcHandle> depPair = *depIter;
 	SymHandle sym = depPair.first;
 	ProcHandle proc = depPair.second;
+
 #ifdef DEBUG_DUAA
 	std::cout << "ManagerDUActive::markUseful: Dependent(" << mIR->toString(sym) 
-		  << "), isNode(" << mDUG->isNode(sym, proc) << ")" << std::endl;
+		  << ")" << std::endl;
 #endif
-
-	if (mDUG->isNode(sym, proc)){
-	    OA_ptr<DUG::NodeInterface> node = mDUG->getNode(sym, proc);
+	std::set<OA_ptr<DUG::Node> >& nodeSet = mDUG->getInDepSymNodeSet(sym);
+	std::set<OA_ptr<DUG::Node> >::iterator setIter = nodeSet.begin();
+	for (; setIter != nodeSet.end(); setIter++){
+	    OA_ptr<DUG::NodeInterface> node = *setIter;
 	    std::pair<unsigned, unsigned> pathNode(1, node->getId());
 	    onPath.insert(pathNode);
-
-
-      
 	    node->markUseful(callStack, mIR, visited, onPath, node->getProc(), 
 			     (unsigned)-1, OA_ptr<DUG::EdgeInterface>());
 	    onPath.erase(pathNode);
@@ -117,13 +119,15 @@ OA_ptr<InterActiveFortran>
 ManagerDUActive::performAnalysis(
     OA_ptr<DataFlow::ParamBindings>              paramBind)
 {
-#ifdef DEBUG_DUAA
-    std::cout << "ManagerDUActive::performAnalysis: ---" << std::endl;
-#endif
     OA_ptr<InterActiveFortran> retval;
     retval = new InterActiveFortran;
 
+#ifdef DEBUG_DUAA
     // Def-Use Activity Analysis
+    std::cout << "==================================================" << std::endl;
+    std::cout << "\tManagerDUActive::performAnalysis" << std::endl;
+    std::cout << "==================================================" << std::endl;
+#endif
     markVaried();
     markUseful();
   
@@ -171,8 +175,8 @@ ManagerDUActive::performAnalysis(
     retval->setActiveSizeInBytes(bytes);
 
 #ifdef DEBUG_DUAA
-    std::cout << "CSFI - numActiveSyms is " << numActiveSyms << std::endl;
-    std::cout << "CSFI - total active variable size is " << bytes << " bytes" << std::endl;
+    std::cout << "CSFS - numActiveSyms is " << numActiveSyms << std::endl;
+    std::cout << "CSFS - total active variable size is " << bytes << " bytes" << std::endl;
 #endif
 
     return retval;

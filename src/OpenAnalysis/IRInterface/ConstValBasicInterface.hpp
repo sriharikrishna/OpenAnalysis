@@ -24,6 +24,7 @@ class ConstValBasicInterface {
     ConstValBasicInterface() {}
     virtual ~ConstValBasicInterface() {}
 
+    virtual bool operator<  (ConstValBasicInterface& other) = 0;
     virtual bool operator== (ConstValBasicInterface& other) = 0;
     virtual bool operator!= (ConstValBasicInterface& other) = 0;
     virtual std::string toString() = 0;

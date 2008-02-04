@@ -41,13 +41,13 @@ OA_ptr<DataFlowSet> CFGDFSolver::solve(OA_ptr<CFG::CFGInterface> cfg,
     mNodeOutSetMap.clear();
     mNodeInitTransApp.clear();
 
-    
     mTop = mDFProb.initializeTop();
     
     //mBottom = initializeBottom();
-
+    
+    
     DataFlow::DGraphSolverDFP::solve(cfg, 
-            ((mDirection==Forward) ? DGraph::DEdgeOrg : DGraph::DEdgeRev),
+            ((mDirection == Forward) ? DGraph::DEdgeOrg : DGraph::DEdgeRev),
             algorithm);
 
 
@@ -128,7 +128,13 @@ bool CFGDFSolver::atDGraphNode( OA_ptr<DGraph::NodeInterface> pNode,
     OA_ptr<DataFlowSet> meetPartialResult = mTop->clone();
     // added following for ReachConsts, should not bother other flows
     // because DFProblem has monotonicity
-    meetPartialResult = mDFProb.meet(meetPartialResult,mNodeInSetMap[node]);
+    if (pOrient==DGraph::DEdgeOrg) { // forward
+        meetPartialResult =
+            mDFProb.meet(meetPartialResult,mNodeInSetMap[node]);
+    } else {
+        meetPartialResult =
+            mDFProb.meet(meetPartialResult,mNodeOutSetMap[node]);
+    }
 
 
     // set up iterator for predecessor nodes
@@ -224,6 +230,9 @@ bool CFGDFSolver::atDGraphNode( OA_ptr<DGraph::NodeInterface> pNode,
             = node->getNodeStatementsRevIterator();
         for (; stmtIterPtr->isValid(); ++(*stmtIterPtr)) {
           OA::StmtHandle stmt = stmtIterPtr->current();
+          if (debug) {
+              std::cout << "\tstmt(hval=" << stmt.hval() << ")" << std::endl;
+          }
           prevIn = mDFProb.transfer(prevIn, stmt);
         }
         if (prevIn != mNodeInSetMap[node] ) {

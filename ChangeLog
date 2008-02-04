@@ -780,3 +780,18 @@
    - Modified Output of ExprTree, so that OpNode can print multiple
      children (i.e. more than 2)
 
+10/29/07   OpenAnalysis svn tag trunk r518 Priyadarshini Malusare
+   - Added DUGStandard::dumpdot routine.
+
+10/29/07   OpenAnalysis svn tag trunk r523 Priyadarshini Malusare
+   - Added modifications jaewook made in order to fix the
+     problem in DUG graph navigation.
+
+10/29/07   OpenAnalysis svn tag trunk r524 Priyadarshini Malusare
+   - Depercated Unnecessary field from Activity Analysis:
+     DepStandard.*, InterDep.*, InterVary.hpp, ManagerInterActive.*,
+     ManagerInterDep.*, ManagerProcIterDep.*, VaryStandard.*,
+     ManagerVaryStandard.*, ManagerEachActive.*,
+     ManagerDepStandard.*,  ManagerICFGVary.*
+
+

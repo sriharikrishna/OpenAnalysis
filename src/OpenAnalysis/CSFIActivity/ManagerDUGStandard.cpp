@@ -14,9 +14,6 @@
 
 #include "ManagerDUGStandard.hpp"
 
-// #define SAC07
-extern int sac07_numGlobalEdges;
-extern int sac07_maxLocalAccVars;
 
 
 #if defined(DEBUG_ALL) || defined(DEBUG_ManagerDUGStandard)
@@ -30,22 +27,22 @@ namespace OA {
 
 
 /*!
-   Visitor over memory reference expressions that creates an
-   appropriate Location data structure for any MemRefExpr.
+  Visitor over memory reference expressions that creates an
+  appropriate Location data structure for any MemRefExpr.
    
-   Conservatively handles addressOf (only way UnnamedRefs happen) and 
-   derefs.  Therefore resulting mLoc will be UnknownLoc for those.
- */
+  Conservatively handles addressOf (only way UnnamedRefs happen) and 
+  derefs.  Therefore resulting mLoc will be UnknownLoc for those.
+*/
 class CreateLocationVisitor : public virtual MemRefExprVisitor {
-  public:
+public:
     OA_ptr<Location> mLoc;
     CreateLocationVisitor(OA_ptr<DUGIRInterface> ir,
                           ProcHandle proc) : mIR(ir),mProc(proc) {}
     ~CreateLocationVisitor() {}
     void visitNamedRef(NamedRef& ref) 
-      {
-          mLoc = mIR->getLocation(mProc,ref.getSymHandle());
-      }
+	{
+	    mLoc = mIR->getLocation(mProc,ref.getSymHandle());
+	}
 
     void visitAddressOf(AddressOf& ref) { mLoc = new UnknownLoc(); }
     void visitUnnamedRef(UnnamedRef& ref) { mLoc = new UnknownLoc; }
@@ -53,15 +50,15 @@ class CreateLocationVisitor : public virtual MemRefExprVisitor {
     void visitDeref(Deref& ref) { mLoc = new UnknownLoc; }
     // default handling of more specific SubSet specificiations
     void visitSubSetRef(SubSetRef& ref) 
-      {
-          // will set mLoc to our base location
-          ref.getMemRefExpr()->acceptVisitor(*this);
-          if (mLoc->isaNamed()) {
-            mLoc = new LocSubSet(mLoc,false);
-          }
-      }
+	{
+	    // will set mLoc to our base location
+	    ref.getMemRefExpr()->acceptVisitor(*this);
+	    if (mLoc->isaNamed()) {
+		mLoc = new LocSubSet(mLoc,false);
+	    }
+	}
 
-  private:
+private:
     OA_ptr<DUGIRInterface> mIR;
     ProcHandle mProc;
 
@@ -76,25 +73,27 @@ ManagerDUGStandard::ManagerDUGStandard(OA_ptr<DUGIRInterface> _ir,
 
 bool ManagerDUGStandard::stmt_has_call(StmtHandle stmt)
 {
-  bool callflag = false;
-  OA_ptr<IRCallsiteIterator> callsiteItPtr = mIR->getCallsites(stmt);
-  for ( ; callsiteItPtr->isValid(); ++(*callsiteItPtr)) {
-    CallHandle call = callsiteItPtr->current();
-    SymHandle sym = mIR->getSymHandle(call);
-    ProcHandle proc = mIR->getProcHandle(sym);
-    if (debug) {
-      std::cout << "sym for callee = " 
-                << mIR->toString(sym) << std::endl;
+    bool callflag = false;
+    OA_ptr<IRCallsiteIterator> callsiteItPtr = mIR->getCallsites(stmt);
+    for ( ; callsiteItPtr->isValid(); ++(*callsiteItPtr)) {
+	CallHandle call = callsiteItPtr->current();
+	SymHandle sym = mIR->getSymHandle(call);
+	ProcHandle proc = mIR->getProcHandle(sym);
+#ifdef DEBUG_DUAA
+	if (debug) {
+	    std::cout << "sym for callee = " 
+		      << mIR->toString(sym) << std::endl;
+	}
+#endif
+	if (proc!=ProcHandle(0)) {
+	    callflag = true;
+	}
     }
-    if (proc!=ProcHandle(0)) {
-      callflag = true;
-    }
-  }
-  return callflag;
+    return callflag;
 }
 
 /*!
-    Creates a DUG for the program
+  Creates a DUG for the program
 */
 void ManagerDUGStandard::insertEdge( 
     SymHandle        from,
@@ -102,464 +101,409 @@ void ManagerDUGStandard::insertEdge(
     EdgeType         etype,
     CallHandle       expr,
     ProcHandle       fromProc,
-    ProcHandle       toProc)
+    ProcHandle       toProc,
+    ProcHandle       proc)
 {
+    if (from == to) {
+	OA_ptr<Node> fromNode = mDUG->getNode(from, fromProc);
+	fromNode->setSelfDependent();
 
-    /*
-  if (from == to) {
-    OA_ptr<Location> fromLoc = mIR->getLocation(fromProc, from);
-    OA_ptr<Node> fromNode = mDUG->getNode(from, fromLoc, fromProc);
-    fromNode->setSelfDependent();
+	return;
+    }
+    // duplicate edges
+    if (etype == CFLOW_EDGE && mMatrix[etype][from][to]) return;
+    mMatrix[etype][from][to] = true;
 
-    return;
-  }
-  // duplicate edges
-  if (etype == CFLOW_EDGE && mMatrix[etype][from][to]) return;
-  mMatrix[etype][from][to] = true;
-
-  OA::OA_ptr<OA::MemRefExpr> symMRE;
-  OA::OA_ptr<OA::LocIterator> symMRElocs_I;
-  
-  OA_ptr<Location> fromLoc;
-  symMRE = mIR->convertSymToMemRefExpr(from);
-  symMRElocs_I = mInterAlias->getAliasResults(fromProc)->getMayLocs(*symMRE, fromProc);
-  fromLoc = symMRElocs_I->current();
-
-  OA_ptr<Location> toLoc;
-  symMRE = mIR->convertSymToMemRefExpr(to);
-  symMRElocs_I = mInterAlias->getAliasResults(toProc)->getMayLocs(*symMRE, toProc);
-  toLoc = symMRElocs_I->current();
-
-  
-#if 0
-  static const char *sEdgeTypeToString[] = { 
-    "CFLOW",
-    "CALL",
-    "RETURN",
-    "PARAM"
-  };
-  if (etype == PARAM_EDGE){
-    std::cout << "insertEdge: ";
-    fromLoc->dump(std::cout, mIR);
-    std::cout << " -> ";
-    toLoc->dump(std::cout, mIR);
-    std::cout << " (" << sEdgeTypeToString[etype] << ")" << std::endl;
-  }
+#ifdef DEBUG_DUAA
+    static const char *sEdgeTypeToString[] = {
+	"CFLOW",
+	"CALL",
+	"RETURN",
+	"PARAM"
+    };
+    std::cout << "insertEdge(" << sEdgeTypeToString[etype] << "): " 
+	      << mIR->toString(from) << "@" << mIR->toString(fromProc)
+	      << " -> " << mIR->toString(to) << "@" << mIR->toString(toProc) << std::endl;
 #endif
-  ProcHandle proc = (etype == RETURN_EDGE ? toProc : fromProc);
-
-  OA_ptr<Node> fromNode = mDUG->getNode(from, fromLoc, fromProc);
-  OA_ptr<Node> toNode   = mDUG->getNode(to, toLoc, toProc);
-
-  // edge between 'from' and 'to' node
-  OA_ptr<Edge> dugEdge;
-  dugEdge = new Edge(mDUG, fromNode, toNode, 
-                                  etype, expr, proc);
-  mDUG->addEdge(dugEdge);
-#ifdef SAC07
-  sac07_numGlobalEdges++;
-#endif
-*/
-
-
- if (from == to) {
     OA_ptr<Node> fromNode = mDUG->getNode(from, fromProc);
-    fromNode->setSelfDependent();
+    OA_ptr<Node> toNode   = mDUG->getNode(to, toProc);
 
-    return;
-  }
-  // duplicate edges
-  if (etype == CFLOW_EDGE && mMatrix[etype][from][to]) return;
-  mMatrix[etype][from][to] = true;
-
-#if 0
-  static const char *sEdgeTypeToString[] = {
-    "CFLOW",
-    "CALL",
-    "RETURN",
-    "PARAM"
-  };
-  if (etype == PARAM_EDGE){
-    std::cout << "insertEdge: ";
-    fromLoc->dump(std::cout, mIR);
-    std::cout << " -> ";
-    toLoc->dump(std::cout, mIR);
-    std::cout << " (" << sEdgeTypeToString[etype] << ")" << std::endl;
-  }
-#endif
-  ProcHandle proc = (etype == RETURN_EDGE ? toProc : fromProc);
-
-  OA_ptr<Node> fromNode = mDUG->getNode(from, fromProc);
-  OA_ptr<Node> toNode   = mDUG->getNode(to, toProc);
-
-  // edge between 'from' and 'to' node
-  OA_ptr<Edge> dugEdge;
-  dugEdge = new Edge(mDUG,fromNode, toNode, etype, expr, proc);
-  mDUG->addEdge(dugEdge);
+    // edge between 'from' and 'to' node
+    OA_ptr<Edge> dugEdge;
+    dugEdge = new Edge(mDUG,fromNode, toNode, etype, expr, proc);
+    mDUG->addEdge(dugEdge);
 #ifdef SAC07
-  sac07_numGlobalEdges++;
+    sac07_numGlobalEdges++;
 #endif
-
 }
 
 
 
 /*!
-    Creates an DUG for the program
+  Creates an DUG for the program
 */
 void ManagerDUGStandard::labelCallRetEdges(
-  StmtHandle stmt, ProcHandle proc)
+    StmtHandle stmt, ProcHandle proc)
 {
 #ifdef DEBUG_DUAA
-  std::cout << "labelCallRetEdges:" << std::endl;
+    std::cout << "labelCallRetEdges:" << std::endl;
 #endif
     
-  // for each call to a defined procedure,
-  // add a call Edge and return edge
-  OA_ptr<IRCallsiteIterator> callsiteItPtr;
-  callsiteItPtr = mIR->getCallsites(stmt);
+    // for each call to a defined procedure,
+    // add a call Edge and return edge
+    OA_ptr<IRCallsiteIterator> callsiteItPtr;
+    callsiteItPtr = mIR->getCallsites(stmt);
 
-  for ( ; callsiteItPtr->isValid(); ++(*callsiteItPtr)) {
+    for ( ; callsiteItPtr->isValid(); ++(*callsiteItPtr)) {
 
-    CallHandle call = callsiteItPtr->current();
-    SymHandle calleesym = mIR->getSymHandle(call);
-    ProcHandle callee = mIR->getProcHandle(calleesym);
-    // Undefined procedures are not processed
-    if (callee==ProcHandle(0)) { continue; }
+	CallHandle call = callsiteItPtr->current();
+	SymHandle calleesym = mIR->getSymHandle(call);
+	ProcHandle callee = mIR->getProcHandle(calleesym);
+	// Undefined procedures are not processed
+	if (callee==ProcHandle(0)) { continue; }
 
-    // to process only reachable procedures
-    mProcsOfInterest.insert(callee);
+	// to process only reachable procedures
+	mProcsOfInterest.insert(callee);
 
-    mProcToCallsiteSet[callee].insert(call); 
-    mCallsiteToProc[call] = proc;
+	mProcToCallsiteSet[callee].insert(call); 
+	mCallsiteToProc[call] = proc;
 
-    // iterate over formal parameters for callee procedure
-    OA_ptr<SymHandleIterator> formalIter;
-    formalIter = mParamBind->getFormalIterator(callee);
-    // iterate over actual parameters at the same time
-    OA_ptr<IRCallsiteParamIterator> actualIter;
-    actualIter = mIR->getCallsiteParams(call);
+	// iterate over formal parameters for callee procedure
+	// iterate over actual parameters at the same time
+	OA_ptr<IRCallsiteParamIterator> actualIter;
+	actualIter = mIR->getCallsiteParams(call);
+	for (int formalCnt=0; actualIter->isValid(); formalCnt++, ++(*actualIter)) 
+	{
+	    // formal
+	    SymHandle formalSym = mIR->getFormalSym(callee, formalCnt);
+	    mProcToFormalSet[callee].insert(formalSym); 
 
-    for ( ; formalIter->isValid() && actualIter->isValid(); 
-            (*formalIter)++, ++(*actualIter)) 
-    {
+	    // actual
+	    ExprHandle param = actualIter->current();
+	    OA_ptr<ExprTree> eTreePtr; eTreePtr = mIR->getExprTree(param);
+	    ExprTree::NodesIterator nodes_iter(*eTreePtr);
 
-      // formal
-      SymHandle formalSym = formalIter->current();
-      mProcToFormalSet[callee].insert(formalSym); 
+	    for ( ; nodes_iter.isValid(); ++nodes_iter) {
 
-      // actual
-      ExprHandle param = actualIter->current();
-      OA_ptr<ExprTree> eTreePtr; eTreePtr = mIR->getExprTree(param);
-      ExprTree::NodesIterator nodes_iter(*eTreePtr);
+		OA_ptr<ExprTree::Node> exprTreeNode; 
+		exprTreeNode = nodes_iter.current();
 
-      for ( ; nodes_iter.isValid(); ++nodes_iter) {
+		if ( exprTreeNode->isaMemRefNode() ) {
 
-        OA_ptr<ExprTree::Node> exprTreeNode; 
-        exprTreeNode = nodes_iter.current();
+		    OA_ptr<ExprTree::MemRefNode> memRefNode;
+		    memRefNode = exprTreeNode.convert<ExprTree::MemRefNode>();
+		    MemRefHandle memref = memRefNode->getHandle();
 
-        if ( exprTreeNode->isaMemRefNode() ) {
-
-          OA_ptr<ExprTree::MemRefNode> memRefNode;
-          memRefNode = exprTreeNode.convert<ExprTree::MemRefNode>();
-          MemRefHandle memref = memRefNode->getHandle();
-
-          // get the memory reference expressions for this handle
-          OA_ptr<MemRefExprIterator> mreIter;
-          mreIter = mIR->getMemRefExprIterator(memref);
+		    // get the memory reference expressions for this handle
+		    OA_ptr<MemRefExprIterator> mreIter;
+		    mreIter = mIR->getMemRefExprIterator(memref);
       
-          // for each mem-ref-expr associated with this memref
+		    // for each mem-ref-expr associated with this memref
           
-          for (; mreIter->isValid(); (*mreIter)++) {
+		    for (; mreIter->isValid(); (*mreIter)++) {
               
-            OA_ptr<OA::MemRefExpr> mre; mre = mreIter->current();
-            SymHandle actualSym;
-            if(mre->isaRefOp())
-            {
-              OA_ptr<RefOp> refOp = mre.convert<RefOp>();
-              if( refOp->isaAddressOf() ) { mre = refOp->getMemRefExpr(); }
-              if(mre->isaNamed()) {
-                 OA_ptr<NamedRef> namedRef = mre.convert<NamedRef>();
-                 actualSym = namedRef->getSymHandle();         
-              } else if(mre->isaRefOp()) {
-                 OA_ptr<RefOp> refrefop = mre.convert<RefOp>();
-                 actualSym = refrefop->getBaseSym();
-              } else {
-                  continue;
-              }
+			OA_ptr<OA::MemRefExpr> mre; mre = mreIter->current();
+			SymHandle actualSym;
+			if(mre->isaRefOp())
+			{
+			    OA_ptr<RefOp> refOp = mre.convert<RefOp>();
+			    if( refOp->isaAddressOf() ) { mre = refOp->getMemRefExpr(); }
+			    if(mre->isaNamed()) {
+				OA_ptr<NamedRef> namedRef = mre.convert<NamedRef>();
+				actualSym = namedRef->getSymHandle();         
+			    } else if(mre->isaRefOp()) {
+				OA_ptr<RefOp> refrefop = mre.convert<RefOp>();
+				actualSym = refrefop->getBaseSym();
+			    } else {
+				continue;
+			    }
 
-            }  else if(mre->isaNamed()) {
-                 OA_ptr<NamedRef> namedRef = mre.convert<NamedRef>();
-                 actualSym = namedRef->getSymHandle();
+			}  else if(mre->isaNamed()) {
+			    OA_ptr<NamedRef> namedRef = mre.convert<NamedRef>();
+			    actualSym = namedRef->getSymHandle();
 
-            }
-            mFormalToActualMap[call][formalSym].insert(actualSym);
-            insertEdge(actualSym, formalSym, CALL_EDGE, call, proc, callee);
-            OA_ptr<Location> baseSymLoc = mIR->getLocation(callee, formalSym);
-            insertEdge(formalSym, actualSym, RETURN_EDGE, call, callee, proc);
+			}
+			mFormalToActualMap[call][formalSym].insert(actualSym);
+			insertEdge(actualSym, formalSym, CALL_EDGE, call, proc, callee, proc);
+			OA_ptr<Location> baseSymLoc = mIR->getLocation(callee, formalSym);
+			insertEdge(formalSym, actualSym, RETURN_EDGE, call, callee, proc, proc);
 
-            mDUG->mapSymToMemRefSet(actualSym, memref);
-            mDUG->mapSymToStmtSet(actualSym, stmt);
+			mDUG->mapSymToMemRefSet(actualSym, memref);
+			mDUG->mapSymToStmtSet(actualSym, stmt);
 
-          }
-        }
-      }
+		    }
+		}
+	    }
+	}
     }
-  }
 }
 
 
 /*!
-    collect independent variables
+  collect independent variables
 */
 void
 ManagerDUGStandard::collectIndependentSyms( ProcHandle proc)
 {
+#ifdef DEBUG_DUAA
+    std::cout << "collectIndependentSyms: ---" << std::endl;
+#endif  
     OA_ptr<MemRefExprIterator> indepIter =mIR->getIndepMemRefExprIter(proc);
     for ( indepIter->reset(); indepIter->isValid(); (*indepIter)++ ) {
       
-      OA_ptr<MemRefExpr> memref = indepIter->current();
-      if(memref->isaRefOp()) {
-          while(memref->isaRefOp()) {
-            OA_ptr<RefOp> refOp = memref.convert<RefOp>();
-            memref = refOp->getMemRefExpr();
-          }
-      } 
+	OA_ptr<MemRefExpr> memref = indepIter->current();
+	if(memref->isaRefOp()) {
+	    while(memref->isaRefOp()) {
+		OA_ptr<RefOp> refOp = memref.convert<RefOp>();
+		memref = refOp->getMemRefExpr();
+	    }
+	} 
 
-      if(memref->isaNamed()) {
-         OA_ptr<NamedRef> named = memref.convert<NamedRef>(); 
-         SymHandle sym = named->getSymHandle();
-         mDUG->insertIndepSymList(sym, proc);
-         mProcsOfInterest.insert(proc);
-      }
-  }
+	if(memref->isaNamed()) {
+	    OA_ptr<NamedRef> named = memref.convert<NamedRef>(); 
+	    SymHandle sym = named->getSymHandle();
+	    mDUG->insertIndepSymList(sym, proc);
+	    mProcsOfInterest.insert(proc);
+#ifdef DEBUG_DUAA
+	    std::cout << "collectIndependentSyms: " 
+		      << mIR->toString(sym) << std::endl;
+#endif  
+	}
+    }
 }
 
 
 
 /*!
-    collect dependent variables
+  collect dependent variables
 */
 void
 ManagerDUGStandard::collectDependentSyms( ProcHandle proc)
 {
-  OA_ptr<MemRefExprIterator> depIter =mIR->getDepMemRefExprIter(proc);
-  for ( depIter->reset(); depIter->isValid(); (*depIter)++ ) {
+#ifdef DEBUG_DUAA
+    std::cout << "collectDependentSyms: ---" << std::endl;
+#endif  
+    OA_ptr<MemRefExprIterator> depIter =mIR->getDepMemRefExprIter(proc);
+    for ( depIter->reset(); depIter->isValid(); (*depIter)++ ) {
 
-    OA_ptr<MemRefExpr> memref = depIter->current();
-    if(memref->isaRefOp()) {
-        while(memref->isaRefOp()) {
-              OA_ptr<RefOp> refOp = memref.convert<RefOp>();
-              memref = refOp->getMemRefExpr();
-        }
-    }
+	OA_ptr<MemRefExpr> memref = depIter->current();
+	if(memref->isaRefOp()) {
+	    while(memref->isaRefOp()) {
+		OA_ptr<RefOp> refOp = memref.convert<RefOp>();
+		memref = refOp->getMemRefExpr();
+	    }
+	}
 
-    if(memref->isaNamed()) {
-        OA_ptr<NamedRef> named = memref.convert<NamedRef>();
-        SymHandle sym = named->getSymHandle();
-        mDUG->insertDepSymList(sym, proc);
-        mProcsOfInterest.insert(proc);
+	if(memref->isaNamed()) {
+	    OA_ptr<NamedRef> named = memref.convert<NamedRef>();
+	    SymHandle sym = named->getSymHandle();
+	    mDUG->insertDepSymList(sym, proc);
+	    mProcsOfInterest.insert(proc);
+#ifdef DEBUG_DUAA
+	    std::cout << "collectDependentSyms: " 
+		      << mIR->toString(sym) << std::endl;
+#endif  
+	}
     }
-  }
 }
 
 
 
 // for each (use, def) pair of a stmt
 void ManagerDUGStandard::labelUseDefEdges(
-  StmtHandle stmt, ProcHandle proc)
+    StmtHandle stmt, ProcHandle proc)
 {
 
 #ifdef DEBUG_DUAA
-  std::cout << "labelUseDefEdges:" << std::endl;
+    std::cout << "labelUseDefEdges: ---" << std::endl;
 #endif
-  std::set<SymHandle> useSet, defSet, allSyms;
+    std::set<SymHandle> useSet, defSet, allSyms;
 
-  // collect all locations in the stmt
-  OA_ptr<MemRefHandleIterator> mrIterPtr;
+    // collect all locations in the stmt
+    OA_ptr<MemRefHandleIterator> mrIterPtr;
 
-  mrIterPtr = mIR->getAllMemRefs(stmt);
+    mrIterPtr = mIR->getAllMemRefs(stmt);
 
-  for (; mrIterPtr->isValid(); (*mrIterPtr)++ )
-  {
+    for (; mrIterPtr->isValid(); (*mrIterPtr)++ )
+    {
       
-    MemRefHandle memref = mrIterPtr->current();
-    // get the memory reference expressions for this handle
-    OA_ptr<MemRefExprIterator> mreIter;
-    mreIter = mIR->getMemRefExprIterator(memref);
+	MemRefHandle memref = mrIterPtr->current();
+	// get the memory reference expressions for this handle
+	OA_ptr<MemRefExprIterator> mreIter;
+	mreIter = mIR->getMemRefExprIterator(memref);
      
-    // for each mem-ref-expr associated with this memref
-    for (; mreIter->isValid(); (*mreIter)++) {
-      OA_ptr<OA::MemRefExpr> mre; mre = mreIter->current();
+	// for each mem-ref-expr associated with this memref
+	for (; mreIter->isValid(); (*mreIter)++) {
+	    OA_ptr<OA::MemRefExpr> mre; mre = mreIter->current();
 
-          if(mre->isaNamed())
-          {
-            OA_ptr<NamedRef> namedRef = mre.convert<NamedRef>();
-            SymHandle sym = namedRef->getSymHandle();
-            allSyms.insert(sym);
+	    if(mre->isaNamed())
+	    {
+		OA_ptr<NamedRef> namedRef = mre.convert<NamedRef>();
+		SymHandle sym = namedRef->getSymHandle();
+		allSyms.insert(sym);
 
-          }
-          if(mre->isaRefOp())
-          {
-            OA_ptr<RefOp> refOp = mre.convert<RefOp>();
+	    }
+	    if(mre->isaRefOp())
+	    {
+		OA_ptr<RefOp> refOp = mre.convert<RefOp>();
             
-            if(refOp->isaAddressOf()) {
-               OA_ptr<MemRefExpr> subMemRef = refOp->getMemRefExpr();
+		if(refOp->isaAddressOf()) {
+		    OA_ptr<MemRefExpr> subMemRef = refOp->getMemRefExpr();
                
-               if(subMemRef->isaNamed())
-                {
-                 OA_ptr<NamedRef> nRef = subMemRef.convert<NamedRef>();
-                 SymHandle sym = nRef->getSymHandle();
-                 allSyms.insert(sym);
-                } 
-            } else {    
-               SymHandle sym = refOp->getBaseSym();
-               allSyms.insert(sym);
-            }   
-          }
+		    if(subMemRef->isaNamed())
+		    {
+			OA_ptr<NamedRef> nRef = subMemRef.convert<NamedRef>();
+			SymHandle sym = nRef->getSymHandle();
+			allSyms.insert(sym);
+		    } 
+		} else {    
+		    SymHandle sym = refOp->getBaseSym();
+		    allSyms.insert(sym);
+		}   
+	    }
+	}
     }
-  }
 
 
-  // Want to add a visitor PLM 12/15/06
-  // collect uses
-  mrIterPtr = mIR->getUseMemRefs(stmt);
-  for (; mrIterPtr->isValid(); (*mrIterPtr)++ ) {
-    MemRefHandle mref = mrIterPtr->current();
+    // Want to add a visitor PLM 12/15/06
+    // collect uses
+    mrIterPtr = mIR->getUseMemRefs(stmt);
+    for (; mrIterPtr->isValid(); (*mrIterPtr)++ ) {
+	MemRefHandle mref = mrIterPtr->current();
 
-    // get the memory reference expressions for this handle
-    OA_ptr<MemRefExprIterator> mreIter; 
-    mreIter = mIR->getMemRefExprIterator(mref);
+	// get the memory reference expressions for this handle
+	OA_ptr<MemRefExprIterator> mreIter; 
+	mreIter = mIR->getMemRefExprIterator(mref);
       
-    // for each mem-ref-expr associated with this memref
-    for (; mreIter->isValid(); (*mreIter)++) {
-      OA_ptr<OA::MemRefExpr> mre; mre = mreIter->current();
+	// for each mem-ref-expr associated with this memref
+	for (; mreIter->isValid(); (*mreIter)++) {
+	    OA_ptr<OA::MemRefExpr> mre; mre = mreIter->current();
 
-          if(mre->isaNamed())
-          {
-            OA_ptr<NamedRef> namedRef = mre.convert<NamedRef>();
-            SymHandle use = namedRef->getSymHandle();
+	    if(mre->isaNamed())
+	    {
+		OA_ptr<NamedRef> namedRef = mre.convert<NamedRef>();
+		SymHandle use = namedRef->getSymHandle();
 
-            mDUG->mapSymToMemRefSet(use, mref);
-            mDUG->mapSymToStmtSet(use, stmt);
+		mDUG->mapSymToMemRefSet(use, mref);
+		mDUG->mapSymToStmtSet(use, stmt);
 
-            useSet.insert(use);
+		useSet.insert(use);
 
-          }
-          if(mre->isaRefOp())
-          {
+	    }
+	    if(mre->isaRefOp())
+	    {
               
-            OA_ptr<RefOp> refOp = mre.convert<RefOp>();
+		OA_ptr<RefOp> refOp = mre.convert<RefOp>();
 
-            if(refOp->isaAddressOf()) {
-               OA_ptr<MemRefExpr> subMemRef = refOp->getMemRefExpr();
-               if(subMemRef->isaNamed())
-                {
-                  OA_ptr<NamedRef> namedRef = mre.convert<NamedRef>();
-                  SymHandle use = namedRef->getSymHandle();
+		if(refOp->isaAddressOf()) {
+		    OA_ptr<MemRefExpr> subMemRef = refOp->getMemRefExpr();
+		    if(subMemRef->isaNamed())
+		    {
+			OA_ptr<NamedRef> namedRef = mre.convert<NamedRef>();
+			SymHandle use = namedRef->getSymHandle();
 
-                  mDUG->mapSymToMemRefSet(use, mref);
-                  mDUG->mapSymToStmtSet(use, stmt);
+			mDUG->mapSymToMemRefSet(use, mref);
+			mDUG->mapSymToStmtSet(use, stmt);
 
-                  useSet.insert(use);
+			useSet.insert(use);
 
-                } 
+		    } 
 
-            } else {
-               SymHandle use = refOp->getBaseSym();
+		} else {
+		    SymHandle use = refOp->getBaseSym();
 
-               mDUG->mapSymToMemRefSet(use, mref);
-               mDUG->mapSymToStmtSet(use, stmt);
+		    mDUG->mapSymToMemRefSet(use, mref);
+		    mDUG->mapSymToStmtSet(use, stmt);
 
-               useSet.insert(use);
-            }
-          }
+		    useSet.insert(use);
+		}
+	    }
+	}
     }
-  }
 
-  // collect defs
+    // collect defs
 
-  // Want to add a visitor PLM 12/15/06
-  mrIterPtr = mIR->getDefMemRefs(stmt);
-  for (; mrIterPtr->isValid(); (*mrIterPtr)++ ) {
-    MemRefHandle mref = mrIterPtr->current();
+    // Want to add a visitor PLM 12/15/06
+    mrIterPtr = mIR->getDefMemRefs(stmt);
+    for (; mrIterPtr->isValid(); (*mrIterPtr)++ ) {
+	MemRefHandle mref = mrIterPtr->current();
 
-    // get the memory reference expressions for this handle
-    OA_ptr<MemRefExprIterator> mreIter; 
-    mreIter = mIR->getMemRefExprIterator(mref);
+	// get the memory reference expressions for this handle
+	OA_ptr<MemRefExprIterator> mreIter; 
+	mreIter = mIR->getMemRefExprIterator(mref);
       
-    // for each mem-ref-expr associated with this memref
-    for (; mreIter->isValid(); (*mreIter)++) {
-      OA_ptr<OA::MemRefExpr> mre; mre = mreIter->current();
+	// for each mem-ref-expr associated with this memref
+	for (; mreIter->isValid(); (*mreIter)++) {
+	    OA_ptr<OA::MemRefExpr> mre; mre = mreIter->current();
 
 
-          if(mre->isaNamed())
-          {
-            OA_ptr<NamedRef> namedRef = mre.convert<NamedRef>();
-            SymHandle def = namedRef->getSymHandle();
-            if (allSyms.find(def) != allSyms.end())
-            {
+	    if(mre->isaNamed())
+	    {
+		OA_ptr<NamedRef> namedRef = mre.convert<NamedRef>();
+		SymHandle def = namedRef->getSymHandle();
+		if (allSyms.find(def) != allSyms.end())
+		{
             
-             mDUG->mapSymToMemRefSet(def, mref);
-             mDUG->mapSymToStmtSet(def, stmt);
+		    mDUG->mapSymToMemRefSet(def, mref);
+		    mDUG->mapSymToStmtSet(def, stmt);
  
-             defSet.insert(def);
-            }
-          }
-          if(mre->isaRefOp())
-          {
+		    defSet.insert(def);
+		}
+	    }
+	    if(mre->isaRefOp())
+	    {
               
-            OA_ptr<RefOp> refOp = mre.convert<RefOp>();
+		OA_ptr<RefOp> refOp = mre.convert<RefOp>();
 
-            if(refOp->isaAddressOf()) {
-               OA_ptr<MemRefExpr> subMemRef = refOp->getMemRefExpr();
-               if(subMemRef->isaNamed())
-                {
-                  OA_ptr<NamedRef> namedRef = subMemRef.convert<NamedRef>();
-                  SymHandle def = namedRef->getSymHandle();
-                  if (allSyms.find(def) != allSyms.end())
-                  {
+		if(refOp->isaAddressOf()) {
+		    OA_ptr<MemRefExpr> subMemRef = refOp->getMemRefExpr();
+		    if(subMemRef->isaNamed())
+		    {
+			OA_ptr<NamedRef> namedRef = subMemRef.convert<NamedRef>();
+			SymHandle def = namedRef->getSymHandle();
+			if (allSyms.find(def) != allSyms.end())
+			{
 
-                      mDUG->mapSymToMemRefSet(def, mref);
-                      mDUG->mapSymToStmtSet(def, stmt);
+			    mDUG->mapSymToMemRefSet(def, mref);
+			    mDUG->mapSymToStmtSet(def, stmt);
 
-                      defSet.insert(def);
-                   }
+			    defSet.insert(def);
+			}
 
-                } 
+		    } 
 
-            } else {
-               SymHandle def = refOp->getBaseSym();
+		} else {
+		    SymHandle def = refOp->getBaseSym();
             
-               if (allSyms.find(def) != allSyms.end()) {
+		    if (allSyms.find(def) != allSyms.end()) {
 
-                  mDUG->mapSymToMemRefSet(def, mref);
-                  mDUG->mapSymToStmtSet(def, stmt);
+			mDUG->mapSymToMemRefSet(def, mref);
+			mDUG->mapSymToStmtSet(def, stmt);
 
-                  defSet.insert(def);
-               }
-            }
-          }
+			defSet.insert(def);
+		    }
+		}
+	    }
 
 
+	}
     }
-  }
 
-  // map all uses to may defs and vice versa for this statement
-  // have to do this after removing implicit deps in case it will be
-  // explicitly put back in
+    // map all uses to may defs and vice versa for this statement
+    // have to do this after removing implicit deps in case it will be
+    // explicitly put back in
   
-  std::set<SymHandle>::iterator useIter, defIter;
-  for (useIter=useSet.begin(); useIter!=useSet.end(); useIter++) {
-    SymHandle use = *useIter;
-    for (defIter=defSet.begin(); defIter!=defSet.end(); defIter++) {
-      SymHandle def = *defIter;
-      insertEdge(use, def, CFLOW_EDGE, CallHandle(0), proc, proc);
+    std::set<SymHandle>::iterator useIter, defIter;
+    for (useIter=useSet.begin(); useIter!=useSet.end(); useIter++) {
+	SymHandle use = *useIter;
+	for (defIter=defSet.begin(); defIter!=defSet.end(); defIter++) {
+	    SymHandle def = *defIter;
+	    insertEdge(use, def, CFLOW_EDGE, CallHandle(0), proc, proc, proc);
 
-      // build dependence matrix
-      setDepMatrix(proc, use, def);
+	    // build dependence matrix
+	    setDepMatrix(proc, use, def);
+	}
     }
-  }
 }
 
 
@@ -567,57 +511,49 @@ void ManagerDUGStandard::labelUseDefEdges(
   Creates a DUG for the program
 */
 OA_ptr<DUGStandard> ManagerDUGStandard::performAnalysis( 
-  OA_ptr<IRProcIterator> procIter,
-  OA_ptr<DataFlow::ParamBindings> paramBind,
-  OA_ptr<OA::CallGraph::CallGraphInterface> cgraph)
+    OA_ptr<IRProcIterator> procIter,
+    OA_ptr<DataFlow::ParamBindings> paramBind,
+    OA_ptr<OA::CallGraph::CallGraphInterface> cgraph)
 {
 
-  mParamBind  = paramBind;
+    mParamBind  = paramBind;
 
-  // create a Manager that generates dep information for each statement in
-  OA_ptr<DUGStandard> dug; 
-  mDUG = dug = new DUGStandard( mIR, paramBind);
+    // create a Manager that generates dep information for each statement in
+    OA_ptr<DUGStandard> dug; 
+    mDUG = dug = new DUGStandard( mIR, paramBind);
   
-#if 0
-  std::cout << "ManagerDUGStandard::performAnalysis: ---" << std::endl;
+#ifdef DEBUG_DUAA
+    std::cout << "ManagerDUGStandard::performAnalysis: ---" << std::endl;
 #endif
-  // Mark 'independent' and 'dependent' variables
-  for ( procIter->reset(); procIter->isValid(); (*procIter)++ ) {
-  //    std::cout << "Inside trying to get Dep and Indep Symbols" << std::endl;
-    collectIndependentSyms(procIter->current());
-    collectDependentSyms  (procIter->current());
-  }
+    // Mark 'independent' and 'dependent' variables
+    for ( procIter->reset(); procIter->isValid(); (*procIter)++ ) {
+	collectIndependentSyms(procIter->current());
+	collectDependentSyms  (procIter->current());
+    }
 
-  OA_ptr<OA::CallGraph::NodesIteratorInterface> callGraphIter;
-  callGraphIter = cgraph->getCallGraphReversePostDFSIterator(DGraph::DEdgeOrg);
+    OA_ptr<OA::CallGraph::NodesIteratorInterface> callGraphIter;
+    callGraphIter = cgraph->getCallGraphReversePostDFSIterator(DGraph::DEdgeOrg);
 
-  for ( ; callGraphIter->isValid(); ++(*callGraphIter)) {
-    OA_ptr<CallGraph::NodeInterface> node; 
-    node = callGraphIter->currentCallGraphNode();
-#if 0
-    node->dump(std::cout, mIR);
-#endif
-    ProcHandle proc = node->getProc();
-    dug->assignActiveStandard(proc);
+    for ( ; callGraphIter->isValid(); ++(*callGraphIter)) {
+	OA_ptr<CallGraph::NodeInterface> node; 
+	node = callGraphIter->currentCallGraphNode();
+	ProcHandle proc = node->getProc();
+	dug->assignActiveStandard(proc);
     
-    // skip unreachable procedures
-    if(mProcsOfInterest.find(proc) == mProcsOfInterest.end()) continue;
-#ifdef DEBUG_DUAA_LAST
-    if(mProcsOfInterest.find(proc) == mProcsOfInterest.end()) {
-    }
-#endif  
+	// skip unreachable procedures
+	if(mProcsOfInterest.find(proc) == mProcsOfInterest.end()) continue;
 
-    OA_ptr<OA::IRStmtIterator> sItPtr; 
-    sItPtr = mIR->getStmtIterator(proc);
-    for ( ; sItPtr->isValid(); (*sItPtr)++) {
-      StmtHandle stmt = sItPtr->current();
-      labelUseDefEdges(stmt, proc);
-      if (stmt_has_call(stmt)){
-        labelCallRetEdges(stmt, proc);
-      }
+	OA_ptr<OA::IRStmtIterator> sItPtr; 
+	sItPtr = mIR->getStmtIterator(proc);
+	for ( ; sItPtr->isValid(); (*sItPtr)++) {
+	    StmtHandle stmt = sItPtr->current();
+	    labelUseDefEdges(stmt, proc);
+	    if (stmt_has_call(stmt)){
+		labelCallRetEdges(stmt, proc);
+	    }
+	}
     }
-  }
-  return dug;
+    return dug;
 }
 
 
@@ -627,60 +563,50 @@ OA_ptr<DUGStandard> ManagerDUGStandard::performAnalysis(
   Set the dependence matrix entry to 'true'
 */
 void ManagerDUGStandard::setDepMatrix( 
-  ProcHandle proc, 
-  SymHandle  use, 
-  SymHandle  def)
+    ProcHandle proc, 
+    SymHandle  use, 
+    SymHandle  def)
 {
-  mDUG->mapSymToProc(use, proc);
-  mDUG->mapSymToProc(def, proc);
-  if (use == def) return;
-  mProcToSymSet[proc].insert(use);
-  mProcToSymSet[proc].insert(def);
-  mProcToMatrix[proc][use][def] = true;
+    mDUG->mapSymToProc(use, proc);
+    mDUG->mapSymToProc(def, proc);
+    if (use == def) return;
+    mProcToSymSet[proc].insert(use);
+    mProcToSymSet[proc].insert(def);
+    mProcToMatrix[proc][use][def] = true;
 
-#if 0
-  std::cout << mIR->toString(proc) << ": ";
-  OA_ptr<Location> useLoc = mIR->getLocation(proc, use);
-  useLoc->dump(std::cout, mIR);
-  std::cout << " ---> ";
-  OA_ptr<Location> defLoc = mIR->getLocation(proc, def);
-  defLoc->dump(std::cout, mIR);
-  std::cout << std::endl;
+#ifdef DEBUG_DUAA
+    std::cout << "setDepMatrix: " << mIR->toString(proc) << ": " << mIR->toString(use);
+    std::cout << " ---> ";
+    std::cout << mIR->toString(def) << std::endl;
 #endif
 }
 
 
 
 
-/*!
-  returns a set of nodes of 'proc' that have outgoing 
-  edges for other procedures
-*/
-void ManagerDUGStandard::findOutgoingNodes(
-  SymHandle sym, ProcHandle proc, std::set<SymHandle>& OutGoingNodeSet)
+bool ManagerDUGStandard::hasEdgesToOtherProc(SymHandle sym, ProcHandle proc)
 {
-  assert(mDUG->isNode(sym, proc));
-  OA_ptr<Node> node = mDUG->getNode(sym, proc);
+    // to filter out a fake parameter '.len' representing the length of 
+    // a string parameter.
+    if (!mDUG->isNode(sym, proc)) return false;
+    OA_ptr<Node> node = mDUG->getNode(sym, proc);
 
-  std::set<SymHandle> visited;
-  node->findOutgoingNodes(proc, OutGoingNodeSet, visited);
+    std::set<SymHandle> visited;
+    return node->hasEdgesToOtherProc(proc, visited);
 }
 
 
 
 
-/*!
-  returns a set of nodes of 'proc' that have incoming 
-  edges for other procedures
-*/
-void ManagerDUGStandard::findIncomingNodes(
-  SymHandle sym, ProcHandle proc, std::set<SymHandle>& IncomingNodeSet)
+bool ManagerDUGStandard::hasEdgesFromOtherProc(SymHandle sym, ProcHandle proc)
 {
-  assert(mDUG->isNode(sym, proc));
-  OA_ptr<Node> node = mDUG->getNode(sym, proc);
+    // to filter out a fake parameter '.len' representing the length of 
+    // a string parameter.
+    if (!mDUG->isNode(sym, proc)) return false;
+    OA_ptr<Node> node = mDUG->getNode(sym, proc);
 
-  std::set<SymHandle> visited;
-  node->findIncomingNodes(proc, IncomingNodeSet, visited);
+    std::set<SymHandle> visited;
+    return node->hasEdgesFromOtherProc(proc, visited);
 }
 
 
@@ -691,34 +617,35 @@ void ManagerDUGStandard::findIncomingNodes(
   'true' if 'sym' is defined inside and used outside.
 */
 bool ManagerDUGStandard::isOutgoingToOtherProcs(
-  SymHandle sym, ProcHandle proc )
+    SymHandle sym, ProcHandle proc )
 {
-  assert(mDUG->isNode(sym, proc));
-  OA_ptr<Node> node = mDUG->getNode(sym, proc);
+    assert(mDUG->isNode(sym, proc));
+    OA_ptr<Node> node = mDUG->getNode(sym, proc);
 
-  bool definedInside = false;
-  OA_ptr<EdgesIteratorInterface> predIterPtr
-    = node->getDUGIncomingEdgesIterator();
-  for (; predIterPtr->isValid() && !definedInside; ++(*predIterPtr)) {
-    OA_ptr<EdgeInterface> predEdge = predIterPtr->currentDUGEdge();
-    if (predEdge->getType() != CFLOW_EDGE) continue;
+    bool definedInside = false;
+    OA_ptr<EdgesIteratorInterface> predIterPtr
+	= node->getDUGIncomingEdgesIterator();
+    for (; predIterPtr->isValid() && !definedInside; ++(*predIterPtr)) {
+	OA_ptr<EdgeInterface> predEdge = predIterPtr->currentDUGEdge();
+	if (predEdge->getType() != CFLOW_EDGE &&
+	    predEdge->getType() != RETURN_EDGE) continue;
   
-    if (predEdge->getProc() == proc) definedInside = true;
-  }
-  if (!definedInside) return false;
+	if (predEdge->getProc() == proc) definedInside = true;
+    }
+    if (!definedInside) return false;
 
 
-  bool usedOutside = false;
-  OA_ptr<EdgesIteratorInterface> succIterPtr
-    = node->getDUGOutgoingEdgesIterator();
-  for (; succIterPtr->isValid() && !usedOutside; ++(*succIterPtr)) {
-    OA_ptr<EdgeInterface> succEdge = succIterPtr->currentDUGEdge();
-    if (succEdge->getType() != CFLOW_EDGE) continue;
+    bool usedOutside = false;
+    OA_ptr<EdgesIteratorInterface> succIterPtr
+	= node->getDUGOutgoingEdgesIterator();
+    for (; succIterPtr->isValid() && !usedOutside; ++(*succIterPtr)) {
+	OA_ptr<EdgeInterface> succEdge = succIterPtr->currentDUGEdge();
+	if (succEdge->getType() != CFLOW_EDGE) continue;
   
-    if (succEdge->getProc() != proc) return true;
-  }
+	if (succEdge->getProc() != proc) return true;
+    }
 
-  return false;
+    return false;
 }
 
 
@@ -730,34 +657,35 @@ bool ManagerDUGStandard::isOutgoingToOtherProcs(
   I.e., 'true' if sym is defined outside and used inside
 */
 bool ManagerDUGStandard::isIncomingFromOtherProcs(
-  SymHandle sym, ProcHandle proc )
+    SymHandle sym, ProcHandle proc )
 {
-  assert(mDUG->isNode(sym, proc));
-  OA_ptr<Node> node = mDUG->getNode(sym, proc);
+    assert(mDUG->isNode(sym, proc));
+    OA_ptr<Node> node = mDUG->getNode(sym, proc);
 
-  bool definedOutside = false;
-  OA_ptr<EdgesIteratorInterface> predIterPtr
-    = node->getDUGIncomingEdgesIterator();
-  for (; predIterPtr->isValid() && !definedOutside; ++(*predIterPtr)) {
-    OA_ptr<EdgeInterface> predEdge = predIterPtr->currentDUGEdge();
-    if (predEdge->getType() != CFLOW_EDGE) continue;
+    bool definedOutside = false;
+    OA_ptr<EdgesIteratorInterface> predIterPtr
+	= node->getDUGIncomingEdgesIterator();
+    for (; predIterPtr->isValid() && !definedOutside; ++(*predIterPtr)) {
+	OA_ptr<EdgeInterface> predEdge = predIterPtr->currentDUGEdge();
+	if (predEdge->getType() != CFLOW_EDGE) continue;
   
-    if (predEdge->getProc() != proc) definedOutside = true;
-  }
-  if (!definedOutside) return false;
+	if (predEdge->getProc() != proc) definedOutside = true;
+    }
+    if (!definedOutside) return false;
 
 
-  bool usedInside = false;
-  OA_ptr<EdgesIteratorInterface> succIterPtr
-    = node->getDUGOutgoingEdgesIterator();
-  for (; succIterPtr->isValid() && !usedInside; ++(*succIterPtr)) {
-    OA_ptr<EdgeInterface> succEdge = succIterPtr->currentDUGEdge();
-    if (succEdge->getType() != CFLOW_EDGE) continue;
+    bool usedInside = false;
+    OA_ptr<EdgesIteratorInterface> succIterPtr
+	= node->getDUGOutgoingEdgesIterator();
+    for (; succIterPtr->isValid() && !usedInside; ++(*succIterPtr)) {
+	OA_ptr<EdgeInterface> succEdge = succIterPtr->currentDUGEdge();
+	if (succEdge->getType() != CFLOW_EDGE &&
+	    succEdge->getType() != CALL_EDGE ) continue;
   
-    if (succEdge->getProc() == proc) return true;
-  }
+	if (succEdge->getProc() == proc) return true;
+    }
 
-  return false;
+    return false;
 }
 
 
@@ -768,14 +696,14 @@ bool ManagerDUGStandard::isIncomingFromOtherProcs(
   than 'proc'. We traverse the VDG backward from 'def'.
 */
 bool ManagerDUGStandard::isPathThruOtherProcs(
-  SymHandle use, SymHandle def, ProcHandle proc )
+    SymHandle use, SymHandle def, ProcHandle proc )
 {
-  OA_ptr<NodeInterface> defNode = mDUG->getNode(def, proc);
-  OA_ptr<NodeInterface> useNode = mDUG->getNode(use, proc);
+    OA_ptr<NodeInterface> defNode = mDUG->getNode(def, proc);
+    OA_ptr<NodeInterface> useNode = mDUG->getNode(use, proc);
 
-  std::set<OA_ptr<NodeInterface> > visited;
-  visited.insert(defNode);
-  return defNode->isPathFrom(useNode, visited);
+    std::set<OA_ptr<NodeInterface> > visited;
+    visited.insert(defNode);
+    return defNode->isPathFrom(useNode, visited);
 }
 
 
@@ -788,25 +716,29 @@ bool ManagerDUGStandard::isPathThruOtherProcs(
   VDG.
 */
 void ManagerDUGStandard::setDepMatrix4Globals(
-  SymHandle use, SymHandle def, ProcHandle proc )
+    SymHandle use, SymHandle def, ProcHandle proc )
 {
-  std::map<SymHandle, std::map<SymHandle, bool> >&
-    depMat = mProcToMatrix[proc];
+    std::map<SymHandle, std::map<SymHandle, bool> >&
+	depMat = mProcToMatrix[proc];
 
-  // Do nothing if 'use' is not used in other procs, 
-  if (!isOutgoingToOtherProcs(use, proc)) return;
+    // Do nothing if 'use' is not used in other procs, 
+    if (!isOutgoingToOtherProcs(use, proc)) return;
 
-  // Do nothing if 'def' is not defined from other procs, 
-  if (!isIncomingFromOtherProcs(def, proc)) return;
+    // Do nothing if 'def' is not defined from other procs, 
+    if (!isIncomingFromOtherProcs(def, proc)) return;
 
-  std::cout << "setDepMatrix4Globals, checking Paths(" << mIR->toString(proc) <<
-    "): " << mIR->toString(use) << " -> " << mIR->toString(def) << std::endl;
-  // Do nothing if there is no path from 'use' to 'def',
-  if (!isPathThruOtherProcs(use, def, proc)) return;
+#ifdef DEBUG_DUAA
+    std::cout << "setDepMatrix4Globals, checking Paths(" << mIR->toString(proc) <<
+	"): " << mIR->toString(use) << " -> " << mIR->toString(def) << std::endl;
+#endif
+    // Do nothing if there is no path from 'use' to 'def',
+    if (!isPathThruOtherProcs(use, def, proc)) return;
 
-  depMat[use][def] = true;
-  std::cout << "Value passing globals(" << mIR->toString(proc) <<
-    "): " << mIR->toString(use) << " -> " << mIR->toString(def) << std::endl;
+    depMat[use][def] = true;
+#ifdef DEBUG_DUAA
+    std::cout << "Value passing globals(" << mIR->toString(proc) <<
+	"): " << mIR->toString(use) << " -> " << mIR->toString(def) << std::endl;
+#endif
 }
 
 
@@ -816,25 +748,31 @@ void ManagerDUGStandard::setDepMatrix4Globals(
   Warshall's transitive closure algorithm on the dependence matrix
 */
 void ManagerDUGStandard::transitiveClosureDepMatrix(
-  OA_ptr<OA::CallGraph::CallGraphInterface> cgraph
-  )
+    OA_ptr<OA::CallGraph::CallGraphInterface> cgraph
+    )
 {
-  // use 'DEdgeRev' to get PostDFSIterator
-  // 'getPostDFSIterator' is not implemented
-  OA_ptr<OA::CallGraph::NodesIteratorInterface> iter;
-  iter = cgraph->getCallGraphReversePostDFSIterator(DGraph::DEdgeRev);
+    // use 'DEdgeRev' to get PostDFSIterator
+    // 'getPostDFSIterator' is not implemented
+    OA_ptr<OA::CallGraph::NodesIteratorInterface> iter;
+    iter = cgraph->getCallGraphReversePostDFSIterator(DGraph::DEdgeRev);
 
-  for ( ; iter->isValid(); ++(*iter)) {
-    OA_ptr<CallGraph::NodeInterface> node; 
-    node = iter->currentCallGraphNode();
-#if 0
-    node->dump(std::cout, mIR);
-    std::cout << " --------------" << std::endl;
-#endif
-    ProcHandle proc = node->getProc();
-    transitiveClosure(proc);
-    edgesBetweenActuals(proc);
-  }
+    for ( ; iter->isValid(); ++(*iter)) {
+	OA_ptr<CallGraph::NodeInterface> node; 
+	node = iter->currentCallGraphNode();
+	ProcHandle proc = node->getProc();
+	transitiveClosure(proc);
+	edgesBetweenActuals(proc);
+    }
+}
+
+
+
+
+bool ManagerDUGStandard::isLocal(SymHandle sym, ProcHandle proc)
+{
+    OA_ptr<Location> loc = mIR->getLocation(proc, sym);
+    if (loc.ptrEqual(0)) return false;
+    return loc->isLocal();
 }
 
 
@@ -845,42 +783,48 @@ void ManagerDUGStandard::transitiveClosureDepMatrix(
 */
 void ManagerDUGStandard::transitiveClosure(ProcHandle proc)
 {
-  std::map<SymHandle, std::map<SymHandle, bool> >&
-    depMat = mProcToMatrix[proc];
+    std::map<SymHandle, std::map<SymHandle, bool> >& depMat = mProcToMatrix[proc];
 
-  std::set<SymHandle>& symSet = mProcToSymSet[proc];
-  std::set<SymHandle>::iterator i, j, k;
-  SymHandle use, def, var;
-  for (i=symSet.begin(); i!=symSet.end(); i++){
-    use = *i;
-    for (j=symSet.begin(); j!=symSet.end(); j++){
-      def = *j;
-      
-#if 0
-      // set the dep matrix if both symbols are globals and
-      // there is a path fron 'use' to 'def' through other
-      // procedures.
-      if (use != def && !depMat[use][def])
-        setDepMatrix4Globals(use, def, proc);
+#ifdef DEBUG_DUAA
+    std::cout << "*** transitiveClosure(" << mIR->toString(proc) 
+	      << ") ***" << std::endl;
 #endif
+    std::set<SymHandle>& symSet = mProcToSymSet[proc];
+    std::set<SymHandle>::iterator i, j, k;
+    SymHandle use, def, var;
 
-      if (use != def && depMat[use][def]){
-#if 0
-        std::cout << "\t" << mIR->toString(proc) << ": ";
-        OA_ptr<Location> useLoc = mIR->getLocation(proc, use);
-        useLoc->dump(std::cout, mIR);
-        std::cout << " ---> ";
-        OA_ptr<Location> defLoc = mIR->getLocation(proc, def);
-        defLoc->dump(std::cout, mIR);
-        std::cout << "(true)" << std::endl;
-#endif
-        for (k=symSet.begin(); k!=symSet.end(); k++){
-          var = *k;
-          depMat[use][var] = depMat[use][var] || depMat[def][var];
-        }
-      }
+#ifdef THIS_IS_TOO_EXPENSIVE
+    // set the dep matrix if both symbols are globals and
+    // there is a path from 'use' to 'def' through other
+    // procedures.
+    for (k=symSet.begin(); k!=symSet.end(); k++){
+	use = *k;
+	if (isLocal(use, proc)) continue;
+	for (i=symSet.begin(); i!=symSet.end(); i++){
+	    def = *i;
+	    if (isLocal(def, proc)) continue;
+	    if (use != def && !depMat[use][def])
+		setDepMatrix4Globals(use, def, proc);
+	}
     }
-  }
+#endif
+    // transitive closure
+    for (k=symSet.begin(); k!=symSet.end(); k++){
+	var = *k;
+	for (i=symSet.begin(); i!=symSet.end(); i++){
+	    use = *i;
+	    if (!depMat[use][var]) continue;
+	    for (j=symSet.begin(); j!=symSet.end(); j++){
+		def = *j;
+		if (!depMat[var][def]) continue;
+		depMat[use][def] = true;
+	    }
+	}
+    }
+#ifdef DEBUG_DUAA
+    std::cout << "*** END:transitiveClosure(" << mIR->toString(proc) 
+	      << ") ***" << std::endl;
+#endif
 }
 
 
@@ -891,92 +835,64 @@ void ManagerDUGStandard::transitiveClosure(ProcHandle proc)
 */
 void ManagerDUGStandard::edgesBetweenActuals(ProcHandle proc)
 {
-  std::set<CallHandle>& callsites = mProcToCallsiteSet[proc];
-  std::set<CallHandle>::iterator callIter;
+    std::set<CallHandle>& callsites = mProcToCallsiteSet[proc];
+    std::set<CallHandle>::iterator callIter;
 
-  std::set<SymHandle>& formals = mProcToFormalSet[proc];
-  std::set<SymHandle>::iterator i, j;
+    std::set<SymHandle>& formals = mProcToFormalSet[proc];
+    std::set<SymHandle>::iterator i, j;
   
-  for (i=formals.begin(); i!=formals.end(); i++){
-    SymHandle formal1 = *i;
-    for (j=formals.begin(); j!=formals.end(); j++){
-      SymHandle formal2 = *j;
-#if 0
-      if (formal1 != formal2 && !mProcToMatrix[proc][formal1][formal2]){
-        std::cout << "\t" << mIR->toString(proc) << ": ";
-        OA_ptr<Location> formal1Loc = mIR->getLocation(proc, formal1);
-        formal1Loc->dump(std::cout, mIR);
-        std::cout << " ---> ";
-        OA_ptr<Location> formal2Loc = mIR->getLocation(proc, formal2);
-        formal2Loc->dump(std::cout, mIR);
-        std::cout << "(false)" << std::endl;
-      }
+    for (i=formals.begin(); i!=formals.end(); i++){
+	SymHandle formal1 = *i;
+	for (j=formals.begin(); j!=formals.end(); j++){
+	    SymHandle formal2 = *j;
+	    if (formal1 == formal2) continue;
+
+	    //--------------------------------------------------
+	    // - Value flow between formals through two global variables
+	    //   not in this procedure
+	    // - This is necessary for PARAM_EDGES
+	    //--------------------------------------------------
+	    if (!mProcToMatrix[proc][formal1][formal2]){
+		if (!hasEdgesToOtherProc(formal1, proc)) continue;
+		if (!hasEdgesFromOtherProc(formal2, proc)) continue;
+		if (isPathThruOtherProcs(formal1, formal2, proc)) {
+#ifdef DEBUG_DUAA
+		    std::cout << "foundPath(" << mIR->toString(proc) << "): " << mIR->toString(formal1)
+			      << " -> " << mIR->toString(formal2) << std::endl;
 #endif
+		    mProcToMatrix[proc][formal1][formal2] = true;
+		}
+	    }
 
-#ifdef THIS_PROVED_TO_BE_A_PROBLEM
-      //--------------------------------------------------
-      // Although I thought this would be a potential problem 
-      // and fixed it, in an experiment this turned out to be not 
-      // a problem because the VALUETHRUGLOBALS mechanism allows
-      // all nodes to be visited properly even in such case !!!
-      // But I leave this here just in case it proves to be
-      // a real problem.
-      //--------------------------------------------------
+	    if (mProcToMatrix[proc][formal1][formal2]){
+		insertEdge(formal1, formal2, PARAM_EDGE, CallHandle(0), proc, proc, proc);
 
-
-      // set the dep matrix if both symbols are globals and
-      // there is a path from 'use' to 'def' through other
-      // procedures.
-      if (formal1 != formal2 && !mProcToMatrix[proc][formal1][formal2]){
-        std::set<SymHandle> outGoingNodeSet, inComingNodeSet;
-        std::set<SymHandle>::iterator Fi, Fj;
-        findOutgoingNodes(formal1, proc, outGoingNodeSet);
-        findIncomingNodes(formal2, proc, inComingNodeSet);
-        bool foundPath = false;
-        for (Fi=outGoingNodeSet.begin(); Fi!=outGoingNodeSet.end() && !foundPath; Fi++){
-          SymHandle use = *Fi;
-          for (Fj=inComingNodeSet.begin(); Fj!=inComingNodeSet.end() && !foundPath; Fj++){
-            SymHandle def = *Fj;
-            foundPath = isPathThruOtherProcs(use, def, proc);
-          }
-        }
-        if (foundPath) {
-          std::cout << "foundPath(" << mIR->toString(proc) << "): " << mIR->toString(formal1) 
-                    << " -> " << mIR->toString(formal2) << std::endl;
-          mProcToMatrix[proc][formal1][formal2] = true;
-        }
-      }
-#endif
-
-      if (formal1 != formal2 && mProcToMatrix[proc][formal1][formal2]){
-        insertEdge(formal1, formal2, PARAM_EDGE, CallHandle(0), proc, proc);
-
-        for (callIter = callsites.begin(); callIter!=callsites.end(); callIter++){
-          CallHandle call = *callIter;
-          // get calling procedure
-          ProcHandle caller = mCallsiteToProc[call];
-          assert(caller != ProcHandle(0));
-          std::set<SymHandle>& set1 = mFormalToActualMap[call][formal1];
-          std::set<SymHandle>& set2 = mFormalToActualMap[call][formal2];
-          std::set<SymHandle>::iterator i1;
-          std::set<SymHandle>::iterator i2;
-          for (i1=set1.begin(); i1 != set1.end(); i1++){
-            for (i2=set2.begin(); i2 != set2.end(); i2++){
-              setDepMatrix(caller, *i1, *i2);
-            }
-          }
-        }
-      }
+		for (callIter = callsites.begin(); callIter!=callsites.end(); callIter++){
+		    CallHandle call = *callIter;
+		    // get calling procedure
+		    ProcHandle caller = mCallsiteToProc[call];
+		    assert(caller != ProcHandle(0));
+		    std::set<SymHandle>& set1 = mFormalToActualMap[call][formal1];
+		    std::set<SymHandle>& set2 = mFormalToActualMap[call][formal2];
+		    std::set<SymHandle>::iterator i1;
+		    std::set<SymHandle>::iterator i2;
+		    for (i1=set1.begin(); i1 != set1.end(); i1++){
+			for (i2=set2.begin(); i2 != set2.end(); i2++){
+			    setDepMatrix(caller, *i1, *i2);
+			}
+		    }
+		}
+	    }
+	}
     }
-  }
 }
 
 
 
 void IndepLocVisitor::visitNamedLoc(NamedLoc& loc)
 {
-   mDUG->insertIndepSymList(loc.getSymHandle(), mProc);
-   mProcsOfInterest.insert(mProc);
+    mDUG->insertIndepSymList(loc.getSymHandle(), mProc);
+    mProcsOfInterest.insert(mProc);
 
 }
 
@@ -993,19 +909,19 @@ void IndepLocVisitor::visitInvisibleLoc(InvisibleLoc& loc)
 
 void IndepLocVisitor::visitUnknownLoc(UnknownLoc& loc)
 {
-  assert(0);
+    assert(0);
 }
 
 void IndepLocVisitor::visitLocSubSet(LocSubSet& loc)
 {
-  OA_ptr<Location> ll = loc.getBaseLoc();
-  if (!ll.ptrEqual(0)) { ll->acceptVisitor(*this); }
+    OA_ptr<Location> ll = loc.getBaseLoc();
+    if (!ll.ptrEqual(0)) { ll->acceptVisitor(*this); }
 }
 
 void depLocVisitor::visitNamedLoc(NamedLoc& loc)
 {
-   mDUG->insertDepSymList(loc.getSymHandle(), mProc);
-   mProcsOfInterest.insert(mProc);
+    mDUG->insertDepSymList(loc.getSymHandle(), mProc);
+    mProcsOfInterest.insert(mProc);
 
 }
 
@@ -1024,13 +940,13 @@ void depLocVisitor::visitInvisibleLoc(InvisibleLoc& loc)
 
 void depLocVisitor::visitUnknownLoc(UnknownLoc& loc)
 {
-  assert(0);
+    assert(0);
 }
 
 void depLocVisitor::visitLocSubSet(LocSubSet& loc)
 {
-  OA_ptr<Location> ll = loc.getBaseLoc();
-  if (!ll.ptrEqual(0)) { ll->acceptVisitor(*this); }
+    OA_ptr<Location> ll = loc.getBaseLoc();
+    if (!ll.ptrEqual(0)) { ll->acceptVisitor(*this); }
 }
 
 

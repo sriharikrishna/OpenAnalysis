@@ -16,13 +16,12 @@
 
 
   Special things about AliasMap:
-  - Only mappings for top memory reference handles to AliasMap sets are
-    provided.
-  - This manager calls it maintains a counter for alias map set ids.
-    Therefore all procedures that have their AliasMap generated with
-    this manager will have unique ids for their alias map sets across
-    all AliasMaps except for the zeroth id.
-
+  - Only mappings for top memory reference handles to AliasMap sets are provided.
+  - This manager calls it maintains a counter for alias map set ids. Therefore all
+    procedures that have their AliasMap generated with this manager will have unique
+    ids for their alias map sets across all AliasMaps except for the zeroth and first ids.
+  - The first alias map set is for things with an empty maySet
+  - The zeroth AliasMapSet is for unknown locs
 */
 
 #ifndef ManagerAliasMapXAIF_h
@@ -39,31 +38,33 @@
 namespace OA {
   namespace XAIF {
 
+    /*! 
+      The AnnotationManager for AliasMapXAIF.
+      This class can build an AliasMapXAIF, 
+      (eventually) read one in from a file, and write one out to a file.
+    */
+    class ManagerAliasMapXAIF { //??? eventually public OA::AnnotationManager
 
-/*! 
-   The AnnotationManager for AliasMapXAIF.
-   This class can build an AliasMapXAIF, 
-   (eventually) read one in from a file, and write one out to a file.
-*/
-class ManagerAliasMapXAIF { //??? eventually public OA::AnnotationManager
+    public:
+      ManagerAliasMapXAIF(OA_ptr<XAIFIRInterface>);
+      ~ManagerAliasMapXAIF () {}
 
-public:
-  ManagerAliasMapXAIF(OA_ptr<XAIFIRInterface>);
-  ~ManagerAliasMapXAIF () {}
+      //! Used to perform analysis when not using AQM
+      OA_ptr<XAIF::AliasMapXAIF> performAnalysis(ProcHandle, 
+						 OA_ptr<Alias::Interface> alias);
 
-  //! Used to perform analysis when not using AQM
-  OA_ptr<XAIF::AliasMapXAIF> performAnalysis(ProcHandle, 
-                                          OA_ptr<Alias::Interface> alias);
+      //! this method will be used when the AQM is working because the 
+      //! Alias information will be queried from AnnotationQueryManager
+      //AliasMapXAIF* performAnalysis(ProcHandle);
 
-  //! this method will be used when the AQM is working because the 
-  //! Alias information will be queried from AnnotationQueryManager
-  //AliasMapXAIF* performAnalysis(ProcHandle);
+    private:
+      OA_ptr<XAIFIRInterface> mIR;    
 
-private:
-  OA_ptr<XAIFIRInterface> mIR;    
-  static int mCurrentStartId;
+      static int sCurrentStartId;
 
-};
+      static int getNextSetId();
+
+    }; // end class ManagerAliasMapXAIF
 
   } // end of XAIF namespace
 } // end of OA namespace

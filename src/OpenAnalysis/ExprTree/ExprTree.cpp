@@ -470,18 +470,12 @@ bool ExprTree::ConstValNode::operator<(Node& other)
 
 bool ExprTree::ConstValNode::operator==(Node& other)
 {
-  std::cout << "this order" << getOrder();
-  std::cout << "other order" << other.getOrder();
    if(getOrder() != other.getOrder()) { return false; }
-std::cout<<"comparing gethandle";        
     ConstValNode& ref = static_cast<ConstValNode&>(other);
-    std::cout<<"comparing gethandle";        
     if( getHandle() == ref.getHandle() )
     {
-      std::cout<<"comparing gethandle true";        
         return true;
     } else {
-std::cout<<"comparing gethandle false";        
         return false;
     }
 

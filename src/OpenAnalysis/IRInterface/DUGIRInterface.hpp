@@ -107,6 +107,13 @@ class DUGIRInterface : public virtual IRHandlesIRInterface {
   virtual OA::OA_ptr<OA::MemRefExpr> 
       convertSymToMemRefExpr(OA::SymHandle sym) = 0;
 
+  virtual OA::OA_ptr<OA::MemRefExprIterator>
+  getUseMREs(OA::StmtHandle stmt) = 0;
+
+  virtual OA::OA_ptr<OA::MemRefExprIterator>
+  getDefMREs(OA::StmtHandle stmt) = 0;
+
+  virtual OA::SymHandle getFormalSym(OA::ProcHandle, int) = 0;
 };
 
   } // end of namespace DUG

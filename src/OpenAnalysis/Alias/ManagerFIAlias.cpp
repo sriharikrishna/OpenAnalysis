@@ -344,7 +344,8 @@ void VisibleBaseVisitor::visitDeref(Deref& ref)
 
 void VisibleBaseVisitor::visitAddressOf(AddressOf& ref)
 {
-   assert(0);
+   //assert(0);
+   mBaseVisible = false;
 }
 
 void VisibleBaseVisitor::visitNamedRef(NamedRef& ref) 

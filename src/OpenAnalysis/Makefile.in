@@ -75,8 +75,6 @@
 # Assumes includer sets MYCXXFLAGS
 
 
-SOURCES = $(libOAsz64_a_SOURCES) $(libOAul_a_SOURCES) $(grtest_SOURCES) $(trtest_SOURCES)
-
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 VPATH = @srcdir@
@@ -132,10 +130,8 @@ am__libOAsz64_a_SOURCES_DIST = OABase/Annotation.cpp \
 	Utils/OutputBuilderDOT.cpp Activity/DepDFSet.cpp \
 	Activity/ManagerDepStandard.cpp Activity/DepStandard.cpp \
 	Activity/InterDep.cpp Activity/ManagerInterDep.cpp \
-	Activity/ManagerICFGDep.cpp Activity/ManagerProcIterDep.cpp \
-	Activity/ICFGDep.cpp Activity/ManagerVaryStandard.cpp \
-	Activity/VaryStandard.cpp Activity/ManagerICFGVary.cpp \
-	Activity/ManagerICFGVaryActive.cpp \
+	Activity/ManagerICFGDep.cpp Activity/ICFGDep.cpp \
+	Activity/VaryStandard.cpp Activity/ManagerICFGVaryActive.cpp \
 	Activity/ManagerUsefulStandard.cpp Activity/UsefulStandard.cpp \
 	Activity/ManagerICFGUseful.cpp \
 	Activity/ManagerActiveStandard.cpp Activity/ActiveStandard.cpp \
@@ -159,12 +155,17 @@ am__libOAsz64_a_SOURCES_DIST = OABase/Annotation.cpp \
 	DataFlow/CountDFSet.cpp DataFlow/ManagerParamBindings.cpp \
 	DataFlow/ParamBindings.cpp DataFlow/ParamBindings_output.cpp \
 	DataFlow/CalleeToCallerVisitor.cpp DataFlow/ICFGDFSolver.cpp \
+	DFAGen/Liveness/auto_LivenessStandard.cpp \
+	DFAGen/Liveness/auto_ManagerLivenessStandard.cpp \
+	DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp \
+	DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp \
 	ExprTree/ExprTree.cpp ExprTree/CompareExprTree.cpp \
 	ExprTree/DifferentiableLocsVisitor.cpp \
 	ExprTree/EvalToConstVisitor.cpp ExprTree/MemRefsVisitor.cpp \
 	ExprTree/LinearityLocsVisitor.cpp \
 	ExprTree/OutputExprTreeVisitor.cpp \
-	ExprTree/ExprTreeSetIterator.cpp ICFG/ICFG.cpp \
+	ExprTree/ExprTreeSetIterator.cpp NewExprTree/NewExprTree.cpp \
+	NewExprTree/OutputNewExprTreeVisitor.cpp ICFG/ICFG.cpp \
 	ICFG/ManagerICFG.cpp CSFIActivity/DUGStandard.cpp \
 	CSFIActivity/ManagerDUGStandard.cpp \
 	CSFIActivity/ManagerDUActive.cpp Linearity/LinearityPair.cpp \
@@ -217,11 +218,8 @@ am__objects_1 = libOAsz64_a-Annotation.$(OBJEXT) \
 	libOAsz64_a-InterDep.$(OBJEXT) \
 	libOAsz64_a-ManagerInterDep.$(OBJEXT) \
 	libOAsz64_a-ManagerICFGDep.$(OBJEXT) \
-	libOAsz64_a-ManagerProcIterDep.$(OBJEXT) \
 	libOAsz64_a-ICFGDep.$(OBJEXT) \
-	libOAsz64_a-ManagerVaryStandard.$(OBJEXT) \
 	libOAsz64_a-VaryStandard.$(OBJEXT) \
-	libOAsz64_a-ManagerICFGVary.$(OBJEXT) \
 	libOAsz64_a-ManagerICFGVaryActive.$(OBJEXT) \
 	libOAsz64_a-ManagerUsefulStandard.$(OBJEXT) \
 	libOAsz64_a-UsefulStandard.$(OBJEXT) \
@@ -263,6 +261,10 @@ am__objects_1 = libOAsz64_a-Annotation.$(OBJEXT) \
 	libOAsz64_a-ParamBindings_output.$(OBJEXT) \
 	libOAsz64_a-CalleeToCallerVisitor.$(OBJEXT) \
 	libOAsz64_a-ICFGDFSolver.$(OBJEXT) \
+	libOAsz64_a-auto_LivenessStandard.$(OBJEXT) \
+	libOAsz64_a-auto_ManagerLivenessStandard.$(OBJEXT) \
+	libOAsz64_a-auto_ReachingDefsStandard.$(OBJEXT) \
+	libOAsz64_a-auto_ManagerReachingDefsStandard.$(OBJEXT) \
 	libOAsz64_a-ExprTree.$(OBJEXT) \
 	libOAsz64_a-CompareExprTree.$(OBJEXT) \
 	libOAsz64_a-DifferentiableLocsVisitor.$(OBJEXT) \
@@ -271,6 +273,8 @@ am__objects_1 = libOAsz64_a-Annotation.$(OBJEXT) \
 	libOAsz64_a-LinearityLocsVisitor.$(OBJEXT) \
 	libOAsz64_a-OutputExprTreeVisitor.$(OBJEXT) \
 	libOAsz64_a-ExprTreeSetIterator.$(OBJEXT) \
+	libOAsz64_a-NewExprTree.$(OBJEXT) \
+	libOAsz64_a-OutputNewExprTreeVisitor.$(OBJEXT) \
 	libOAsz64_a-ICFG.$(OBJEXT) libOAsz64_a-ManagerICFG.$(OBJEXT) \
 	libOAsz64_a-DUGStandard.$(OBJEXT) \
 	libOAsz64_a-ManagerDUGStandard.$(OBJEXT) \
@@ -340,10 +344,8 @@ am__libOAul_a_SOURCES_DIST = OABase/Annotation.cpp \
 	Utils/OutputBuilderDOT.cpp Activity/DepDFSet.cpp \
 	Activity/ManagerDepStandard.cpp Activity/DepStandard.cpp \
 	Activity/InterDep.cpp Activity/ManagerInterDep.cpp \
-	Activity/ManagerICFGDep.cpp Activity/ManagerProcIterDep.cpp \
-	Activity/ICFGDep.cpp Activity/ManagerVaryStandard.cpp \
-	Activity/VaryStandard.cpp Activity/ManagerICFGVary.cpp \
-	Activity/ManagerICFGVaryActive.cpp \
+	Activity/ManagerICFGDep.cpp Activity/ICFGDep.cpp \
+	Activity/VaryStandard.cpp Activity/ManagerICFGVaryActive.cpp \
 	Activity/ManagerUsefulStandard.cpp Activity/UsefulStandard.cpp \
 	Activity/ManagerICFGUseful.cpp \
 	Activity/ManagerActiveStandard.cpp Activity/ActiveStandard.cpp \
@@ -367,12 +369,17 @@ am__libOAul_a_SOURCES_DIST = OABase/Annotation.cpp \
 	DataFlow/CountDFSet.cpp DataFlow/ManagerParamBindings.cpp \
 	DataFlow/ParamBindings.cpp DataFlow/ParamBindings_output.cpp \
 	DataFlow/CalleeToCallerVisitor.cpp DataFlow/ICFGDFSolver.cpp \
+	DFAGen/Liveness/auto_LivenessStandard.cpp \
+	DFAGen/Liveness/auto_ManagerLivenessStandard.cpp \
+	DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp \
+	DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp \
 	ExprTree/ExprTree.cpp ExprTree/CompareExprTree.cpp \
 	ExprTree/DifferentiableLocsVisitor.cpp \
 	ExprTree/EvalToConstVisitor.cpp ExprTree/MemRefsVisitor.cpp \
 	ExprTree/LinearityLocsVisitor.cpp \
 	ExprTree/OutputExprTreeVisitor.cpp \
-	ExprTree/ExprTreeSetIterator.cpp ICFG/ICFG.cpp \
+	ExprTree/ExprTreeSetIterator.cpp NewExprTree/NewExprTree.cpp \
+	NewExprTree/OutputNewExprTreeVisitor.cpp ICFG/ICFG.cpp \
 	ICFG/ManagerICFG.cpp CSFIActivity/DUGStandard.cpp \
 	CSFIActivity/ManagerDUGStandard.cpp \
 	CSFIActivity/ManagerDUActive.cpp Linearity/LinearityPair.cpp \
@@ -423,12 +430,8 @@ am__objects_2 = libOAul_a-Annotation.$(OBJEXT) \
 	libOAul_a-ManagerDepStandard.$(OBJEXT) \
 	libOAul_a-DepStandard.$(OBJEXT) libOAul_a-InterDep.$(OBJEXT) \
 	libOAul_a-ManagerInterDep.$(OBJEXT) \
-	libOAul_a-ManagerICFGDep.$(OBJEXT) \
-	libOAul_a-ManagerProcIterDep.$(OBJEXT) \
-	libOAul_a-ICFGDep.$(OBJEXT) \
-	libOAul_a-ManagerVaryStandard.$(OBJEXT) \
+	libOAul_a-ManagerICFGDep.$(OBJEXT) libOAul_a-ICFGDep.$(OBJEXT) \
 	libOAul_a-VaryStandard.$(OBJEXT) \
-	libOAul_a-ManagerICFGVary.$(OBJEXT) \
 	libOAul_a-ManagerICFGVaryActive.$(OBJEXT) \
 	libOAul_a-ManagerUsefulStandard.$(OBJEXT) \
 	libOAul_a-UsefulStandard.$(OBJEXT) \
@@ -468,7 +471,12 @@ am__objects_2 = libOAul_a-Annotation.$(OBJEXT) \
 	libOAul_a-ParamBindings.$(OBJEXT) \
 	libOAul_a-ParamBindings_output.$(OBJEXT) \
 	libOAul_a-CalleeToCallerVisitor.$(OBJEXT) \
-	libOAul_a-ICFGDFSolver.$(OBJEXT) libOAul_a-ExprTree.$(OBJEXT) \
+	libOAul_a-ICFGDFSolver.$(OBJEXT) \
+	libOAul_a-auto_LivenessStandard.$(OBJEXT) \
+	libOAul_a-auto_ManagerLivenessStandard.$(OBJEXT) \
+	libOAul_a-auto_ReachingDefsStandard.$(OBJEXT) \
+	libOAul_a-auto_ManagerReachingDefsStandard.$(OBJEXT) \
+	libOAul_a-ExprTree.$(OBJEXT) \
 	libOAul_a-CompareExprTree.$(OBJEXT) \
 	libOAul_a-DifferentiableLocsVisitor.$(OBJEXT) \
 	libOAul_a-EvalToConstVisitor.$(OBJEXT) \
@@ -476,6 +484,8 @@ am__objects_2 = libOAul_a-Annotation.$(OBJEXT) \
 	libOAul_a-LinearityLocsVisitor.$(OBJEXT) \
 	libOAul_a-OutputExprTreeVisitor.$(OBJEXT) \
 	libOAul_a-ExprTreeSetIterator.$(OBJEXT) \
+	libOAul_a-NewExprTree.$(OBJEXT) \
+	libOAul_a-OutputNewExprTreeVisitor.$(OBJEXT) \
 	libOAul_a-ICFG.$(OBJEXT) libOAul_a-ManagerICFG.$(OBJEXT) \
 	libOAul_a-DUGStandard.$(OBJEXT) \
 	libOAul_a-ManagerDUGStandard.$(OBJEXT) \
@@ -576,7 +586,6 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
-GREP = @GREP@
 HOST_AR = @HOST_AR@
 HOST_CXXFLAGS = @HOST_CXXFLAGS@
 HOST_LIBADD = @HOST_LIBADD@
@@ -611,6 +620,8 @@ SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
 ac_ct_CXX = @ac_ct_CXX@
+ac_ct_RANLIB = @ac_ct_RANLIB@
+ac_ct_STRIP = @ac_ct_STRIP@
 am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
 am__fastdepCXX_TRUE = @am__fastdepCXX_TRUE@
 am__include = @am__include@
@@ -625,30 +636,23 @@ build_cpu = @build_cpu@
 build_os = @build_os@
 build_vendor = @build_vendor@
 datadir = @datadir@
-datarootdir = @datarootdir@
-docdir = @docdir@
-dvidir = @dvidir@
 exec_prefix = @exec_prefix@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
 host_os = @host_os@
 host_vendor = @host_vendor@
-htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
 libdir = @libdir@
 libexecdir = @libexecdir@
-localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
-pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
-psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
@@ -702,8 +706,12 @@ MYINSTALLEDHEADERS = \
   IRInterface/XAIFIRInterface.hpp \
   IRInterface/LinearityIRInterface.hpp \
   IRInterface/LivenessIRInterface.hpp \
+  IRInterface/auto_ReachingDefsIRInterface.hpp \
+  IRInterface/auto_AvailableExpressions.hpp \
   IRInterface/DUGIRInterface.hpp \
   IRInterface/LoopIRInterface.hpp \
+  IRInterface/OpBasicInterface.hpp \
+  IRInterface/ExprTreeIRInterface.hpp \
   \
   OABase/Annotation.hpp \
   \
@@ -713,11 +721,8 @@ MYINSTALLEDHEADERS = \
   Activity/ManagerInterDep.hpp \
   Activity/InterDep.hpp \
   Activity/ManagerICFGDep.hpp \
-  Activity/ManagerProcIterDep.hpp \
   Activity/ICFGDep.hpp \
-  Activity/ManagerVaryStandard.hpp \
   Activity/VaryStandard.hpp \
-  Activity/ManagerICFGVary.hpp \
   Activity/ManagerICFGVaryActive.hpp \
   Activity/ManagerICFGUseful.hpp \
   Activity/InterVary.hpp \
@@ -736,6 +741,8 @@ MYINSTALLEDHEADERS = \
   AffineExpr/AffineExprAbstraction.hpp \
   AffineExpr/ManagerAffineExpr.hpp \
   \
+  Alias/AliasTagInterface.hpp \
+  Alias/AliasTag.hpp \
   Alias/Interface.hpp \
   Alias/EquivSets.hpp \
   Alias/EquivSets.hpp \
@@ -765,6 +772,7 @@ MYINSTALLEDHEADERS = \
   DataDep/ManagerDataDep.hpp \
   \
   DataFlow/DataFlowSet.hpp \
+  DataFlow/DFAGenDFSet.hpp \
   DataFlow/DGraphSolverDFP.hpp \
   DataFlow/WorkList.hpp \
   DataFlow/WorkListPQueue.hpp \
@@ -783,6 +791,12 @@ MYINSTALLEDHEADERS = \
   DataFlow/ICFGDFProblem.hpp \
   DataFlow/ICFGDFSolver.hpp \
   \
+  DFAGen/Liveness/auto_LivenessStandard.hpp \
+  DFAGen/Liveness/auto_ManagerLivenessStandard.hpp \
+  \
+  DFAGen/ReachingDefs/auto_ReachingDefsStandard.hpp \
+  DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.hpp \
+  \
   ExprTree/ExprTree.hpp \
   ExprTree/ExprTreeVisitor.hpp \
   ExprTree/DifferentiableLocsVisitor.hpp \
@@ -793,6 +807,10 @@ MYINSTALLEDHEADERS = \
   ExprTree/OutputExprTreeVisitor.hpp \
   ExprTree/ExprTreeSetIterator.hpp \
   ExprTree/CompareExprTree.hpp \
+  \
+  NewExprTree/NewExprTree.hpp \
+  NewExprTree/NewExprTreeVisitor.hpp \
+  NewExprTree/OutputNewExprTreeVisitor.hpp \
   \
   ICFG/ICFGInterface.hpp \
   ICFG/ICFG.hpp \
@@ -907,11 +925,8 @@ MYSOURCES = \
   Activity/InterDep.cpp \
   Activity/ManagerInterDep.cpp \
   Activity/ManagerICFGDep.cpp \
-  Activity/ManagerProcIterDep.cpp \
   Activity/ICFGDep.cpp \
-  Activity/ManagerVaryStandard.cpp \
   Activity/VaryStandard.cpp \
-  Activity/ManagerICFGVary.cpp \
   Activity/ManagerICFGVaryActive.cpp \
   Activity/ManagerUsefulStandard.cpp \
   Activity/UsefulStandard.cpp \
@@ -961,6 +976,12 @@ MYSOURCES = \
   DataFlow/CalleeToCallerVisitor.cpp \
   DataFlow/ICFGDFSolver.cpp \
   \
+  DFAGen/Liveness/auto_LivenessStandard.cpp \
+  DFAGen/Liveness/auto_ManagerLivenessStandard.cpp \
+  \
+  DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp \
+  DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp \
+  \
   ExprTree/ExprTree.cpp \
   ExprTree/CompareExprTree.cpp \
   ExprTree/DifferentiableLocsVisitor.cpp \
@@ -969,6 +990,9 @@ MYSOURCES = \
   ExprTree/LinearityLocsVisitor.cpp \
   ExprTree/OutputExprTreeVisitor.cpp \
   ExprTree/ExprTreeSetIterator.cpp \
+  \
+  NewExprTree/NewExprTree.cpp \
+  NewExprTree/OutputNewExprTreeVisitor.cpp \
   \
   ICFG/ICFG.cpp \
   ICFG/ManagerICFG.cpp \
@@ -1245,7 +1269,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerICFGDep.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerICFGReachConsts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerICFGUseful.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerICFGVary.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerICFGVaryActive.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerInterAliasMapBasic.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerInterDep.Po@am__quote@
@@ -1254,7 +1277,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerLinearityStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerLivenessStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerParamBindings.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerProcIterDep.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerReachConstsStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerReachDefsOverwriteStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerReachDefsOverwriteXAIF.Po@am__quote@
@@ -1264,16 +1286,17 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerUDDUChainsStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerUDDUChainsXAIF.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerUsefulStandard.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ManagerVaryStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-MemRefExpr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-MemRefsVisitor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-NamedLoc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-NestedSCR.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-NewExprTree.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-NotationGenerator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-OutputBuilder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-OutputBuilderDOT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-OutputBuilderText.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-OutputExprTreeVisitor.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-OutputNewExprTreeVisitor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-OverlapSymIterator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ParamBindings.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-ParamBindings_output.Po@am__quote@
@@ -1294,6 +1317,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-UnnamedLoc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-UsefulStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-VaryStandard.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-auto_LivenessStandard.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-auto_ManagerLivenessStandard.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-auto_ManagerReachingDefsStandard.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAsz64_a-auto_ReachingDefsStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ActivePerStmt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ActiveStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-AffineExprAbstraction.Po@am__quote@
@@ -1373,7 +1400,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerICFGDep.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerICFGReachConsts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerICFGUseful.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerICFGVary.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerICFGVaryActive.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerInterAliasMapBasic.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerInterDep.Po@am__quote@
@@ -1382,7 +1408,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerLinearityStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerLivenessStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerParamBindings.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerProcIterDep.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerReachConstsStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerReachDefsOverwriteStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerReachDefsOverwriteXAIF.Po@am__quote@
@@ -1392,16 +1417,17 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerUDDUChainsStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerUDDUChainsXAIF.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerUsefulStandard.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ManagerVaryStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-MemRefExpr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-MemRefsVisitor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-NamedLoc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-NestedSCR.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-NewExprTree.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-NotationGenerator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-OutputBuilder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-OutputBuilderDOT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-OutputBuilderText.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-OutputExprTreeVisitor.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-OutputNewExprTreeVisitor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-OverlapSymIterator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ParamBindings.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-ParamBindings_output.Po@am__quote@
@@ -1422,6 +1448,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-UnnamedLoc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-UsefulStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-VaryStandard.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-auto_LivenessStandard.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-auto_ManagerLivenessStandard.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-auto_ManagerReachingDefsStandard.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libOAul_a-auto_ReachingDefsStandard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trtest-trtest.Po@am__quote@
 
 .cpp.o:
@@ -1578,20 +1608,6 @@ libOAsz64_a-ManagerICFGDep.obj: Activity/ManagerICFGDep.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-ManagerICFGDep.obj `if test -f 'Activity/ManagerICFGDep.cpp'; then $(CYGPATH_W) 'Activity/ManagerICFGDep.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ManagerICFGDep.cpp'; fi`
 
-libOAsz64_a-ManagerProcIterDep.o: Activity/ManagerProcIterDep.cpp
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-ManagerProcIterDep.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-ManagerProcIterDep.Tpo" -c -o libOAsz64_a-ManagerProcIterDep.o `test -f 'Activity/ManagerProcIterDep.cpp' || echo '$(srcdir)/'`Activity/ManagerProcIterDep.cpp; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-ManagerProcIterDep.Tpo" "$(DEPDIR)/libOAsz64_a-ManagerProcIterDep.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-ManagerProcIterDep.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Activity/ManagerProcIterDep.cpp' object='libOAsz64_a-ManagerProcIterDep.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-ManagerProcIterDep.o `test -f 'Activity/ManagerProcIterDep.cpp' || echo '$(srcdir)/'`Activity/ManagerProcIterDep.cpp
-
-libOAsz64_a-ManagerProcIterDep.obj: Activity/ManagerProcIterDep.cpp
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-ManagerProcIterDep.obj -MD -MP -MF "$(DEPDIR)/libOAsz64_a-ManagerProcIterDep.Tpo" -c -o libOAsz64_a-ManagerProcIterDep.obj `if test -f 'Activity/ManagerProcIterDep.cpp'; then $(CYGPATH_W) 'Activity/ManagerProcIterDep.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ManagerProcIterDep.cpp'; fi`; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-ManagerProcIterDep.Tpo" "$(DEPDIR)/libOAsz64_a-ManagerProcIterDep.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-ManagerProcIterDep.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Activity/ManagerProcIterDep.cpp' object='libOAsz64_a-ManagerProcIterDep.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-ManagerProcIterDep.obj `if test -f 'Activity/ManagerProcIterDep.cpp'; then $(CYGPATH_W) 'Activity/ManagerProcIterDep.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ManagerProcIterDep.cpp'; fi`
-
 libOAsz64_a-ICFGDep.o: Activity/ICFGDep.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-ICFGDep.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-ICFGDep.Tpo" -c -o libOAsz64_a-ICFGDep.o `test -f 'Activity/ICFGDep.cpp' || echo '$(srcdir)/'`Activity/ICFGDep.cpp; \
 @am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-ICFGDep.Tpo" "$(DEPDIR)/libOAsz64_a-ICFGDep.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-ICFGDep.Tpo"; exit 1; fi
@@ -1606,20 +1622,6 @@ libOAsz64_a-ICFGDep.obj: Activity/ICFGDep.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-ICFGDep.obj `if test -f 'Activity/ICFGDep.cpp'; then $(CYGPATH_W) 'Activity/ICFGDep.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ICFGDep.cpp'; fi`
 
-libOAsz64_a-ManagerVaryStandard.o: Activity/ManagerVaryStandard.cpp
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-ManagerVaryStandard.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-ManagerVaryStandard.Tpo" -c -o libOAsz64_a-ManagerVaryStandard.o `test -f 'Activity/ManagerVaryStandard.cpp' || echo '$(srcdir)/'`Activity/ManagerVaryStandard.cpp; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-ManagerVaryStandard.Tpo" "$(DEPDIR)/libOAsz64_a-ManagerVaryStandard.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-ManagerVaryStandard.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Activity/ManagerVaryStandard.cpp' object='libOAsz64_a-ManagerVaryStandard.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-ManagerVaryStandard.o `test -f 'Activity/ManagerVaryStandard.cpp' || echo '$(srcdir)/'`Activity/ManagerVaryStandard.cpp
-
-libOAsz64_a-ManagerVaryStandard.obj: Activity/ManagerVaryStandard.cpp
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-ManagerVaryStandard.obj -MD -MP -MF "$(DEPDIR)/libOAsz64_a-ManagerVaryStandard.Tpo" -c -o libOAsz64_a-ManagerVaryStandard.obj `if test -f 'Activity/ManagerVaryStandard.cpp'; then $(CYGPATH_W) 'Activity/ManagerVaryStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ManagerVaryStandard.cpp'; fi`; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-ManagerVaryStandard.Tpo" "$(DEPDIR)/libOAsz64_a-ManagerVaryStandard.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-ManagerVaryStandard.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Activity/ManagerVaryStandard.cpp' object='libOAsz64_a-ManagerVaryStandard.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-ManagerVaryStandard.obj `if test -f 'Activity/ManagerVaryStandard.cpp'; then $(CYGPATH_W) 'Activity/ManagerVaryStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ManagerVaryStandard.cpp'; fi`
-
 libOAsz64_a-VaryStandard.o: Activity/VaryStandard.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-VaryStandard.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-VaryStandard.Tpo" -c -o libOAsz64_a-VaryStandard.o `test -f 'Activity/VaryStandard.cpp' || echo '$(srcdir)/'`Activity/VaryStandard.cpp; \
 @am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-VaryStandard.Tpo" "$(DEPDIR)/libOAsz64_a-VaryStandard.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-VaryStandard.Tpo"; exit 1; fi
@@ -1633,20 +1635,6 @@ libOAsz64_a-VaryStandard.obj: Activity/VaryStandard.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Activity/VaryStandard.cpp' object='libOAsz64_a-VaryStandard.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-VaryStandard.obj `if test -f 'Activity/VaryStandard.cpp'; then $(CYGPATH_W) 'Activity/VaryStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/VaryStandard.cpp'; fi`
-
-libOAsz64_a-ManagerICFGVary.o: Activity/ManagerICFGVary.cpp
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-ManagerICFGVary.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-ManagerICFGVary.Tpo" -c -o libOAsz64_a-ManagerICFGVary.o `test -f 'Activity/ManagerICFGVary.cpp' || echo '$(srcdir)/'`Activity/ManagerICFGVary.cpp; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-ManagerICFGVary.Tpo" "$(DEPDIR)/libOAsz64_a-ManagerICFGVary.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-ManagerICFGVary.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Activity/ManagerICFGVary.cpp' object='libOAsz64_a-ManagerICFGVary.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-ManagerICFGVary.o `test -f 'Activity/ManagerICFGVary.cpp' || echo '$(srcdir)/'`Activity/ManagerICFGVary.cpp
-
-libOAsz64_a-ManagerICFGVary.obj: Activity/ManagerICFGVary.cpp
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-ManagerICFGVary.obj -MD -MP -MF "$(DEPDIR)/libOAsz64_a-ManagerICFGVary.Tpo" -c -o libOAsz64_a-ManagerICFGVary.obj `if test -f 'Activity/ManagerICFGVary.cpp'; then $(CYGPATH_W) 'Activity/ManagerICFGVary.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ManagerICFGVary.cpp'; fi`; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-ManagerICFGVary.Tpo" "$(DEPDIR)/libOAsz64_a-ManagerICFGVary.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-ManagerICFGVary.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Activity/ManagerICFGVary.cpp' object='libOAsz64_a-ManagerICFGVary.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-ManagerICFGVary.obj `if test -f 'Activity/ManagerICFGVary.cpp'; then $(CYGPATH_W) 'Activity/ManagerICFGVary.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ManagerICFGVary.cpp'; fi`
 
 libOAsz64_a-ManagerICFGVaryActive.o: Activity/ManagerICFGVaryActive.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-ManagerICFGVaryActive.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-ManagerICFGVaryActive.Tpo" -c -o libOAsz64_a-ManagerICFGVaryActive.o `test -f 'Activity/ManagerICFGVaryActive.cpp' || echo '$(srcdir)/'`Activity/ManagerICFGVaryActive.cpp; \
@@ -2236,6 +2224,62 @@ libOAsz64_a-ICFGDFSolver.obj: DataFlow/ICFGDFSolver.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-ICFGDFSolver.obj `if test -f 'DataFlow/ICFGDFSolver.cpp'; then $(CYGPATH_W) 'DataFlow/ICFGDFSolver.cpp'; else $(CYGPATH_W) '$(srcdir)/DataFlow/ICFGDFSolver.cpp'; fi`
 
+libOAsz64_a-auto_LivenessStandard.o: DFAGen/Liveness/auto_LivenessStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-auto_LivenessStandard.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-auto_LivenessStandard.Tpo" -c -o libOAsz64_a-auto_LivenessStandard.o `test -f 'DFAGen/Liveness/auto_LivenessStandard.cpp' || echo '$(srcdir)/'`DFAGen/Liveness/auto_LivenessStandard.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-auto_LivenessStandard.Tpo" "$(DEPDIR)/libOAsz64_a-auto_LivenessStandard.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-auto_LivenessStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/Liveness/auto_LivenessStandard.cpp' object='libOAsz64_a-auto_LivenessStandard.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-auto_LivenessStandard.o `test -f 'DFAGen/Liveness/auto_LivenessStandard.cpp' || echo '$(srcdir)/'`DFAGen/Liveness/auto_LivenessStandard.cpp
+
+libOAsz64_a-auto_LivenessStandard.obj: DFAGen/Liveness/auto_LivenessStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-auto_LivenessStandard.obj -MD -MP -MF "$(DEPDIR)/libOAsz64_a-auto_LivenessStandard.Tpo" -c -o libOAsz64_a-auto_LivenessStandard.obj `if test -f 'DFAGen/Liveness/auto_LivenessStandard.cpp'; then $(CYGPATH_W) 'DFAGen/Liveness/auto_LivenessStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/Liveness/auto_LivenessStandard.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-auto_LivenessStandard.Tpo" "$(DEPDIR)/libOAsz64_a-auto_LivenessStandard.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-auto_LivenessStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/Liveness/auto_LivenessStandard.cpp' object='libOAsz64_a-auto_LivenessStandard.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-auto_LivenessStandard.obj `if test -f 'DFAGen/Liveness/auto_LivenessStandard.cpp'; then $(CYGPATH_W) 'DFAGen/Liveness/auto_LivenessStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/Liveness/auto_LivenessStandard.cpp'; fi`
+
+libOAsz64_a-auto_ManagerLivenessStandard.o: DFAGen/Liveness/auto_ManagerLivenessStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-auto_ManagerLivenessStandard.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-auto_ManagerLivenessStandard.Tpo" -c -o libOAsz64_a-auto_ManagerLivenessStandard.o `test -f 'DFAGen/Liveness/auto_ManagerLivenessStandard.cpp' || echo '$(srcdir)/'`DFAGen/Liveness/auto_ManagerLivenessStandard.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-auto_ManagerLivenessStandard.Tpo" "$(DEPDIR)/libOAsz64_a-auto_ManagerLivenessStandard.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-auto_ManagerLivenessStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/Liveness/auto_ManagerLivenessStandard.cpp' object='libOAsz64_a-auto_ManagerLivenessStandard.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-auto_ManagerLivenessStandard.o `test -f 'DFAGen/Liveness/auto_ManagerLivenessStandard.cpp' || echo '$(srcdir)/'`DFAGen/Liveness/auto_ManagerLivenessStandard.cpp
+
+libOAsz64_a-auto_ManagerLivenessStandard.obj: DFAGen/Liveness/auto_ManagerLivenessStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-auto_ManagerLivenessStandard.obj -MD -MP -MF "$(DEPDIR)/libOAsz64_a-auto_ManagerLivenessStandard.Tpo" -c -o libOAsz64_a-auto_ManagerLivenessStandard.obj `if test -f 'DFAGen/Liveness/auto_ManagerLivenessStandard.cpp'; then $(CYGPATH_W) 'DFAGen/Liveness/auto_ManagerLivenessStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/Liveness/auto_ManagerLivenessStandard.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-auto_ManagerLivenessStandard.Tpo" "$(DEPDIR)/libOAsz64_a-auto_ManagerLivenessStandard.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-auto_ManagerLivenessStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/Liveness/auto_ManagerLivenessStandard.cpp' object='libOAsz64_a-auto_ManagerLivenessStandard.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-auto_ManagerLivenessStandard.obj `if test -f 'DFAGen/Liveness/auto_ManagerLivenessStandard.cpp'; then $(CYGPATH_W) 'DFAGen/Liveness/auto_ManagerLivenessStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/Liveness/auto_ManagerLivenessStandard.cpp'; fi`
+
+libOAsz64_a-auto_ReachingDefsStandard.o: DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-auto_ReachingDefsStandard.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-auto_ReachingDefsStandard.Tpo" -c -o libOAsz64_a-auto_ReachingDefsStandard.o `test -f 'DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp' || echo '$(srcdir)/'`DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-auto_ReachingDefsStandard.Tpo" "$(DEPDIR)/libOAsz64_a-auto_ReachingDefsStandard.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-auto_ReachingDefsStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp' object='libOAsz64_a-auto_ReachingDefsStandard.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-auto_ReachingDefsStandard.o `test -f 'DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp' || echo '$(srcdir)/'`DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp
+
+libOAsz64_a-auto_ReachingDefsStandard.obj: DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-auto_ReachingDefsStandard.obj -MD -MP -MF "$(DEPDIR)/libOAsz64_a-auto_ReachingDefsStandard.Tpo" -c -o libOAsz64_a-auto_ReachingDefsStandard.obj `if test -f 'DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp'; then $(CYGPATH_W) 'DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-auto_ReachingDefsStandard.Tpo" "$(DEPDIR)/libOAsz64_a-auto_ReachingDefsStandard.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-auto_ReachingDefsStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp' object='libOAsz64_a-auto_ReachingDefsStandard.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-auto_ReachingDefsStandard.obj `if test -f 'DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp'; then $(CYGPATH_W) 'DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp'; fi`
+
+libOAsz64_a-auto_ManagerReachingDefsStandard.o: DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-auto_ManagerReachingDefsStandard.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-auto_ManagerReachingDefsStandard.Tpo" -c -o libOAsz64_a-auto_ManagerReachingDefsStandard.o `test -f 'DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp' || echo '$(srcdir)/'`DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-auto_ManagerReachingDefsStandard.Tpo" "$(DEPDIR)/libOAsz64_a-auto_ManagerReachingDefsStandard.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-auto_ManagerReachingDefsStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp' object='libOAsz64_a-auto_ManagerReachingDefsStandard.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-auto_ManagerReachingDefsStandard.o `test -f 'DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp' || echo '$(srcdir)/'`DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp
+
+libOAsz64_a-auto_ManagerReachingDefsStandard.obj: DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-auto_ManagerReachingDefsStandard.obj -MD -MP -MF "$(DEPDIR)/libOAsz64_a-auto_ManagerReachingDefsStandard.Tpo" -c -o libOAsz64_a-auto_ManagerReachingDefsStandard.obj `if test -f 'DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp'; then $(CYGPATH_W) 'DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-auto_ManagerReachingDefsStandard.Tpo" "$(DEPDIR)/libOAsz64_a-auto_ManagerReachingDefsStandard.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-auto_ManagerReachingDefsStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp' object='libOAsz64_a-auto_ManagerReachingDefsStandard.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-auto_ManagerReachingDefsStandard.obj `if test -f 'DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp'; then $(CYGPATH_W) 'DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp'; fi`
+
 libOAsz64_a-ExprTree.o: ExprTree/ExprTree.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-ExprTree.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-ExprTree.Tpo" -c -o libOAsz64_a-ExprTree.o `test -f 'ExprTree/ExprTree.cpp' || echo '$(srcdir)/'`ExprTree/ExprTree.cpp; \
 @am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-ExprTree.Tpo" "$(DEPDIR)/libOAsz64_a-ExprTree.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-ExprTree.Tpo"; exit 1; fi
@@ -2347,6 +2391,34 @@ libOAsz64_a-ExprTreeSetIterator.obj: ExprTree/ExprTreeSetIterator.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ExprTree/ExprTreeSetIterator.cpp' object='libOAsz64_a-ExprTreeSetIterator.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-ExprTreeSetIterator.obj `if test -f 'ExprTree/ExprTreeSetIterator.cpp'; then $(CYGPATH_W) 'ExprTree/ExprTreeSetIterator.cpp'; else $(CYGPATH_W) '$(srcdir)/ExprTree/ExprTreeSetIterator.cpp'; fi`
+
+libOAsz64_a-NewExprTree.o: NewExprTree/NewExprTree.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-NewExprTree.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-NewExprTree.Tpo" -c -o libOAsz64_a-NewExprTree.o `test -f 'NewExprTree/NewExprTree.cpp' || echo '$(srcdir)/'`NewExprTree/NewExprTree.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-NewExprTree.Tpo" "$(DEPDIR)/libOAsz64_a-NewExprTree.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-NewExprTree.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='NewExprTree/NewExprTree.cpp' object='libOAsz64_a-NewExprTree.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-NewExprTree.o `test -f 'NewExprTree/NewExprTree.cpp' || echo '$(srcdir)/'`NewExprTree/NewExprTree.cpp
+
+libOAsz64_a-NewExprTree.obj: NewExprTree/NewExprTree.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-NewExprTree.obj -MD -MP -MF "$(DEPDIR)/libOAsz64_a-NewExprTree.Tpo" -c -o libOAsz64_a-NewExprTree.obj `if test -f 'NewExprTree/NewExprTree.cpp'; then $(CYGPATH_W) 'NewExprTree/NewExprTree.cpp'; else $(CYGPATH_W) '$(srcdir)/NewExprTree/NewExprTree.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-NewExprTree.Tpo" "$(DEPDIR)/libOAsz64_a-NewExprTree.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-NewExprTree.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='NewExprTree/NewExprTree.cpp' object='libOAsz64_a-NewExprTree.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-NewExprTree.obj `if test -f 'NewExprTree/NewExprTree.cpp'; then $(CYGPATH_W) 'NewExprTree/NewExprTree.cpp'; else $(CYGPATH_W) '$(srcdir)/NewExprTree/NewExprTree.cpp'; fi`
+
+libOAsz64_a-OutputNewExprTreeVisitor.o: NewExprTree/OutputNewExprTreeVisitor.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-OutputNewExprTreeVisitor.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-OutputNewExprTreeVisitor.Tpo" -c -o libOAsz64_a-OutputNewExprTreeVisitor.o `test -f 'NewExprTree/OutputNewExprTreeVisitor.cpp' || echo '$(srcdir)/'`NewExprTree/OutputNewExprTreeVisitor.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-OutputNewExprTreeVisitor.Tpo" "$(DEPDIR)/libOAsz64_a-OutputNewExprTreeVisitor.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-OutputNewExprTreeVisitor.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='NewExprTree/OutputNewExprTreeVisitor.cpp' object='libOAsz64_a-OutputNewExprTreeVisitor.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-OutputNewExprTreeVisitor.o `test -f 'NewExprTree/OutputNewExprTreeVisitor.cpp' || echo '$(srcdir)/'`NewExprTree/OutputNewExprTreeVisitor.cpp
+
+libOAsz64_a-OutputNewExprTreeVisitor.obj: NewExprTree/OutputNewExprTreeVisitor.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-OutputNewExprTreeVisitor.obj -MD -MP -MF "$(DEPDIR)/libOAsz64_a-OutputNewExprTreeVisitor.Tpo" -c -o libOAsz64_a-OutputNewExprTreeVisitor.obj `if test -f 'NewExprTree/OutputNewExprTreeVisitor.cpp'; then $(CYGPATH_W) 'NewExprTree/OutputNewExprTreeVisitor.cpp'; else $(CYGPATH_W) '$(srcdir)/NewExprTree/OutputNewExprTreeVisitor.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAsz64_a-OutputNewExprTreeVisitor.Tpo" "$(DEPDIR)/libOAsz64_a-OutputNewExprTreeVisitor.Po"; else rm -f "$(DEPDIR)/libOAsz64_a-OutputNewExprTreeVisitor.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='NewExprTree/OutputNewExprTreeVisitor.cpp' object='libOAsz64_a-OutputNewExprTreeVisitor.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAsz64_a-OutputNewExprTreeVisitor.obj `if test -f 'NewExprTree/OutputNewExprTreeVisitor.cpp'; then $(CYGPATH_W) 'NewExprTree/OutputNewExprTreeVisitor.cpp'; else $(CYGPATH_W) '$(srcdir)/NewExprTree/OutputNewExprTreeVisitor.cpp'; fi`
 
 libOAsz64_a-ICFG.o: ICFG/ICFG.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAsz64_a_CXXFLAGS) $(CXXFLAGS) -MT libOAsz64_a-ICFG.o -MD -MP -MF "$(DEPDIR)/libOAsz64_a-ICFG.Tpo" -c -o libOAsz64_a-ICFG.o `test -f 'ICFG/ICFG.cpp' || echo '$(srcdir)/'`ICFG/ICFG.cpp; \
@@ -3370,20 +3442,6 @@ libOAul_a-ManagerICFGDep.obj: Activity/ManagerICFGDep.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-ManagerICFGDep.obj `if test -f 'Activity/ManagerICFGDep.cpp'; then $(CYGPATH_W) 'Activity/ManagerICFGDep.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ManagerICFGDep.cpp'; fi`
 
-libOAul_a-ManagerProcIterDep.o: Activity/ManagerProcIterDep.cpp
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-ManagerProcIterDep.o -MD -MP -MF "$(DEPDIR)/libOAul_a-ManagerProcIterDep.Tpo" -c -o libOAul_a-ManagerProcIterDep.o `test -f 'Activity/ManagerProcIterDep.cpp' || echo '$(srcdir)/'`Activity/ManagerProcIterDep.cpp; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-ManagerProcIterDep.Tpo" "$(DEPDIR)/libOAul_a-ManagerProcIterDep.Po"; else rm -f "$(DEPDIR)/libOAul_a-ManagerProcIterDep.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Activity/ManagerProcIterDep.cpp' object='libOAul_a-ManagerProcIterDep.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-ManagerProcIterDep.o `test -f 'Activity/ManagerProcIterDep.cpp' || echo '$(srcdir)/'`Activity/ManagerProcIterDep.cpp
-
-libOAul_a-ManagerProcIterDep.obj: Activity/ManagerProcIterDep.cpp
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-ManagerProcIterDep.obj -MD -MP -MF "$(DEPDIR)/libOAul_a-ManagerProcIterDep.Tpo" -c -o libOAul_a-ManagerProcIterDep.obj `if test -f 'Activity/ManagerProcIterDep.cpp'; then $(CYGPATH_W) 'Activity/ManagerProcIterDep.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ManagerProcIterDep.cpp'; fi`; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-ManagerProcIterDep.Tpo" "$(DEPDIR)/libOAul_a-ManagerProcIterDep.Po"; else rm -f "$(DEPDIR)/libOAul_a-ManagerProcIterDep.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Activity/ManagerProcIterDep.cpp' object='libOAul_a-ManagerProcIterDep.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-ManagerProcIterDep.obj `if test -f 'Activity/ManagerProcIterDep.cpp'; then $(CYGPATH_W) 'Activity/ManagerProcIterDep.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ManagerProcIterDep.cpp'; fi`
-
 libOAul_a-ICFGDep.o: Activity/ICFGDep.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-ICFGDep.o -MD -MP -MF "$(DEPDIR)/libOAul_a-ICFGDep.Tpo" -c -o libOAul_a-ICFGDep.o `test -f 'Activity/ICFGDep.cpp' || echo '$(srcdir)/'`Activity/ICFGDep.cpp; \
 @am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-ICFGDep.Tpo" "$(DEPDIR)/libOAul_a-ICFGDep.Po"; else rm -f "$(DEPDIR)/libOAul_a-ICFGDep.Tpo"; exit 1; fi
@@ -3398,20 +3456,6 @@ libOAul_a-ICFGDep.obj: Activity/ICFGDep.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-ICFGDep.obj `if test -f 'Activity/ICFGDep.cpp'; then $(CYGPATH_W) 'Activity/ICFGDep.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ICFGDep.cpp'; fi`
 
-libOAul_a-ManagerVaryStandard.o: Activity/ManagerVaryStandard.cpp
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-ManagerVaryStandard.o -MD -MP -MF "$(DEPDIR)/libOAul_a-ManagerVaryStandard.Tpo" -c -o libOAul_a-ManagerVaryStandard.o `test -f 'Activity/ManagerVaryStandard.cpp' || echo '$(srcdir)/'`Activity/ManagerVaryStandard.cpp; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-ManagerVaryStandard.Tpo" "$(DEPDIR)/libOAul_a-ManagerVaryStandard.Po"; else rm -f "$(DEPDIR)/libOAul_a-ManagerVaryStandard.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Activity/ManagerVaryStandard.cpp' object='libOAul_a-ManagerVaryStandard.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-ManagerVaryStandard.o `test -f 'Activity/ManagerVaryStandard.cpp' || echo '$(srcdir)/'`Activity/ManagerVaryStandard.cpp
-
-libOAul_a-ManagerVaryStandard.obj: Activity/ManagerVaryStandard.cpp
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-ManagerVaryStandard.obj -MD -MP -MF "$(DEPDIR)/libOAul_a-ManagerVaryStandard.Tpo" -c -o libOAul_a-ManagerVaryStandard.obj `if test -f 'Activity/ManagerVaryStandard.cpp'; then $(CYGPATH_W) 'Activity/ManagerVaryStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ManagerVaryStandard.cpp'; fi`; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-ManagerVaryStandard.Tpo" "$(DEPDIR)/libOAul_a-ManagerVaryStandard.Po"; else rm -f "$(DEPDIR)/libOAul_a-ManagerVaryStandard.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Activity/ManagerVaryStandard.cpp' object='libOAul_a-ManagerVaryStandard.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-ManagerVaryStandard.obj `if test -f 'Activity/ManagerVaryStandard.cpp'; then $(CYGPATH_W) 'Activity/ManagerVaryStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ManagerVaryStandard.cpp'; fi`
-
 libOAul_a-VaryStandard.o: Activity/VaryStandard.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-VaryStandard.o -MD -MP -MF "$(DEPDIR)/libOAul_a-VaryStandard.Tpo" -c -o libOAul_a-VaryStandard.o `test -f 'Activity/VaryStandard.cpp' || echo '$(srcdir)/'`Activity/VaryStandard.cpp; \
 @am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-VaryStandard.Tpo" "$(DEPDIR)/libOAul_a-VaryStandard.Po"; else rm -f "$(DEPDIR)/libOAul_a-VaryStandard.Tpo"; exit 1; fi
@@ -3425,20 +3469,6 @@ libOAul_a-VaryStandard.obj: Activity/VaryStandard.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Activity/VaryStandard.cpp' object='libOAul_a-VaryStandard.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-VaryStandard.obj `if test -f 'Activity/VaryStandard.cpp'; then $(CYGPATH_W) 'Activity/VaryStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/VaryStandard.cpp'; fi`
-
-libOAul_a-ManagerICFGVary.o: Activity/ManagerICFGVary.cpp
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-ManagerICFGVary.o -MD -MP -MF "$(DEPDIR)/libOAul_a-ManagerICFGVary.Tpo" -c -o libOAul_a-ManagerICFGVary.o `test -f 'Activity/ManagerICFGVary.cpp' || echo '$(srcdir)/'`Activity/ManagerICFGVary.cpp; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-ManagerICFGVary.Tpo" "$(DEPDIR)/libOAul_a-ManagerICFGVary.Po"; else rm -f "$(DEPDIR)/libOAul_a-ManagerICFGVary.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Activity/ManagerICFGVary.cpp' object='libOAul_a-ManagerICFGVary.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-ManagerICFGVary.o `test -f 'Activity/ManagerICFGVary.cpp' || echo '$(srcdir)/'`Activity/ManagerICFGVary.cpp
-
-libOAul_a-ManagerICFGVary.obj: Activity/ManagerICFGVary.cpp
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-ManagerICFGVary.obj -MD -MP -MF "$(DEPDIR)/libOAul_a-ManagerICFGVary.Tpo" -c -o libOAul_a-ManagerICFGVary.obj `if test -f 'Activity/ManagerICFGVary.cpp'; then $(CYGPATH_W) 'Activity/ManagerICFGVary.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ManagerICFGVary.cpp'; fi`; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-ManagerICFGVary.Tpo" "$(DEPDIR)/libOAul_a-ManagerICFGVary.Po"; else rm -f "$(DEPDIR)/libOAul_a-ManagerICFGVary.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Activity/ManagerICFGVary.cpp' object='libOAul_a-ManagerICFGVary.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-ManagerICFGVary.obj `if test -f 'Activity/ManagerICFGVary.cpp'; then $(CYGPATH_W) 'Activity/ManagerICFGVary.cpp'; else $(CYGPATH_W) '$(srcdir)/Activity/ManagerICFGVary.cpp'; fi`
 
 libOAul_a-ManagerICFGVaryActive.o: Activity/ManagerICFGVaryActive.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-ManagerICFGVaryActive.o -MD -MP -MF "$(DEPDIR)/libOAul_a-ManagerICFGVaryActive.Tpo" -c -o libOAul_a-ManagerICFGVaryActive.o `test -f 'Activity/ManagerICFGVaryActive.cpp' || echo '$(srcdir)/'`Activity/ManagerICFGVaryActive.cpp; \
@@ -4028,6 +4058,62 @@ libOAul_a-ICFGDFSolver.obj: DataFlow/ICFGDFSolver.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-ICFGDFSolver.obj `if test -f 'DataFlow/ICFGDFSolver.cpp'; then $(CYGPATH_W) 'DataFlow/ICFGDFSolver.cpp'; else $(CYGPATH_W) '$(srcdir)/DataFlow/ICFGDFSolver.cpp'; fi`
 
+libOAul_a-auto_LivenessStandard.o: DFAGen/Liveness/auto_LivenessStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-auto_LivenessStandard.o -MD -MP -MF "$(DEPDIR)/libOAul_a-auto_LivenessStandard.Tpo" -c -o libOAul_a-auto_LivenessStandard.o `test -f 'DFAGen/Liveness/auto_LivenessStandard.cpp' || echo '$(srcdir)/'`DFAGen/Liveness/auto_LivenessStandard.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-auto_LivenessStandard.Tpo" "$(DEPDIR)/libOAul_a-auto_LivenessStandard.Po"; else rm -f "$(DEPDIR)/libOAul_a-auto_LivenessStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/Liveness/auto_LivenessStandard.cpp' object='libOAul_a-auto_LivenessStandard.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-auto_LivenessStandard.o `test -f 'DFAGen/Liveness/auto_LivenessStandard.cpp' || echo '$(srcdir)/'`DFAGen/Liveness/auto_LivenessStandard.cpp
+
+libOAul_a-auto_LivenessStandard.obj: DFAGen/Liveness/auto_LivenessStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-auto_LivenessStandard.obj -MD -MP -MF "$(DEPDIR)/libOAul_a-auto_LivenessStandard.Tpo" -c -o libOAul_a-auto_LivenessStandard.obj `if test -f 'DFAGen/Liveness/auto_LivenessStandard.cpp'; then $(CYGPATH_W) 'DFAGen/Liveness/auto_LivenessStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/Liveness/auto_LivenessStandard.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-auto_LivenessStandard.Tpo" "$(DEPDIR)/libOAul_a-auto_LivenessStandard.Po"; else rm -f "$(DEPDIR)/libOAul_a-auto_LivenessStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/Liveness/auto_LivenessStandard.cpp' object='libOAul_a-auto_LivenessStandard.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-auto_LivenessStandard.obj `if test -f 'DFAGen/Liveness/auto_LivenessStandard.cpp'; then $(CYGPATH_W) 'DFAGen/Liveness/auto_LivenessStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/Liveness/auto_LivenessStandard.cpp'; fi`
+
+libOAul_a-auto_ManagerLivenessStandard.o: DFAGen/Liveness/auto_ManagerLivenessStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-auto_ManagerLivenessStandard.o -MD -MP -MF "$(DEPDIR)/libOAul_a-auto_ManagerLivenessStandard.Tpo" -c -o libOAul_a-auto_ManagerLivenessStandard.o `test -f 'DFAGen/Liveness/auto_ManagerLivenessStandard.cpp' || echo '$(srcdir)/'`DFAGen/Liveness/auto_ManagerLivenessStandard.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-auto_ManagerLivenessStandard.Tpo" "$(DEPDIR)/libOAul_a-auto_ManagerLivenessStandard.Po"; else rm -f "$(DEPDIR)/libOAul_a-auto_ManagerLivenessStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/Liveness/auto_ManagerLivenessStandard.cpp' object='libOAul_a-auto_ManagerLivenessStandard.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-auto_ManagerLivenessStandard.o `test -f 'DFAGen/Liveness/auto_ManagerLivenessStandard.cpp' || echo '$(srcdir)/'`DFAGen/Liveness/auto_ManagerLivenessStandard.cpp
+
+libOAul_a-auto_ManagerLivenessStandard.obj: DFAGen/Liveness/auto_ManagerLivenessStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-auto_ManagerLivenessStandard.obj -MD -MP -MF "$(DEPDIR)/libOAul_a-auto_ManagerLivenessStandard.Tpo" -c -o libOAul_a-auto_ManagerLivenessStandard.obj `if test -f 'DFAGen/Liveness/auto_ManagerLivenessStandard.cpp'; then $(CYGPATH_W) 'DFAGen/Liveness/auto_ManagerLivenessStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/Liveness/auto_ManagerLivenessStandard.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-auto_ManagerLivenessStandard.Tpo" "$(DEPDIR)/libOAul_a-auto_ManagerLivenessStandard.Po"; else rm -f "$(DEPDIR)/libOAul_a-auto_ManagerLivenessStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/Liveness/auto_ManagerLivenessStandard.cpp' object='libOAul_a-auto_ManagerLivenessStandard.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-auto_ManagerLivenessStandard.obj `if test -f 'DFAGen/Liveness/auto_ManagerLivenessStandard.cpp'; then $(CYGPATH_W) 'DFAGen/Liveness/auto_ManagerLivenessStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/Liveness/auto_ManagerLivenessStandard.cpp'; fi`
+
+libOAul_a-auto_ReachingDefsStandard.o: DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-auto_ReachingDefsStandard.o -MD -MP -MF "$(DEPDIR)/libOAul_a-auto_ReachingDefsStandard.Tpo" -c -o libOAul_a-auto_ReachingDefsStandard.o `test -f 'DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp' || echo '$(srcdir)/'`DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-auto_ReachingDefsStandard.Tpo" "$(DEPDIR)/libOAul_a-auto_ReachingDefsStandard.Po"; else rm -f "$(DEPDIR)/libOAul_a-auto_ReachingDefsStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp' object='libOAul_a-auto_ReachingDefsStandard.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-auto_ReachingDefsStandard.o `test -f 'DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp' || echo '$(srcdir)/'`DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp
+
+libOAul_a-auto_ReachingDefsStandard.obj: DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-auto_ReachingDefsStandard.obj -MD -MP -MF "$(DEPDIR)/libOAul_a-auto_ReachingDefsStandard.Tpo" -c -o libOAul_a-auto_ReachingDefsStandard.obj `if test -f 'DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp'; then $(CYGPATH_W) 'DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-auto_ReachingDefsStandard.Tpo" "$(DEPDIR)/libOAul_a-auto_ReachingDefsStandard.Po"; else rm -f "$(DEPDIR)/libOAul_a-auto_ReachingDefsStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp' object='libOAul_a-auto_ReachingDefsStandard.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-auto_ReachingDefsStandard.obj `if test -f 'DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp'; then $(CYGPATH_W) 'DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp'; fi`
+
+libOAul_a-auto_ManagerReachingDefsStandard.o: DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-auto_ManagerReachingDefsStandard.o -MD -MP -MF "$(DEPDIR)/libOAul_a-auto_ManagerReachingDefsStandard.Tpo" -c -o libOAul_a-auto_ManagerReachingDefsStandard.o `test -f 'DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp' || echo '$(srcdir)/'`DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-auto_ManagerReachingDefsStandard.Tpo" "$(DEPDIR)/libOAul_a-auto_ManagerReachingDefsStandard.Po"; else rm -f "$(DEPDIR)/libOAul_a-auto_ManagerReachingDefsStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp' object='libOAul_a-auto_ManagerReachingDefsStandard.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-auto_ManagerReachingDefsStandard.o `test -f 'DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp' || echo '$(srcdir)/'`DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp
+
+libOAul_a-auto_ManagerReachingDefsStandard.obj: DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-auto_ManagerReachingDefsStandard.obj -MD -MP -MF "$(DEPDIR)/libOAul_a-auto_ManagerReachingDefsStandard.Tpo" -c -o libOAul_a-auto_ManagerReachingDefsStandard.obj `if test -f 'DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp'; then $(CYGPATH_W) 'DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-auto_ManagerReachingDefsStandard.Tpo" "$(DEPDIR)/libOAul_a-auto_ManagerReachingDefsStandard.Po"; else rm -f "$(DEPDIR)/libOAul_a-auto_ManagerReachingDefsStandard.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp' object='libOAul_a-auto_ManagerReachingDefsStandard.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-auto_ManagerReachingDefsStandard.obj `if test -f 'DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp'; then $(CYGPATH_W) 'DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp'; else $(CYGPATH_W) '$(srcdir)/DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp'; fi`
+
 libOAul_a-ExprTree.o: ExprTree/ExprTree.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-ExprTree.o -MD -MP -MF "$(DEPDIR)/libOAul_a-ExprTree.Tpo" -c -o libOAul_a-ExprTree.o `test -f 'ExprTree/ExprTree.cpp' || echo '$(srcdir)/'`ExprTree/ExprTree.cpp; \
 @am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-ExprTree.Tpo" "$(DEPDIR)/libOAul_a-ExprTree.Po"; else rm -f "$(DEPDIR)/libOAul_a-ExprTree.Tpo"; exit 1; fi
@@ -4139,6 +4225,34 @@ libOAul_a-ExprTreeSetIterator.obj: ExprTree/ExprTreeSetIterator.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ExprTree/ExprTreeSetIterator.cpp' object='libOAul_a-ExprTreeSetIterator.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-ExprTreeSetIterator.obj `if test -f 'ExprTree/ExprTreeSetIterator.cpp'; then $(CYGPATH_W) 'ExprTree/ExprTreeSetIterator.cpp'; else $(CYGPATH_W) '$(srcdir)/ExprTree/ExprTreeSetIterator.cpp'; fi`
+
+libOAul_a-NewExprTree.o: NewExprTree/NewExprTree.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-NewExprTree.o -MD -MP -MF "$(DEPDIR)/libOAul_a-NewExprTree.Tpo" -c -o libOAul_a-NewExprTree.o `test -f 'NewExprTree/NewExprTree.cpp' || echo '$(srcdir)/'`NewExprTree/NewExprTree.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-NewExprTree.Tpo" "$(DEPDIR)/libOAul_a-NewExprTree.Po"; else rm -f "$(DEPDIR)/libOAul_a-NewExprTree.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='NewExprTree/NewExprTree.cpp' object='libOAul_a-NewExprTree.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-NewExprTree.o `test -f 'NewExprTree/NewExprTree.cpp' || echo '$(srcdir)/'`NewExprTree/NewExprTree.cpp
+
+libOAul_a-NewExprTree.obj: NewExprTree/NewExprTree.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-NewExprTree.obj -MD -MP -MF "$(DEPDIR)/libOAul_a-NewExprTree.Tpo" -c -o libOAul_a-NewExprTree.obj `if test -f 'NewExprTree/NewExprTree.cpp'; then $(CYGPATH_W) 'NewExprTree/NewExprTree.cpp'; else $(CYGPATH_W) '$(srcdir)/NewExprTree/NewExprTree.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-NewExprTree.Tpo" "$(DEPDIR)/libOAul_a-NewExprTree.Po"; else rm -f "$(DEPDIR)/libOAul_a-NewExprTree.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='NewExprTree/NewExprTree.cpp' object='libOAul_a-NewExprTree.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-NewExprTree.obj `if test -f 'NewExprTree/NewExprTree.cpp'; then $(CYGPATH_W) 'NewExprTree/NewExprTree.cpp'; else $(CYGPATH_W) '$(srcdir)/NewExprTree/NewExprTree.cpp'; fi`
+
+libOAul_a-OutputNewExprTreeVisitor.o: NewExprTree/OutputNewExprTreeVisitor.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-OutputNewExprTreeVisitor.o -MD -MP -MF "$(DEPDIR)/libOAul_a-OutputNewExprTreeVisitor.Tpo" -c -o libOAul_a-OutputNewExprTreeVisitor.o `test -f 'NewExprTree/OutputNewExprTreeVisitor.cpp' || echo '$(srcdir)/'`NewExprTree/OutputNewExprTreeVisitor.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-OutputNewExprTreeVisitor.Tpo" "$(DEPDIR)/libOAul_a-OutputNewExprTreeVisitor.Po"; else rm -f "$(DEPDIR)/libOAul_a-OutputNewExprTreeVisitor.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='NewExprTree/OutputNewExprTreeVisitor.cpp' object='libOAul_a-OutputNewExprTreeVisitor.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-OutputNewExprTreeVisitor.o `test -f 'NewExprTree/OutputNewExprTreeVisitor.cpp' || echo '$(srcdir)/'`NewExprTree/OutputNewExprTreeVisitor.cpp
+
+libOAul_a-OutputNewExprTreeVisitor.obj: NewExprTree/OutputNewExprTreeVisitor.cpp
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-OutputNewExprTreeVisitor.obj -MD -MP -MF "$(DEPDIR)/libOAul_a-OutputNewExprTreeVisitor.Tpo" -c -o libOAul_a-OutputNewExprTreeVisitor.obj `if test -f 'NewExprTree/OutputNewExprTreeVisitor.cpp'; then $(CYGPATH_W) 'NewExprTree/OutputNewExprTreeVisitor.cpp'; else $(CYGPATH_W) '$(srcdir)/NewExprTree/OutputNewExprTreeVisitor.cpp'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libOAul_a-OutputNewExprTreeVisitor.Tpo" "$(DEPDIR)/libOAul_a-OutputNewExprTreeVisitor.Po"; else rm -f "$(DEPDIR)/libOAul_a-OutputNewExprTreeVisitor.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='NewExprTree/OutputNewExprTreeVisitor.cpp' object='libOAul_a-OutputNewExprTreeVisitor.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -c -o libOAul_a-OutputNewExprTreeVisitor.obj `if test -f 'NewExprTree/OutputNewExprTreeVisitor.cpp'; then $(CYGPATH_W) 'NewExprTree/OutputNewExprTreeVisitor.cpp'; else $(CYGPATH_W) '$(srcdir)/NewExprTree/OutputNewExprTreeVisitor.cpp'; fi`
 
 libOAul_a-ICFG.o: ICFG/ICFG.cpp
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libOAul_a_CXXFLAGS) $(CXXFLAGS) -MT libOAul_a-ICFG.o -MD -MP -MF "$(DEPDIR)/libOAul_a-ICFG.Tpo" -c -o libOAul_a-ICFG.o `test -f 'ICFG/ICFG.cpp' || echo '$(srcdir)/'`ICFG/ICFG.cpp; \
@@ -5119,7 +5233,7 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 
 distdir: $(DISTFILES)
-	$(mkdir_p) $(distdir)/../../src $(distdir)/Activity $(distdir)/AffineExpr $(distdir)/Alias $(distdir)/CFG $(distdir)/CSFIActivity $(distdir)/CallGraph $(distdir)/DataDep $(distdir)/DataFlow $(distdir)/ExprTree $(distdir)/ICFG $(distdir)/IRInterface $(distdir)/Linearity $(distdir)/Liveness $(distdir)/Location $(distdir)/Location/Iterators $(distdir)/Loop $(distdir)/MemRefExpr $(distdir)/OABase $(distdir)/ReachConsts $(distdir)/ReachDefs $(distdir)/ReachDefsOverwrite $(distdir)/SSA $(distdir)/SideEffect $(distdir)/UDDUChains $(distdir)/Utils $(distdir)/Utils/DGraph $(distdir)/XAIF
+	$(mkdir_p) $(distdir)/../../src $(distdir)/Activity $(distdir)/AffineExpr $(distdir)/Alias $(distdir)/CFG $(distdir)/CSFIActivity $(distdir)/CallGraph $(distdir)/DFAGen/Liveness $(distdir)/DFAGen/ReachingDefs $(distdir)/DataDep $(distdir)/DataFlow $(distdir)/ExprTree $(distdir)/ICFG $(distdir)/IRInterface $(distdir)/Linearity $(distdir)/Liveness $(distdir)/Location $(distdir)/Location/Iterators $(distdir)/Loop $(distdir)/MemRefExpr $(distdir)/NewExprTree $(distdir)/OABase $(distdir)/ReachConsts $(distdir)/ReachDefs $(distdir)/ReachDefsOverwrite $(distdir)/SSA $(distdir)/SideEffect $(distdir)/UDDUChains $(distdir)/Utils $(distdir)/Utils/DGraph $(distdir)/XAIF
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

@@ -171,15 +171,17 @@ class AliasMapXAIF : public virtual Annotation {
     //*****************************************************************
 
     //! get unique id for the alias map set for this memory reference
-    //! SET_ID_NONE indicates that this memory reference doesn't map to any of
-    //! the existing AliasMap sets
+    //! This method is NOT used for construction, and CANNOT return SET_ID_NONE
     int getMapSetId(MemRefHandle ref); 
      
-    //! get id for an alias map set that contains
-    //! an equivalent set of locations, SET_ID_NONE indicates 
-    //! that no equivalent location set was found in any AliasMap sets 
-    int getMapSetId(OA_ptr<std::set<LocTuple> > pLocTupleSet); 
- 
+    //! get unique id for the alias map set for this memory reference
+    //! SET_ID_NONE indicates that this memory reference doesn't map to any of the existing AliasMap sets
+    int findMapSet(MemRefHandle ref);
+
+    //! get id for an alias map set that contains an equivalent set of locations.
+    //! SET_ID_NONE indicates that no equivalent location set was found in any AliasMap sets
+    int findMapSet(OA_ptr<std::set<LocTuple> > pLocTupleSet);
+
     //! get iterator over ids for this alias map
     OA_ptr<IdIterator> getIdIterator();
 
@@ -190,9 +192,6 @@ class AliasMapXAIF : public virtual Annotation {
     // Construction methods 
     //*****************************************************************
     
-    //! create a new alias map set and return the id
-    int makeEmptySet();
- 
     //! associate the given location set with the given mapSet
     void mapLocTupleSet(OA_ptr<std::set<LocTuple> > ltSet, int setId);
 
@@ -217,10 +216,7 @@ class AliasMapXAIF : public virtual Annotation {
     ProcHandle mProcHandle; // procedure these sets are associated with
 
     // keep track of id mapping to location sets and status with a map
-    static int sCurrentSetId;
-
     std::map<int,OA_ptr<std::set<LocTuple> > > mIdToLocTupleSetMap; 
-    //std::map<int,AliasResultType> mIdToSetStatusMap;
 
     // what memory references map to this alias map set
     std::map<int,MemRefSet> mIdToMemRefSetMap;
@@ -231,19 +227,6 @@ class AliasMapXAIF : public virtual Annotation {
     // set of memrefexpr for a memref
     std::map<MemRefHandle,std::set<OA_ptr<MemRefExpr> > > 
         mMemRefToMRESetMap;
-
-    // the location set a MemRefExpr maps to
-    //std::map<OA_ptr<MemRefExpr>,int> mMREToIdMap;  
-
-    // the location set a Location belongs to
-    //std::map<OA_ptr<Location::Location>,int> mLocToIdMap;    
-
-    // caching aliasing information
-    //bool mCacheMapsValid;
-    //std::map<MemRefHandle,MemRefSet> mMemRefToMayCacheMap;
-    //std::map<MemRefHandle,MemRefSet> mMemRefToMustCacheMap;
-    //void updateCacheMaps();
-
 };
 
 

@@ -24,8 +24,8 @@
 #include <OpenAnalysis/OABase/Annotation.hpp>
 #include <OpenAnalysis/Utils/OA_ptr.hpp>
 
-namespace OA {
 using namespace std;
+namespace OA {
 
 class Location;
 
@@ -38,7 +38,7 @@ class LocationVisitor;
 typedef std::set<OA_ptr<Location> > LocSet;
 
 void dumpLocSet(std::set<OA_ptr<Location> >& set, std::ostream& os, 
-                OA_ptr<IRHandlesIRInterface> pIR);
+                OA_ptr<IRHandlesIRInterface> pIR, bool succinct=false);
 
 /*!  Function that intersects sets of Location */
 OA_ptr<std::set<OA_ptr<Location> > > 

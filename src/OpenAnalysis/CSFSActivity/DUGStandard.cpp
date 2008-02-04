@@ -1,14 +1,14 @@
 /*! \file
   
-  \brief Implementation of DUGStandard.
+\brief Implementation of DUGStandard.
 
-  \authors Michelle Strout
-  \version $Id: DUGStandard.cpp,v 1.3 2005/10/17 21:21:41 garvin Exp $
+\authors Michelle Strout
+\version $Id: DUGStandard.cpp,v 1.3 2005/10/17 21:21:41 garvin Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
-  All rights reserved. <br>
-  See ../../../Copyright.txt for details. <br>
+Copyright (c) 2002-2004, Rice University <br>
+Copyright (c) 2004, University of Chicago <br>  
+All rights reserved. <br>
+See ../../../Copyright.txt for details. <br>
 */
 
 //--------------------------------------------------------------------
@@ -27,7 +27,7 @@ using std::cerr;
 #include "DUGStandard.hpp"
 
 namespace OA {
-  namespace DUG {
+    namespace DUG {
 
 //--------------------------------------------------------------------
 
@@ -141,27 +141,39 @@ Node::longdump (ostream& os, OA_ptr<IRHandlesIRInterface> ir)
 void
 Node::dumpdot (ostream& os, OA_ptr<DUGIRInterface> ir)
 {
-    SymHandle sym = getSym();
+    SymHandle sym   = getSym();
+    IRHandle  ih    = getDef(); 
     std::string str = ir->toString(sym);
 
-    char buf1[20];
+    char buf1[20], buf2[20];
     sprintf(buf1, "(%u)\\n", getId());
+    sprintf(buf2, "@%u", ih.hval());
 
     std::string::size_type loc = str.find( "::", 0);
     if( loc != std::string::npos ) str.erase(loc, 2);
 
     str.insert(loc, std::string(buf1));
+    str.append(std::string(buf2));
+
     OA_ptr<Location> memLoc = mDUG->mIR->getLocation(mProc, sym);
     if (memLoc.ptrEqual(0)){
+#ifdef DEBUG_DUAA
 	std::cout << "^^^^^ NULL LOCATION ^^^^^" << std::endl;
 	std::cout << "\tmProc(" << mDUG->mIR->toString(mProc);
 	std::cout << "), sym(" << mDUG->mIR->toString(sym) 
 		  << ")" << std::endl;
+	if (mDef == IRHandle(0) || mDef == IRHandle(1) || mDef == IRHandle(2))
+	    std::cout << "stmt(012)" << std::endl;
+	else
+	    std::cout << "stmt(" << mDUG->mIR->toString((StmtHandle)mDef)
+		      << ")" << std::endl;
+#endif
     }
     else if (!memLoc->isLocal()) {
 	str.erase(0, loc);
 	str.insert(0, std::string("JWGLOBAL"));
     }
+
     os << "\"" << str << "\"";
 }
 
@@ -266,6 +278,13 @@ void Edge::dump(ostream& os)
     os << sEdgeTypeToString[mType];
 }
 
+void filterStr(std::string& s)
+{
+    std::string::size_type loc = s.find( "::", 0);
+    if( loc != std::string::npos ) s.erase(0, loc+2);
+}
+
+
 void Edge::dumpdot(ostream& os, OA_ptr<DUGIRInterface> ir)
 {
     OA_ptr<NodeInterface> srcNode  = getDUGSource();
@@ -275,13 +294,6 @@ void Edge::dumpdot(ostream& os, OA_ptr<DUGIRInterface> ir)
     os << "->";
     sinkNode->dumpdot(os, ir);
     dumpdot_label(os, ir);
-}
-
-
-void filterStr(std::string& s)
-{
-    std::string::size_type loc = s.find( "::", 0);
-    if( loc != std::string::npos ) s.erase(0, loc+2);
 }
 
 
@@ -524,6 +536,8 @@ DUGStandard::dump (ostream& os, OA_ptr<IRHandlesIRInterface> ir)
 
 }
 
+
+
 void
 DUGStandard::dumpdot(ostream& os, OA_ptr<DUGIRInterface> ir)
 {
@@ -543,17 +557,20 @@ DUGStandard::dumpdot(ostream& os, OA_ptr<DUGIRInterface> ir)
     os.flush();
 }
 
-
 OA_ptr<Node> 
-DUGStandard::getNode(SymHandle sym, ProcHandle proc){
+DUGStandard::getNode(IRSymHandle ish, ProcHandle proc){
     
+    IRHandle ih = ish.first;
+    SymHandle sym = ish.second;
+    assert(sym);
 #ifdef DEBUG_DUAA
     std::cout << "getNode: " << mIR->toString(sym) << "("
 	      << sym.hval() << ")@" << mIR->toString(proc) << "("
 	      << proc.hval() << ") --- ";
 #endif
-    assert(sym);
-    OA_ptr<Node> retval = mSymToNode[sym];
+    IRSymHandle key(ih, sym);
+
+    OA_ptr<Node> retval = mSymToNode[key];
     if (!retval.ptrEqual(0)) {
 #ifdef DEBUG_DUAA
 	std::cout << "found itself" << std::endl;
@@ -565,7 +582,7 @@ DUGStandard::getNode(SymHandle sym, ProcHandle proc){
     OA_ptr<NamedLoc> nloc = loc.convert<NamedLoc>();
     OA_ptr<SymHandleIterator> symIter = nloc->getFullOverlapIter();
     for ( ; symIter->isValid(); (*symIter)++) {
-	retval = mSymToNode[symIter->current()];
+	retval = mSymToNode[IRSymHandle(ih,symIter->current())];
 	if (!retval.ptrEqual(0)) {
 #ifdef DEBUG_DUAA
 	    std::cout << "found FullOverlap" << std::endl;
@@ -576,7 +593,7 @@ DUGStandard::getNode(SymHandle sym, ProcHandle proc){
 #if 0
     symIter = nloc->getPartOverlapIter();
     for ( ; symIter->isValid(); (*symIter)++) {
-	retval = mSymToNode[symIter->current()];
+	retval = mSymToNode[IRSymHandle(ih,symIter->current())];
 	if (!retval.ptrEqual(0)) {
 #ifdef DEBUG_DUAA
 	    std::cout << "found PartOverlap" << std::endl;
@@ -585,35 +602,43 @@ DUGStandard::getNode(SymHandle sym, ProcHandle proc){
 	}
     }
 #endif
+
     assert (retval.ptrEqual(0));
     OA_ptr<DUGStandard> temp; temp = this;
-    retval = new Node(temp, proc, sym);
+    retval = new Node(temp, proc, ih, sym);
     assert(!retval.ptrEqual(0));
-    mSymToNode[sym] = retval;
+    mSymToNode[key] = retval;
     addNode(retval);
 #ifdef DEBUG_DUAA
     std::cout << "added" << std::endl;
 #endif
+    if (isIndependent(proc, sym) || isDependent(proc, sym))
+	mInDepSymToNodes[sym].insert(retval);
 
     return retval;
 }
 
 // true if a node exists for 'loc'
 bool
-DUGStandard::isNode(SymHandle sym, ProcHandle proc){
+DUGStandard::isNode(IRSymHandle ish, ProcHandle proc){
+    IRHandle ih = ish.first;
+    SymHandle sym = ish.second;
+    assert(sym);
 #ifdef DEBUG_DUAA
     std::cout << "isNode: " << mIR->toString(sym) << "("
 	      << sym.hval() << ")@" << mIR->toString(proc) << "("
 	      << proc.hval() << ") --- ";
 #endif
-    assert(sym);
-    OA_ptr<Node> retval = mSymToNode[sym];
+    std::pair<IRHandle, SymHandle> key(ih, sym);
+    OA_ptr<Node> retval = mSymToNode[key];
+
     if (!retval.ptrEqual(0)) {
 #ifdef DEBUG_DUAA
 	std::cout << "found itself" << std::endl;
 #endif
 	return true;
     }
+
     OA_ptr<Location> loc = mIR->getLocation(proc, sym);
     if (loc.ptrEqual(0)) {
 #ifdef DEBUG_DUAA
@@ -624,7 +649,7 @@ DUGStandard::isNode(SymHandle sym, ProcHandle proc){
     OA_ptr<NamedLoc> nloc = loc.convert<NamedLoc>();
     OA_ptr<SymHandleIterator> symIter = nloc->getFullOverlapIter();
     for ( ; symIter->isValid(); (*symIter)++) {
-	retval = mSymToNode[symIter->current()];
+	retval = mSymToNode[IRSymHandle(ih,symIter->current())];
 	if (!retval.ptrEqual(0)) {
 #ifdef DEBUG_DUAA
 	    std::cout << "found FullOverlap" << std::endl;
@@ -635,7 +660,7 @@ DUGStandard::isNode(SymHandle sym, ProcHandle proc){
 #if 0
     symIter = nloc->getPartOverlapIter();
     for ( ; symIter->isValid(); (*symIter)++) {
-	retval = mSymToNode[symIter->current()];
+	retval = mSymToNode[IRSymHandle(ih,symIter->current())];
 	if (!retval.ptrEqual(0)) {
 #ifdef DEBUG_DUAA
 	    std::cout << "found PartOverlap" << std::endl;
@@ -649,8 +674,6 @@ DUGStandard::isNode(SymHandle sym, ProcHandle proc){
 #endif
     return false;
 }
-
-
 
 void 
 DUGStandard::insertActiveSymSet(OA_ptr<Location> loc)
@@ -788,10 +811,10 @@ Node::markVaried(std::list<CallHandle>& callStack,
 		 std::set<OA_ptr<EdgeInterface> >& visited,
 		 std::set<std::pair<unsigned,unsigned> >& onPath,
 		 ProcHandle proc,
-		 unsigned prevId, 
+		 SymHandle prevSym, 
 		 OA_ptr<EdgeInterface> parenEdge)
 { 
-    unsigned currId = getId();
+    SymHandle currSym = getSym();
 
     EdgeType parenEType = CFLOW_EDGE;
     CallHandle parenCall = CallHandle(0);
@@ -810,13 +833,11 @@ Node::markVaried(std::list<CallHandle>& callStack,
     std::cout << std::endl;
 #endif  
     bool isVariedBefore = isVaried();
-    setVaried();
     int nonParentSuccessors = 0;
-
+    setVaried();
 
     bool valueThroughGlobals = false;
-    if (callStack.front() == CallHandle(1)) 
-	valueThroughGlobals = true;
+    if (callStack.front() == CallHandle(1)) valueThroughGlobals = true;
 
     // set up iterator for successor edges
     OA_ptr<EdgesIteratorInterface> succIterPtr;
@@ -827,10 +848,7 @@ Node::markVaried(std::list<CallHandle>& callStack,
 	OA_ptr<EdgeInterface> succEdge = succIterPtr->currentDUGEdge();
 	OA_ptr<NodeInterface> succNode = succEdge->getDUGSink();
 
-	OA_ptr<Node> sn = succNode.convert<Node>();
-
-	SymHandle s = sn->getSym();
-
+	SymHandle succSym = succNode->getSym();
 	unsigned succId = succNode->getId();
 	EdgeType etype = succEdge->getType();
 
@@ -851,7 +869,7 @@ Node::markVaried(std::list<CallHandle>& callStack,
 	    default: assert(0);
 	}
 
-	if (succId != prevId || parenCall != succEdge->getCall()) nonParentSuccessors++;
+	if (succSym != prevSym || parenCall != succEdge->getCall()) nonParentSuccessors++;
 
 	if (visited.find(succEdge) != visited.end() ||
 	    onPath.find(pathNode)  != onPath.end()  ) 
@@ -867,7 +885,7 @@ Node::markVaried(std::list<CallHandle>& callStack,
 		visited.insert(succEdge);
         
 		succNode->markVaried(callStack, ir, visited, onPath, 
-				     succEdge->getSinkProc(), currId, 
+				     succEdge->getSinkProc(), currSym, 
 				     succEdge);
 		callStack.pop_front();
 		break;
@@ -877,41 +895,39 @@ Node::markVaried(std::list<CallHandle>& callStack,
 		    visited.insert(succEdge);
 
 		    succNode->markVaried(callStack, ir, visited, onPath, 
-					 succEdge->getProc(), currId, 
+					 succEdge->getProc(), currSym, 
 					 succEdge);
 		    if (!valueThroughGlobals) callStack.push_front(succEdge->getCall());
 		}
 #ifdef DEBUG_DUAA
 		else{
-		    std::cout << "markVaried: " << (callStack.front() == succEdge->getCall())
-			      << (unsigned)callStack.front().hval() << "<->"
-			      << (unsigned)succEdge->getCall().hval() << std::endl;
+		    std::cout << "markVaried: stackTop(" << (unsigned)callStack.front().hval() 
+			      << ") <-> edgeCallExp("
+			      << (unsigned)succEdge->getCall().hval() << ")" << std::endl;
 		}
 #endif  
 		break;
 	    default: // for both CFLOW_EDGE and PARAM_EDGE
 		if (succEdge->getType() != PARAM_EDGE) 
 		    visited.insert(succEdge);
-		// to prevent value passing through global variables between procedures
+		// value passing through global variables between procedures
 		ProcHandle succProc = succEdge->getProc();
 		if (proc != succProc) {
 		    callStack.push_front(CallHandle(1));
           
 		    succNode->markVaried(callStack, ir, visited, onPath, 
-					 succProc, currId, succEdge);
+					 succProc, currSym, succEdge);
 		    callStack.pop_front();
 		}
 		else{
 		    succNode->markVaried(callStack, ir, visited, onPath, 
-					 proc, currId, succEdge);
+					 proc, currSym, succEdge);
 		}
-          
 		break;
 	}
 
 	onPath.erase(pathNode);
     }
-
     // Actual or formal parameters without any outgoing edges shouldn't be
     // activated.
     if (nonParentSuccessors == 0 && !isVariedBefore && !isSelfDependent() && 
@@ -934,21 +950,13 @@ Node::markUseful(std::list<CallHandle>& callStack,
 		 std::set<OA_ptr<EdgeInterface> >& visited,
 		 std::set<std::pair<unsigned,unsigned> >& onPath,
 		 ProcHandle proc,
-		 unsigned prevId, 
+		 SymHandle prevSym, 
 		 OA_ptr<EdgeInterface> parenEdge)
 {
     if (!isVaried()) {
-#ifdef DEBUG_DUAA
-	std::cout << "notVaried: "; 
-	dumpdot(std::cout, mDUG->mIR);
-	if (!parenEdge.ptrEqual(0)) {
-	    std::cout << "(call:" << parenEdge->getCall().hval() << ")"; 
-	}
-	std::cout << std::endl; 
-#endif  
 	return;
     }
-    unsigned currId = getId();
+    SymHandle currSym = getSym();
 
     EdgeType parenEType = CFLOW_EDGE;
     CallHandle parenCall = CallHandle(0);
@@ -968,8 +976,6 @@ Node::markUseful(std::list<CallHandle>& callStack,
     bool isUsefulBefore = isUseful();
     setUseful();
     int nonChildAncestors = 0;
-    bool isIndependent = mDUG->isIndependent(getProc(), getSym()) && 
-	!mDUG->isDependent(getProc(), getSym());
 
     bool valueThroughGlobals = false;
     if (callStack.front() == CallHandle(1)) valueThroughGlobals = true;
@@ -979,11 +985,12 @@ Node::markUseful(std::list<CallHandle>& callStack,
     predIterPtr = getDUGIncomingEdgesIterator();
     // iterate over the predecessors unless 'this' node is for indenepdent variable
     // we assume no independent variables are dependent on another independent variables
-    for (; predIterPtr->isValid() // && !isIndependent
-	     ; ++(*predIterPtr)) {
+    for (; predIterPtr->isValid(); ++(*predIterPtr)) {
       
 	OA_ptr<EdgeInterface> predEdge = predIterPtr->currentDUGEdge();
 	OA_ptr<NodeInterface> predNode = predEdge->getDUGSource();
+
+	SymHandle predSym = predNode->getSym();
 	unsigned predId = predNode->getId();
 	EdgeType etype = predEdge->getType();
 
@@ -1000,18 +1007,13 @@ Node::markUseful(std::list<CallHandle>& callStack,
 			(callStack.front().hval(),predId); break;
 	    case CALL_EDGE: 
 	    case CFLOW_EDGE:
-		pathNode = std::pair<unsigned,unsigned>(1,predId); break;
+		pathNode = std::pair<unsigned,unsigned>
+		    (1,predId); break;
 	    default: assert(0);
 	}
-	if (predId != prevId || parenCall != predEdge->getCall()) nonChildAncestors++;
+	if (predSym != prevSym || parenCall != predEdge->getCall()) nonChildAncestors++;
 	if (visited.find(predEdge) != visited.end() ||
-	    onPath.find(pathNode)  != onPath.end()  ) {
-#ifdef DEBUG_DUAA
-	    std::cout << "CONTINUE(" << currId << "+>" << predId << "): visited(" << (visited.find(predEdge) != visited.end()) 
-		      << "), path(" << (onPath.find(pathNode) != onPath.end()) << ")" << std::endl;
-#endif  
-	    continue;
-	}
+	    onPath.find(pathNode)  != onPath.end()  ) continue;
 	onPath.insert(pathNode);
 
 	switch(etype) {
@@ -1020,23 +1022,16 @@ Node::markUseful(std::list<CallHandle>& callStack,
 		    if (!valueThroughGlobals) callStack.pop_front();
 		    visited.insert(predEdge);
 		    predNode->markUseful(callStack, ir, visited, onPath, 
-					 predEdge->getProc(), currId, predEdge);
+					 predEdge->getProc(), currSym, predEdge);
 		    if (!valueThroughGlobals) callStack.push_front(predEdge->getCall());
-		} 
-#ifdef DEBUG_DUAA
-		else {
-		    std::cout << "stack not match(" << currId << "+>" << predId << "): stack(" 
-			      << callStack.front().hval() << ") vs. edgeCall("
-			      << predEdge->getCall().hval() << ")" << std::endl;
 		}
-#endif  
 		break;
 	    case (RETURN_EDGE):
 		callStack.push_front(predEdge->getCall());
 		visited.insert(predEdge);
 		predNode->markUseful(callStack, ir, visited, onPath, 
 				     predEdge->getSourceProc(), 
-				     currId, predEdge);
+				     currSym, predEdge);
 		callStack.pop_front();
 		break;
 	    default: // for both CFLOW_EDGE and PARAM_EDGE
@@ -1048,7 +1043,7 @@ Node::markUseful(std::list<CallHandle>& callStack,
 		    std::cout << "valthruglobals: begin" << std::endl;
 #endif  
 		    predNode->markUseful(callStack, ir, visited, onPath, 
-					 predProc, currId, predEdge);
+					 predProc, currSym, predEdge);
 		    callStack.pop_front();
 #ifdef DEBUG_DUAA
 		    std::cout << "valthruglobals: end" << std::endl;
@@ -1057,7 +1052,7 @@ Node::markUseful(std::list<CallHandle>& callStack,
 		else
 		{
 		    predNode->markUseful(callStack, ir, visited, onPath, 
-					 proc, currId, predEdge);
+					 proc, currSym, predEdge);
 		}
 		break;
 	}
@@ -1065,6 +1060,7 @@ Node::markUseful(std::list<CallHandle>& callStack,
 	onPath.erase(pathNode);
     }
 
+    unsigned currId = getId();
     // Formal parameters without any outgoing edges shouldn't be
     // activated.
     if (nonChildAncestors == 0 && !isUsefulBefore && !isSelfDependent() && 
@@ -1080,6 +1076,7 @@ Node::markUseful(std::list<CallHandle>& callStack,
 #endif  
 	setActive();
     }
+
 #ifdef DEBUG_DUAA
     std::cout << "<-" << std::endl;
 #endif  
@@ -1136,17 +1133,36 @@ Node::isPathFrom(OA_ptr<NodeInterface> useNode,
 
 
 
+// true if this has an outgoing edge to other procedures
+bool
+Node::hasOutgoingEdgesToOtherProcs(ProcHandle proc)
+{ 
+    OA_ptr<EdgesIteratorInterface> succIterPtr
+	= getDUGOutgoingEdgesIterator();
+    for (; succIterPtr->isValid(); ++(*succIterPtr)) {
+	OA_ptr<EdgeInterface> succEdge = succIterPtr->currentDUGEdge();
+	if (succEdge->getType() != CFLOW_EDGE) continue;
+	if (succEdge->getProc() != proc) return true;
+    }
+
+    return false;
+}
+
+
+
 // returns a set of outgoing nodes of this proc
 void
 Node::findOutgoingNodes(ProcHandle proc, 
-			std::set<SymHandle>& OutGoingNodeSet,
-			std::set<SymHandle>& visited)
+			std::set<IRSymHandle>& OutGoingNodeSet,
+			std::set<IRSymHandle>& visited)
 { 
-    SymHandle sym = getSym();
-    if (visited.find(sym) != visited.end()) return;
-    visited.insert(sym);
+    IRSymHandle nodeKey = getIRSymHandle();
+    if (visited.find(nodeKey) != visited.end()) return;
+    visited.insert(nodeKey);
 
-    bool edgesToOtherProcs = false;
+    if (hasOutgoingEdgesToOtherProcs(proc)) 
+	OutGoingNodeSet.insert(nodeKey);
+
     // traverse foreward from this nodes
     OA_ptr<EdgesIteratorInterface> succIterPtr
 	= getDUGOutgoingEdgesIterator();
@@ -1155,27 +1171,64 @@ Node::findOutgoingNodes(ProcHandle proc,
 	OA_ptr<NodeInterface> succNode = succEdge->getDUGSink();
 
 	if (succEdge->getType() != CFLOW_EDGE) continue;
-	if (succEdge->getProc() != proc) {
-	    if (!edgesToOtherProcs) {
-		OutGoingNodeSet.insert(sym);
-		edgesToOtherProcs = true;
-	    }
-	    continue;
-	}
-
+	if (succEdge->getProc() != proc) continue;
+  
 	succNode->findOutgoingNodes(proc, OutGoingNodeSet, visited);
     }
 }
 
 
 
-// true if this has an outgoing edge to other procedures
+// true if this has an incoming edge to other procedures
 bool
-Node::hasEdgesToOtherProc(ProcHandle proc, std::set<SymHandle>& visited)
+Node::hasIncomingEdgesFromOtherProcs(ProcHandle proc)
 { 
-    SymHandle sym = getSym();
-    if (visited.find(sym) != visited.end()) return false;
-    visited.insert(sym);
+    OA_ptr<EdgesIteratorInterface> predIterPtr
+	= getDUGIncomingEdgesIterator();
+    for (; predIterPtr->isValid(); ++(*predIterPtr)) {
+	OA_ptr<EdgeInterface> predEdge = predIterPtr->currentDUGEdge();
+	if (predEdge->getType() != CFLOW_EDGE) continue;
+	if (predEdge->getProc() != proc) return true;
+    }
+    return false;
+}
+
+
+
+// returns a set of incoming nodes of this proc
+void
+Node::findIncomingNodes(ProcHandle proc, 
+			std::set<IRSymHandle>& InComingNodeSet,
+			std::set<IRSymHandle>& visited)
+{ 
+    IRSymHandle nodeKey = getIRSymHandle();
+    if (visited.find(nodeKey) != visited.end()) return;
+    visited.insert(nodeKey);
+
+    if (hasIncomingEdgesFromOtherProcs(proc)) 
+	InComingNodeSet.insert(nodeKey);
+
+    // traverse backward from this nodes
+    OA_ptr<EdgesIteratorInterface> predIterPtr = getDUGIncomingEdgesIterator();
+    for (; predIterPtr->isValid(); ++(*predIterPtr)) {
+	OA_ptr<EdgeInterface> predEdge = predIterPtr->currentDUGEdge();
+	OA_ptr<NodeInterface> predNode = predEdge->getDUGSource();
+  
+	if (predEdge->getType() != CFLOW_EDGE) continue;
+	if (predEdge->getProc() != proc) continue;
+
+	predNode->findIncomingNodes(proc, InComingNodeSet, visited);
+    }
+}
+
+
+
+bool
+Node::hasEdgesToOtherProc(ProcHandle proc, std::set<IRSymHandle>& visited)
+{ 
+    IRSymHandle ish = getIRSymHandle();
+    if (visited.find(ish) != visited.end()) return false;
+    visited.insert(ish);
 
     // traverse foreward from this nodes
     OA_ptr<EdgesIteratorInterface> succIterPtr = getDUGOutgoingEdgesIterator();
@@ -1196,11 +1249,11 @@ Node::hasEdgesToOtherProc(ProcHandle proc, std::set<SymHandle>& visited)
 
 // true if this has an incoming edge to other procedures
 bool
-Node::hasEdgesFromOtherProc(ProcHandle proc, std::set<SymHandle>& visited)
+Node::hasEdgesFromOtherProc(ProcHandle proc, std::set<IRSymHandle>& visited)
 { 
-    SymHandle sym = getSym();
-    if (visited.find(sym) != visited.end()) return false;
-    visited.insert(sym);
+    IRSymHandle ish = getIRSymHandle();
+    if (visited.find(ish) != visited.end()) return false;
+    visited.insert(ish);
 
     // traverse backward from this nodes
     OA_ptr<EdgesIteratorInterface> predIterPtr = getDUGIncomingEdgesIterator();
@@ -1219,5 +1272,5 @@ Node::hasEdgesFromOtherProc(ProcHandle proc, std::set<SymHandle>& visited)
 
 
 
-  } // end namespace DUGStandard
+    } // end namespace DUGStandard
 } // end namespace OA

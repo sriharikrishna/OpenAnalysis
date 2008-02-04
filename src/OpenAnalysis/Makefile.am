@@ -92,8 +92,12 @@ MYINSTALLEDHEADERS = \
   IRInterface/XAIFIRInterface.hpp \
   IRInterface/LinearityIRInterface.hpp \
   IRInterface/LivenessIRInterface.hpp \
+  IRInterface/auto_ReachingDefsIRInterface.hpp \
+  IRInterface/auto_AvailableExpressions.hpp \
   IRInterface/DUGIRInterface.hpp \
   IRInterface/LoopIRInterface.hpp \
+  IRInterface/OpBasicInterface.hpp \
+  IRInterface/ExprTreeIRInterface.hpp \
   \
   OABase/Annotation.hpp \
   \
@@ -103,11 +107,8 @@ MYINSTALLEDHEADERS = \
   Activity/ManagerInterDep.hpp \
   Activity/InterDep.hpp \
   Activity/ManagerICFGDep.hpp \
-  Activity/ManagerProcIterDep.hpp \
   Activity/ICFGDep.hpp \
-  Activity/ManagerVaryStandard.hpp \
   Activity/VaryStandard.hpp \
-  Activity/ManagerICFGVary.hpp \
   Activity/ManagerICFGVaryActive.hpp \
   Activity/ManagerICFGUseful.hpp \
   Activity/InterVary.hpp \
@@ -126,6 +127,8 @@ MYINSTALLEDHEADERS = \
   AffineExpr/AffineExprAbstraction.hpp \
   AffineExpr/ManagerAffineExpr.hpp \
   \
+  Alias/AliasTagInterface.hpp \
+  Alias/AliasTag.hpp \
   Alias/Interface.hpp \
   Alias/EquivSets.hpp \
   Alias/EquivSets.hpp \
@@ -155,6 +158,7 @@ MYINSTALLEDHEADERS = \
   DataDep/ManagerDataDep.hpp \
   \
   DataFlow/DataFlowSet.hpp \
+  DataFlow/DFAGenDFSet.hpp \
   DataFlow/DGraphSolverDFP.hpp \
   DataFlow/WorkList.hpp \
   DataFlow/WorkListPQueue.hpp \
@@ -173,6 +177,12 @@ MYINSTALLEDHEADERS = \
   DataFlow/ICFGDFProblem.hpp \
   DataFlow/ICFGDFSolver.hpp \
   \
+  DFAGen/Liveness/auto_LivenessStandard.hpp \
+  DFAGen/Liveness/auto_ManagerLivenessStandard.hpp \
+  \
+  DFAGen/ReachingDefs/auto_ReachingDefsStandard.hpp \
+  DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.hpp \
+  \
   ExprTree/ExprTree.hpp \
   ExprTree/ExprTreeVisitor.hpp \
   ExprTree/DifferentiableLocsVisitor.hpp \
@@ -183,6 +193,10 @@ MYINSTALLEDHEADERS = \
   ExprTree/OutputExprTreeVisitor.hpp \
   ExprTree/ExprTreeSetIterator.hpp \
   ExprTree/CompareExprTree.hpp \
+  \
+  NewExprTree/NewExprTree.hpp \
+  NewExprTree/NewExprTreeVisitor.hpp \
+  NewExprTree/OutputNewExprTreeVisitor.hpp \
   \
   ICFG/ICFGInterface.hpp \
   ICFG/ICFG.hpp \
@@ -296,11 +310,8 @@ MYSOURCES = \
   Activity/InterDep.cpp \
   Activity/ManagerInterDep.cpp \
   Activity/ManagerICFGDep.cpp \
-  Activity/ManagerProcIterDep.cpp \
   Activity/ICFGDep.cpp \
-  Activity/ManagerVaryStandard.cpp \
   Activity/VaryStandard.cpp \
-  Activity/ManagerICFGVary.cpp \
   Activity/ManagerICFGVaryActive.cpp \
   Activity/ManagerUsefulStandard.cpp \
   Activity/UsefulStandard.cpp \
@@ -350,6 +361,12 @@ MYSOURCES = \
   DataFlow/CalleeToCallerVisitor.cpp \
   DataFlow/ICFGDFSolver.cpp \
   \
+  DFAGen/Liveness/auto_LivenessStandard.cpp \
+  DFAGen/Liveness/auto_ManagerLivenessStandard.cpp \
+  \
+  DFAGen/ReachingDefs/auto_ReachingDefsStandard.cpp \
+  DFAGen/ReachingDefs/auto_ManagerReachingDefsStandard.cpp \
+  \
   ExprTree/ExprTree.cpp \
   ExprTree/CompareExprTree.cpp \
   ExprTree/DifferentiableLocsVisitor.cpp \
@@ -358,6 +375,9 @@ MYSOURCES = \
   ExprTree/LinearityLocsVisitor.cpp \
   ExprTree/OutputExprTreeVisitor.cpp \
   ExprTree/ExprTreeSetIterator.cpp \
+  \
+  NewExprTree/NewExprTree.cpp \
+  NewExprTree/OutputNewExprTreeVisitor.cpp \
   \
   ICFG/ICFG.cpp \
   ICFG/ManagerICFG.cpp \

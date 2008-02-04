@@ -23,13 +23,18 @@ namespace OA {
 static bool debug = false;
 
 void dumpLocSet(std::set<OA_ptr<Location> >& set, std::ostream& os, 
-                OA_ptr<IRHandlesIRInterface> pIR)
+                OA_ptr<IRHandlesIRInterface> pIR, bool succinct)
 {
     os << "LocSet = { ";
     std::set<OA_ptr<Location> >::iterator setIter;
     for (setIter=set.begin(); setIter!=set.end(); setIter++) {
         OA_ptr<Location> loc = *setIter;
-        loc->dump(os,pIR);
+        if(!succinct) {
+            loc->dump(os,pIR);
+            os << " ";
+        } else {
+            os << loc->toString(pIR);
+        }
     }
     os << " }" << std::endl;   
 }

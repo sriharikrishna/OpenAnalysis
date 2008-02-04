@@ -46,6 +46,8 @@ enum NodeType { FORMALPARAM_NODE, NONEFORMAL_NODE };
   class EdgesIteratorInterface;
   class DUGInterface;
  
+  typedef std::pair<IRHandle,SymHandle> IRSymHandle;
+
   //--------------------------------------------------------
   class NodeInterface : public virtual DGraph::NodeInterface {
   public:
@@ -62,7 +64,8 @@ enum NodeType { FORMALPARAM_NODE, NONEFORMAL_NODE };
 
     virtual OA_ptr<Location> getLoc() const = 0;
    
-    OA::SymHandle getSym();
+    virtual SymHandle getSym() const = 0;
+    virtual IRHandle getDef() const = 0;
   
     //! number of statements in node
     virtual unsigned int size () const = 0;
@@ -89,14 +92,14 @@ enum NodeType { FORMALPARAM_NODE, NONEFORMAL_NODE };
                     OA_ptr<Activity::ActivityIRInterface>,
                     std::set<OA_ptr<EdgeInterface> >&,
                     std::set<std::pair<unsigned,unsigned> >&,
-                    ProcHandle, unsigned,
+                    ProcHandle, SymHandle,
                     OA_ptr<EdgeInterface>) = 0;
 
     virtual void markUseful(std::list<CallHandle>&,
                     OA_ptr<Activity::ActivityIRInterface>,
                     std::set<OA_ptr<EdgeInterface> >&,
                     std::set<std::pair<unsigned,unsigned> >&,
-                    ProcHandle, unsigned,
+                    ProcHandle, SymHandle,
                     OA_ptr<EdgeInterface>) = 0;
 
     virtual bool isPathFrom(OA_ptr<NodeInterface>,
@@ -109,12 +112,12 @@ enum NodeType { FORMALPARAM_NODE, NONEFORMAL_NODE };
     virtual void longdump(std::ostream& os, OA_ptr<IRHandlesIRInterface> ir) = 0;
     virtual void output(OA::IRHandlesIRInterface& ir) = 0;
 
-    virtual void findOutgoingNodes(ProcHandle, std::set<SymHandle>&, 
-                   std::set<SymHandle>&) = 0;
-//     virtual void findIncomingNodes(ProcHandle, std::set<SymHandle>&, 
-//                    std::set<SymHandle>&) = 0;
-    virtual bool hasEdgesToOtherProc(ProcHandle, std::set<SymHandle>&) = 0;
-    virtual bool hasEdgesFromOtherProc(ProcHandle, std::set<SymHandle>&) = 0;
+    virtual void findOutgoingNodes(ProcHandle, std::set<IRSymHandle>&, 
+                   std::set<IRSymHandle>&) = 0;
+    virtual void findIncomingNodes(ProcHandle, std::set<IRSymHandle>&, 
+                   std::set<IRSymHandle>&) = 0;
+    virtual bool hasEdgesToOtherProc(ProcHandle, std::set<IRSymHandle>&) = 0;
+    virtual bool hasEdgesFromOtherProc(ProcHandle, std::set<IRSymHandle>&) = 0;
 
 
   };

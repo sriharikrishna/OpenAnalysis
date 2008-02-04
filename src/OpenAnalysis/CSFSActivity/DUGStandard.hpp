@@ -1,14 +1,14 @@
 /*! \file
   
-  \brief Declaration for standard DUG (interprocedural control flow graph).
+\brief Declaration for standard DUG (interprocedural control flow graph).
 
-  \authors Michelle Strout
-  \version $Id: DUGStandard.hpp,v 1.3 2005/07/25 16:19:30 utke Exp $
+\authors Michelle Strout
+\version $Id: DUGStandard.hpp,v 1.3 2005/07/25 16:19:30 utke Exp $
 
-  Copyright (c) 2002-2004, Rice University <br>
-  Copyright (c) 2004, University of Chicago <br>  
-  All rights reserved. <br>
-  See ../../../Copyright.txt for details. <br>
+Copyright (c) 2002-2004, Rice University <br>
+Copyright (c) 2004, University of Chicago <br>  
+All rights reserved. <br>
+See ../../../Copyright.txt for details. <br>
 
 */
 
@@ -18,7 +18,7 @@
 #ifndef DUGStandard_H
 #define DUGStandard_H
 
-//#define DEBUG_DUAA
+// #define DEBUG_DUAA
 
 //--------------------------------------------------------------------
 // STL headers
@@ -37,11 +37,13 @@
 #include <OpenAnalysis/CSFIActivity/DUGInterface.hpp>
 #include <OpenAnalysis/Utils/DGraph/DGraphImplement.hpp>
 #include <OpenAnalysis/Activity/ActiveStandard.hpp>
+#include <OpenAnalysis/UDDUChains/Interface.hpp>
+#include <OpenAnalysis/UDDUChains/ManagerUDDUChainsStandard.hpp>
 //--------------------------------------------------------------------
 
 
 namespace OA {
-  namespace DUG {
+    namespace DUG {
       
 class Node;
 class Edge;
@@ -49,16 +51,13 @@ class NodesIterator;
 class EdgesIterator;
 class DUGStandard;
  
+void filterStr(std::string&);
+
 //--------------------------------------------------------
 class Node : public virtual NodeInterface {
 public:
-    Node (OA_ptr<DUGStandard> pDUG, ProcHandle proc, NodeType pType)
-        : mDUG(pDUG), mProc(proc), mType(pType) { Ctor(); }
-    Node (OA_ptr<DUGStandard> pDUG, ProcHandle proc, NodeType pType,
-          OA_ptr<CFG::NodeInterface> cNode)
-        : mDUG(pDUG), mProc(proc), mType(pType) { Ctor(); }
-    Node (OA_ptr<DUGStandard> pDUG, ProcHandle pProc, SymHandle pSym)
-        : mDUG(pDUG), mProc(pProc), mType(NONEFORMAL_NODE), mSym(pSym) {
+    Node (OA_ptr<DUGStandard> pDUG, ProcHandle pProc, IRHandle ih, SymHandle pSym)
+        : mDUG(pDUG), mProc(pProc), mType(NONEFORMAL_NODE), mDef(ih), mSym(pSym) {
 	Ctor();
     }
 
@@ -73,18 +72,20 @@ public:
     ProcHandle getProc() const { return mProc; }
     OA_ptr<Location> getLoc() const { return mLoc; }
     SymHandle getSym() const { return mSym; }
+    IRHandle getDef() const { return mDef; }
+    IRSymHandle getIRSymHandle() const { return IRSymHandle(mDef,mSym); }
     
     void markVaried(std::list<CallHandle>&, 
                     OA_ptr<Activity::ActivityIRInterface>,
                     std::set<OA_ptr<EdgeInterface> >&,
                     std::set<std::pair<unsigned,unsigned> >&,
-                    ProcHandle, unsigned,
+                    ProcHandle, SymHandle,
                     OA_ptr<EdgeInterface>);
     void markUseful(std::list<CallHandle>&, 
                     OA_ptr<Activity::ActivityIRInterface>,
                     std::set<OA_ptr<EdgeInterface> >&,
                     std::set<std::pair<unsigned,unsigned> >&,
-                    ProcHandle, unsigned,
+                    ProcHandle, SymHandle,
                     OA_ptr<EdgeInterface>);
 
     bool isVaried(){ return mVaried;}
@@ -109,10 +110,12 @@ public:
 
     bool isPathFrom(OA_ptr<NodeInterface>,
                     std::set<OA_ptr<NodeInterface> >&);
-    bool hasEdgesToOtherProc(ProcHandle, std::set<SymHandle>&);
-    bool hasEdgesFromOtherProc(ProcHandle, std::set<SymHandle>&);
-    void findOutgoingNodes(ProcHandle, std::set<SymHandle>&, std::set<SymHandle>&);
-//     void findIncomingNodes(ProcHandle, std::set<SymHandle>&, std::set<SymHandle>&);
+    bool hasOutgoingEdgesToOtherProcs(ProcHandle);
+    bool hasIncomingEdgesFromOtherProcs(ProcHandle);
+    void findOutgoingNodes(ProcHandle, std::set<IRSymHandle>&, std::set<IRSymHandle>&);
+    void findIncomingNodes(ProcHandle, std::set<IRSymHandle>&, std::set<IRSymHandle>&);
+    bool hasEdgesToOtherProc(ProcHandle, std::set<IRSymHandle>&);
+    bool hasEdgesFromOtherProc(ProcHandle, std::set<IRSymHandle>&);
 
 
     unsigned int size () const {
@@ -221,6 +224,7 @@ private:
     // structure
 
     OA_ptr<Location> mLoc;
+    IRHandle mDef;                   // node key: CallHandle or StmtHandle
     SymHandle mSym;                  // node key
     bool mVaried;                    // 'true' if varied
     bool mUseful;                    // 'true' if useful
@@ -284,8 +288,8 @@ public:
     bool operator<(DGraph::EdgeInterface& other);
 
     void dump (std::ostream& os);
-    void dumpdot (std::ostream& os, OA_ptr<DUGIRInterface> ir);
-    void dumpdot_label (std::ostream& os, OA_ptr<DUGIRInterface> ir);
+    void dumpdot (std::ostream&, OA_ptr<DUGIRInterface>);
+    void dumpdot_label (std::ostream&, OA_ptr<DUGIRInterface>);
     void dumpbase (std::ostream& os) {}
     void output(OA::IRHandlesIRInterface& ir) { mDGEdge->output(ir); }
 
@@ -364,6 +368,9 @@ public:
     //! one of the CFGs we contain
     OA_ptr<Node> getDUGNode(OA_ptr<DGraph::NodeInterface> dgNode) const;
   
+    std::set<OA_ptr<Node> >& getInDepSymNodeSet(SymHandle sym){
+	return mInDepSymToNodes[sym];
+    }
     std::list<std::pair<SymHandle, ProcHandle> >& getIndepSyms(){
 	return mIndepSymList;
     }
@@ -382,7 +389,6 @@ public:
     }
 
     void mapSymToProc(SymHandle sym, ProcHandle proc){
-      
 	mSymToProc[sym] = proc;
     }
 
@@ -564,8 +570,8 @@ public:
  
     //==================================================================
 
-    OA_ptr<Node> getNode(SymHandle, ProcHandle);
-    bool isNode(SymHandle, ProcHandle);
+    OA_ptr<Node> getNode(IRSymHandle, ProcHandle);
+    bool isNode(IRSymHandle, ProcHandle);
 
 private:
     OA_ptr<Node> mEntry; 
@@ -583,7 +589,7 @@ private:
     OA_ptr<std::list<OA_ptr<Node> > > mReturnNodes;
 
     // map from SymHandle to Node
-    std::map<SymHandle, OA_ptr<Node> > mSymToNode;
+    std::map<std::pair<IRHandle,SymHandle>, OA_ptr<Node> > mSymToNode;
 
     // map from SymHandle to Location
     std::map<SymHandle, OA_ptr<Location> > mSymToLoc;
@@ -617,6 +623,8 @@ private:
 
     std::map<OA_ptr<Location>, OA_ptr<std::set<StmtHandle> > > mLocToStmtSet;
 
+    // map from dependent, independent SymHandle to the set of Nodes
+    std::map<SymHandle, std::set<OA_ptr<Node> > > mInDepSymToNodes;
 };
 //--------------------------------------------------------------------
 

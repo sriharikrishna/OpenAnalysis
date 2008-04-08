@@ -134,6 +134,8 @@ ManagerParamBindings::performAnalysis( OA_ptr<CallGraph::CallGraphInterface> cal
           std::cout << "==== param = " << mIR->toString(param) << std::endl;
           std::cout << "callerProc = " << mIR->toString(callerProc) 
                     << ", hval = " << callerProc.hval() << std::endl;
+          std::cout << "calleeProc = " << mIR->toString(calleeProc) 
+                    << ", hval = " << callerProc.hval() << std::endl;
         }
 
         OA_ptr<ExprTree> eTreePtr = mIR->getExprTree(param);

@@ -3,7 +3,7 @@
   \brief Declaration for standard DUG (interprocedural control flow graph).
 
   \authors Michelle Strout
-  \version $Id: DUGStandard.hpp,v 1.3 2005/07/25 16:19:30 utke Exp $
+  \version $Id: DUGStandard.hpp,v 1.3 2008/02/06 19:58:47 utke Exp $
 
   Copyright (c) 2002-2004, Rice University <br>
   Copyright (c) 2004, University of Chicago <br>  
@@ -79,7 +79,8 @@ public:
                     std::set<OA_ptr<EdgeInterface> >&,
                     std::set<std::pair<unsigned,unsigned> >&,
                     ProcHandle, unsigned,
-                    OA_ptr<EdgeInterface>);
+                    OA_ptr<EdgeInterface>,
+		    bool activeWithVariedOnly);
     void markUseful(std::list<CallHandle>&, 
                     OA_ptr<Activity::ActivityIRInterface>,
                     std::set<OA_ptr<EdgeInterface> >&,

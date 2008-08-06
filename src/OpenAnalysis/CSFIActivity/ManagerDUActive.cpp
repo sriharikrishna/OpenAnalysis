@@ -37,7 +37,7 @@ ManagerDUActive::ManagerDUActive(
 /*!
  */
 void
-ManagerDUActive::markVaried()
+ManagerDUActive::markVaried(bool activeWithVariedOnly)
 {
     std::list<CallHandle> callStack;
     std::set<OA_ptr<DUG::EdgeInterface> > visited;
@@ -64,7 +64,8 @@ ManagerDUActive::markVaried()
 	    std::pair<unsigned, unsigned> pathNode(1, node->getId());
 	    onPath.insert(pathNode);
 	    node->markVaried(callStack, mIR, visited, onPath, node->getProc(), 
-			     (unsigned)-1, OA_ptr<DUG::EdgeInterface>());
+			     (unsigned)-1, OA_ptr<DUG::EdgeInterface>(),
+			     activeWithVariedOnly);
 	    onPath.erase(pathNode);
 	}
     }
@@ -114,18 +115,19 @@ ManagerDUActive::markUseful()
 /*!
  */
 OA_ptr<InterActiveFortran> 
-ManagerDUActive::performAnalysis(
-    OA_ptr<DataFlow::ParamBindings>              paramBind)
+ManagerDUActive::performAnalysis(OA_ptr<DataFlow::ParamBindings> paramBind,
+				 bool activeWithVariedOnly)
 {
 #ifdef DEBUG_DUAA
-    std::cout << "ManagerDUActive::performAnalysis: ---" << std::endl;
+  std::cout << "ManagerDUActive::performAnalysis: with activeWithVariedOnly = " << activeWithVariedOnly << std::endl;
 #endif
     OA_ptr<InterActiveFortran> retval;
     retval = new InterActiveFortran;
 
     // Def-Use Activity Analysis
-    markVaried();
-    markUseful();
+    markVaried(activeWithVariedOnly);
+    if (!activeWithVariedOnly)
+      markUseful();
   
     //-------------------------------------------------------------
     // copy active SymHandles from mDUG to 'retval'

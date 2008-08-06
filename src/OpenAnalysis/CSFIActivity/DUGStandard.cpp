@@ -3,7 +3,7 @@
   \brief Implementation of DUGStandard.
 
   \authors Michelle Strout
-  \version $Id: DUGStandard.cpp,v 1.3 2005/10/17 21:21:41 garvin Exp $
+  \version $Id: DUGStandard.cpp,v 1.4 2008/05/21 15:16:05 utke Exp $
 
   Copyright (c) 2002-2004, Rice University <br>
   Copyright (c) 2004, University of Chicago <br>  
@@ -789,7 +789,8 @@ Node::markVaried(std::list<CallHandle>& callStack,
 		 std::set<std::pair<unsigned,unsigned> >& onPath,
 		 ProcHandle proc,
 		 unsigned prevId, 
-		 OA_ptr<EdgeInterface> parenEdge)
+		 OA_ptr<EdgeInterface> parenEdge,
+		 bool activeWithVariedOnly)
 { 
     unsigned currId = getId();
 
@@ -878,7 +879,8 @@ Node::markVaried(std::list<CallHandle>& callStack,
         
 		succNode->markVaried(callStack, ir, visited, onPath, 
 				     succEdge->getSinkProc(), currId, 
-				     succEdge);
+				     succEdge,
+				     activeWithVariedOnly);
 		callStack.pop_front();
 		if (proc != callerProc){ 
 #ifdef DEBUG_DUAA
@@ -895,7 +897,8 @@ Node::markVaried(std::list<CallHandle>& callStack,
 
 		    succNode->markVaried(callStack, ir, visited, onPath, 
 					 succEdge->getProc(), currId, 
-					 succEdge);
+					 succEdge,
+					 activeWithVariedOnly);
 		    if (!valueThroughGlobals) callStack.push_front(succEdge->getCall());
 		}
 #ifdef DEBUG_DUAA
@@ -915,12 +918,14 @@ Node::markVaried(std::list<CallHandle>& callStack,
 		    callStack.push_front(CallHandle(1));
           
 		    succNode->markVaried(callStack, ir, visited, onPath, 
-					 succProc, currId, succEdge);
+					 succProc, currId, succEdge,
+					 activeWithVariedOnly);
 		    callStack.pop_front();
 		}
 		else{
 		    succNode->markVaried(callStack, ir, visited, onPath, 
-					 proc, currId, succEdge);
+					 proc, currId, succEdge,
+					 activeWithVariedOnly);
 		}
           
 		break;
@@ -940,6 +945,8 @@ Node::markVaried(std::list<CallHandle>& callStack,
 	std::cout << ")" << std::endl;
 #endif  
     }
+    if (activeWithVariedOnly)
+      setActive();
 #ifdef DEBUG_DUAA
     std::cout << "<-" << std::endl;
 #endif  

@@ -42,10 +42,10 @@ public:
                   OA_ptr<OA::DUG::DUGStandard>);
   ~ManagerDUActive () {}
 
-  OA_ptr<InterActiveFortran> performAnalysis(
-    OA_ptr<DataFlow::ParamBindings> paramBind);
+  OA_ptr<InterActiveFortran> performAnalysis(OA_ptr<DataFlow::ParamBindings> paramBind,
+					     bool activeWithVariedOnly=false);
 
-  void markVaried();
+  void markVaried(bool activeWithVariedOnly);
   void markUseful();
 
   //! Indicate whether the given symbol is active or not within any procedure

@@ -59,7 +59,10 @@ void Node::Ctor() {
     mUseful = false;
     mSelfDependent = false;
 #ifdef DEBUG_DUAA
+    static unsigned nodeCnt=0;
+    nodeCnt++;
     std::cout << "getId(" << getId() << ")" << std::endl;
+    std::cout << "nodeCnt(" << nodeCnt << ")" << std::endl;
 #endif
 }
 
@@ -881,6 +884,16 @@ Node::markVaried(std::list<CallHandle>& callStack,
 
 	switch(etype) {
 	    case (CALL_EDGE):
+	    {
+		// to deal with value passing through global variables between procedures
+		ProcHandle callerProc = succEdge->getSourceProc();
+		if (proc != callerProc){ 
+#ifdef DEBUG_DUAA
+		    std::cout << "valthruglobals: begin" << std::endl;
+#endif  
+		    callStack.push_front(CallHandle(1));
+		}
+          
 		callStack.push_front(succEdge->getCall());
 		visited.insert(succEdge);
         
@@ -888,7 +901,14 @@ Node::markVaried(std::list<CallHandle>& callStack,
 				     succEdge->getSinkProc(), currSym, 
 				     succEdge);
 		callStack.pop_front();
+		if (proc != callerProc){ 
+#ifdef DEBUG_DUAA
+		    std::cout << "valthruglobals: end" << std::endl;
+#endif  
+		    callStack.pop_front();
+		}
 		break;
+	    }
 	    case (RETURN_EDGE):
 		if (callStack.front() == succEdge->getCall() || valueThroughGlobals){
 		    if (!valueThroughGlobals) callStack.pop_front();
@@ -1027,13 +1047,29 @@ Node::markUseful(std::list<CallHandle>& callStack,
 		}
 		break;
 	    case (RETURN_EDGE):
+	    {
+		ProcHandle callerProc = predEdge->getSinkProc();
+		if (proc != callerProc){ 
+		    callStack.push_front(CallHandle(1));
+#ifdef DEBUG_DUAA
+		    std::cout << "valthruglobals: begin" << std::endl;
+#endif  
+		}
+
 		callStack.push_front(predEdge->getCall());
 		visited.insert(predEdge);
 		predNode->markUseful(callStack, ir, visited, onPath, 
 				     predEdge->getSourceProc(), 
 				     currSym, predEdge);
 		callStack.pop_front();
+		if (proc != callerProc){ 
+		    callStack.pop_front();
+#ifdef DEBUG_DUAA
+		    std::cout << "valthruglobals: end" << std::endl;
+#endif  
+		}
 		break;
+	    }
 	    default: // for both CFLOW_EDGE and PARAM_EDGE
 		if (predEdge->getType() != PARAM_EDGE) visited.insert(predEdge);
 		ProcHandle predProc = predEdge->getProc();

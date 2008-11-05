@@ -1,5 +1,7 @@
 syntax: glob
 x86-Linux*
 build-x86-Linux*
+x86_64-Linux*
+build-x86_64-Linux*
 *.orig
 build.log

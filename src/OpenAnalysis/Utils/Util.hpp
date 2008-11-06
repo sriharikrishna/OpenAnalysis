@@ -15,7 +15,7 @@
 #ifndef OA_Util_H
 #define OA_Util_H
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <string>
 
 // Could use templates within OA namespace

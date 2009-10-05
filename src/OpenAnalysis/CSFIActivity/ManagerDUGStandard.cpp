@@ -104,10 +104,11 @@ void ManagerDUGStandard::insertEdge(
     ProcHandle       toProc,
     ProcHandle       proc)
 {
-    if (from == to) {
-	OA_ptr<Node> fromNode = mDUG->getNode(from, fromProc);
-	fromNode->setSelfDependent();
+    OA_ptr<Node> fromNode = mDUG->getNode(from, fromProc);
+    OA_ptr<Node> toNode   = mDUG->getNode(to,   toProc);
 
+    if (from == to) {
+	fromNode->setSelfDependent();
 	return;
     }
     // duplicate edges
@@ -125,8 +126,6 @@ void ManagerDUGStandard::insertEdge(
 	      << mIR->toString(from) << "@" << mIR->toString(fromProc)
 	      << " -> " << mIR->toString(to) << "@" << mIR->toString(toProc) << std::endl;
 #endif
-    OA_ptr<Node> fromNode = mDUG->getNode(from, fromProc);
-    OA_ptr<Node> toNode   = mDUG->getNode(to, toProc);
 
     // edge between 'from' and 'to' node
     OA_ptr<Edge> dugEdge;
@@ -865,7 +864,7 @@ void ManagerDUGStandard::edgesBetweenActuals(ProcHandle proc)
 	    }
 
 	    if (mProcToMatrix[proc][formal1][formal2]){
-		insertEdge(formal1, formal2, PARAM_EDGE, CallHandle(0), proc, proc, proc);
+ 		insertEdge(formal1, formal2, PARAM_EDGE, CallHandle(0), proc, proc, proc);
 
 		for (callIter = callsites.begin(); callIter!=callsites.end(); callIter++){
 		    CallHandle call = *callIter;
@@ -874,6 +873,7 @@ void ManagerDUGStandard::edgesBetweenActuals(ProcHandle proc)
 		    assert(caller != ProcHandle(0));
 		    std::set<SymHandle>& set1 = mFormalToActualMap[call][formal1];
 		    std::set<SymHandle>& set2 = mFormalToActualMap[call][formal2];
+		    assert(set2.size() == 1); // only one actual can be assigned
 		    std::set<SymHandle>::iterator i1;
 		    std::set<SymHandle>::iterator i2;
 		    for (i1=set1.begin(); i1 != set1.end(); i1++){

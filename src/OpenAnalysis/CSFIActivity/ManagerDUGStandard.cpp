@@ -873,7 +873,7 @@ void ManagerDUGStandard::edgesBetweenActuals(ProcHandle proc)
 		    assert(caller != ProcHandle(0));
 		    std::set<SymHandle>& set1 = mFormalToActualMap[call][formal1];
 		    std::set<SymHandle>& set2 = mFormalToActualMap[call][formal2];
-		    assert(set2.size() == 1); // only one actual can be assigned
+		    assert(set2.size() <= 1); // only one actual can be assigned
 		    std::set<SymHandle>::iterator i1;
 		    std::set<SymHandle>::iterator i2;
 		    for (i1=set1.begin(); i1 != set1.end(); i1++){

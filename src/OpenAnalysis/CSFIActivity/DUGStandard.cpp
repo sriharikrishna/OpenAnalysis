@@ -881,7 +881,7 @@ Node::markVaried(std::list<CallHandle>& callStack,
 	    default: assert(0);
 	}
 
-	if (succId != prevId || parenCall != succEdge->getCall()) nonParentSuccessors++;
+	if (etype != RETURN_EDGE || succId != prevId) nonParentSuccessors++;
 
 #ifdef DEBUG_PATH
 	if (fromSymFound && toSymFound){
@@ -903,8 +903,8 @@ Node::markVaried(std::list<CallHandle>& callStack,
 	}
 #endif 
 	if (visited.find(succEdge) != visited.end() ||
-	    onPath.find(pathNode)  != onPath.end()  ||
-	    succId == prevId                        ||
+// 	    onPath.find(pathNode)  != onPath.end()  ||
+// 	    succId == prevId                        ||
 	    se->isExplored4Varied(callStack.front())) 
 	{
 	    continue;

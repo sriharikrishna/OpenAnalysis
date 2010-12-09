@@ -54,7 +54,7 @@ public:
 
   //??? don't think this guy need AQM, but will eventually have
   //to have one so is standard with other AnnotationManagers
-  virtual OA_ptr<CFG::CFG> performAnalysis(ProcHandle);
+  virtual OA_ptr<CFG> performAnalysis(ProcHandle);
 
 
 

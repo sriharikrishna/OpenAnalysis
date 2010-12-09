@@ -54,7 +54,7 @@ static bool debug = false;
         }
 
 
-  OA_ptr<CFG::CFG> ManagerCFGStandard::performAnalysis(ProcHandle proc)
+  OA_ptr<CFG> ManagerCFGStandard::performAnalysis(ProcHandle proc)
   {
     // get information from the ir interface
     bool return_statements_allowed = mIR->returnStatementsAllowed();

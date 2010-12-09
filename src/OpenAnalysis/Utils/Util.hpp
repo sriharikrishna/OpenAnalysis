@@ -105,12 +105,12 @@ Feb 2006
 #define OA_DEBUG_CTRL_MACRO(ModuleNameListDEBUG, DeBugDEBUG)\
     {\
         DeBugDEBUG = false;\
-        char *ept = getenv("OA_DEBUG");\
+        const char *ept = getenv("OA_DEBUG");\
         if( ept != NULL ) {\
             while (*ept == ':') {++ept;}\
-            char *ept1 = ept;\
-            char *mpt1;\
-            char *mpt;\
+            const char *ept1 = ept;\
+            const char *mpt1;\
+            const char *mpt;\
             mpt1 = ModuleNameListDEBUG;\
             while (*mpt1 == ':') {++mpt1;}\
             mpt = mpt1;\

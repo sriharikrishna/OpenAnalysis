@@ -786,7 +786,7 @@ Node::setActive()
 #ifdef DEBUG_PATH
 std::list<Node* > debugPathVaried;
 std::list<Node* > debugPathUseful;
-std::string debug_sym("oad_s_min_r_::RESULT");
+std::string debug_sym("REAL_MGCWRD::RMW");
 std::string debug_sym2("gad_calc_rhs_::FZON");
 #endif
 void 
@@ -839,6 +839,7 @@ Node::markVaried(std::list<CallHandle>& callStack,
 #endif 
 
     int nonParentSuccessors = 0;
+    bool nonReturnEdges = false; 
     bool valueThroughGlobals = false;
     if (callStack.front() == CallHandle(1)) 
 	valueThroughGlobals = true;
@@ -881,7 +882,19 @@ Node::markVaried(std::list<CallHandle>& callStack,
 	    default: assert(0);
 	}
 
-	if (etype != RETURN_EDGE || succId != prevId) nonParentSuccessors++;
+	if (etype != RETURN_EDGE) 
+	  nonReturnEdges=true;
+	if (etype != RETURN_EDGE || succId != prevId){
+	  nonParentSuccessors++;
+// 	  std::string psymStr(mDUG->mIR->toString(getSym()));
+// 	  if (psymStr == debug_sym ){
+// 	    std::cout << "*** nonParentSuccessors is now " << nonParentSuccessors 
+// 		      << " for eType:  " << etype << " != " <<  RETURN_EDGE
+// 		      << " succId " << succId
+// 		      << " prevId " << prevId
+// 		      << std::endl; 
+// 	  }
+	}
 
 #ifdef DEBUG_PATH
 	if (fromSymFound && toSymFound){
@@ -1013,9 +1026,10 @@ Node::markVaried(std::list<CallHandle>& callStack,
 
     // Actual or formal parameters without any outgoing edges shouldn't be
     // activated.
-    if (nonParentSuccessors == 0 && !isVariedBefore && !isSelfDependent() && 
+    if ((!nonReturnEdges || nonParentSuccessors == 0) 
+	&& !isVariedBefore && !isSelfDependent() && 
 	( parenEType == CALL_EDGE || parenEType == RETURN_EDGE) && 
-	!mDUG->isDependent(getProc(), getSym()) ){
+	!mDUG->isDependent(getProc(), getSym()) ) {
 	unsetVaried();
 #ifdef DEBUG_PATH
 	std::cout << " unsetVaried:"; dump(std::cout, mDUG->mIR);

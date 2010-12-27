@@ -839,7 +839,6 @@ Node::markVaried(std::list<CallHandle>& callStack,
 #endif 
 
     int nonParentSuccessors = 0;
-    bool nonReturnEdges = false; 
     bool valueThroughGlobals = false;
     if (callStack.front() == CallHandle(1)) 
 	valueThroughGlobals = true;
@@ -882,8 +881,6 @@ Node::markVaried(std::list<CallHandle>& callStack,
 	    default: assert(0);
 	}
 
-	if (etype != RETURN_EDGE) 
-	  nonReturnEdges=true;
 	if (etype != RETURN_EDGE || succId != prevId){
 	  nonParentSuccessors++;
 // 	  std::string psymStr(mDUG->mIR->toString(getSym()));
@@ -1026,7 +1023,7 @@ Node::markVaried(std::list<CallHandle>& callStack,
 
     // Actual or formal parameters without any outgoing edges shouldn't be
     // activated.
-    if ((!nonReturnEdges || nonParentSuccessors == 0) 
+    if (nonParentSuccessors == 0
 	&& !isVariedBefore && !isSelfDependent() && 
 	( parenEType == CALL_EDGE || parenEType == RETURN_EDGE) && 
 	!mDUG->isDependent(getProc(), getSym()) ) {
@@ -1102,6 +1099,7 @@ Node::markUseful(std::list<CallHandle>& callStack,
     }
 #endif
     int nonChildAncestors = 0;
+    bool nonCallPredEdge=false; 
     bool isIndependent = mDUG->isIndependent(getProc(), getSym()) && 
 	!mDUG->isDependent(getProc(), getSym());
 
@@ -1139,6 +1137,7 @@ Node::markUseful(std::list<CallHandle>& callStack,
 		pathNode = std::pair<unsigned,unsigned>(1,predId); break;
 	    default: assert(0);
 	}
+	if (etype!=CALL_EDGE) nonCallPredEdge=true;
 	if (predId != prevId || parenCall != predEdge->getCall()) nonChildAncestors++;
 	if (visited.find(predEdge) != visited.end() ||
 	    onPath.find(pathNode)  != onPath.end()  ||
@@ -1226,11 +1225,11 @@ Node::markUseful(std::list<CallHandle>& callStack,
 
     // Formal parameters without any outgoing edges shouldn't be
     // activated.
-    if (nonChildAncestors == 0 && !isUsefulBefore && !isSelfDependent() && 
+    if ((nonChildAncestors == 0 || !nonCallPredEdge)  && !isUsefulBefore && !isSelfDependent() && 
 	( parenEType == RETURN_EDGE || parenEType == CALL_EDGE) &&
 	!mDUG->isIndependent(getProc(), getSym()) ){
 #ifdef DEBUG_DUAA
-	std::cout << "unsetUseful(" << currId << ")" << std::endl;
+	std::cout << " unsetUseful:"; dump(std::cout, mDUG->mIR);
 #endif  
 	unsetUseful();
 	

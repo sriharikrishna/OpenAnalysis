@@ -787,7 +787,7 @@ Node::setActive()
 std::list<Node* > debugPathVaried;
 std::list<Node* > debugPathUseful;
 std::string debug_sym("REAL_MGCWRD::RMW");
-std::string debug_sym2("gad_calc_rhs_::FZON");
+std::string debug_sym2("P1::X");
 #endif
 void 
 Node::markVaried(std::list<CallHandle>& callStack,
@@ -822,7 +822,7 @@ Node::markVaried(std::list<CallHandle>& callStack,
     debugPathVaried.push_back(this);
     std::string symStr(mDUG->mIR->toString(getSym()));
     bool fromSymFound = false;
-    if (symStr == debug_sym ){
+    if (symStr == debug_sym || symStr == debug_sym2 ){
 	fromSymFound = true;
 	std::cout << std::endl << "=========================" << std::endl;
 	std::list<Node* >::iterator nodeIter = debugPathVaried.begin();
@@ -1027,7 +1027,7 @@ Node::markVaried(std::list<CallHandle>& callStack,
 	&& !isVariedBefore && !isSelfDependent() && 
 	( parenEType == CALL_EDGE || parenEType == RETURN_EDGE) && 
 	!mDUG->isDependent(getProc(), getSym()) ) {
-	unsetVaried();
+      unsetVaried();
 #ifdef DEBUG_PATH
 	std::cout << " unsetVaried:"; dump(std::cout, mDUG->mIR);
 #endif
@@ -1066,6 +1066,9 @@ Node::markUseful(std::list<CallHandle>& callStack,
 #endif  
 	return;
     }
+#ifdef DEBUG_DUAA
+    std::cout << " calling markUseful for : " << mDUG->mIR->toString(getSym()).c_str() << " following edge :";
+#endif  
     unsigned currId = getId();
 
     EdgeType parenEType = CFLOW_EDGE;
@@ -1082,20 +1085,23 @@ Node::markUseful(std::list<CallHandle>& callStack,
     }else
 	parenEdge->dumpdot(std::cout, mDUG->mIR);
     std::cout << "(call:" << parenCall.hval() << ")" << std::endl; 
+    std::string symStr(mDUG->mIR->toString(getSym()));
+    if (symStr == debug_sym  || symStr == debug_sym2){
+      std::cout << "useful before: " << isUseful() << " for "; dump(std::cout, mDUG->mIR);
+    }
 #endif  
     bool isUsefulBefore = isUseful();
     setUseful();
 #ifdef DEBUG_PATH
+    std::cout << "setUseful:"; dump(std::cout, mDUG->mIR); 
     debugPathUseful.push_back(this);
-    std::string symStr(mDUG->mIR->toString(getSym()));
-    if (symStr == debug_sym ){
-	std::cout << std::endl << "=========================" << std::endl;
+    if (symStr == debug_sym || symStr == debug_sym2 ){
+	std::cout << std::endl << "===== U PATH BEGIN =========" << std::endl;
 	std::list<Node* >::iterator nodeIter = debugPathUseful.begin();
 	for(;nodeIter != debugPathUseful.end(); nodeIter++){
-	    std::cout << " -u-> ";
 	    (*nodeIter)->dump(std::cout, mDUG->mIR);
 	}
-	std::cout << std::endl << "=========================" << std::endl;
+	std::cout << std::endl << "===== U PATH END ===========" << std::endl;
     }
 #endif
     int nonChildAncestors = 0;
@@ -1109,12 +1115,14 @@ Node::markUseful(std::list<CallHandle>& callStack,
     // set up iterator for predecessor edges
     OA_ptr<EdgesIteratorInterface> predIterPtr;
     predIterPtr = getDUGIncomingEdgesIterator();
-    // iterate over the predecessors unless 'this' node is for indenepdent variable
-    // we assume no independent variables are dependent on another independent variables
-    for (; predIterPtr->isValid() // && !isIndependent
+    // iterate over the predecessors 
+    for (; predIterPtr->isValid() 
 	     ; ++(*predIterPtr)) {
       
 	OA_ptr<EdgeInterface> predEdge = predIterPtr->currentDUGEdge();
+#ifdef DEBUG_DUAA
+	std::cout << "now looking at edge: ";  predEdge->dumpdot(std::cout, mDUG->mIR);
+#endif  
 	OA_ptr<NodeInterface> predNode = predEdge->getDUGSource();
 	unsigned predId = predNode->getId();
 	EdgeType etype = predEdge->getType();
@@ -1143,8 +1151,8 @@ Node::markUseful(std::list<CallHandle>& callStack,
 	    onPath.find(pathNode)  != onPath.end()  ||
 	    pe->isExplored4Useful(callStack.front())) {
 #ifdef DEBUG_DUAA
-	    std::cout << "CONTINUE(" << currId << "+>" << predId << "): visited(" << (visited.find(predEdge) != visited.end()) 
-		      << "), path(" << (onPath.find(pathNode) != onPath.end()) << ")" << std::endl;
+	  std::cout << "CONTINUE(" << currId << " -> " << predId << "): was visited:" << (visited.find(predEdge) != visited.end()) 
+		    << " (" << pathNode.first << ","<<  pathNode.second << ") is on path:" << (onPath.find(pathNode) != onPath.end()) << " edge: ";  predEdge->dumpdot(std::cout, mDUG->mIR);
 #endif  
 	    continue;
 	}
@@ -1225,19 +1233,39 @@ Node::markUseful(std::list<CallHandle>& callStack,
 
     // Formal parameters without any outgoing edges shouldn't be
     // activated.
-    if ((nonChildAncestors == 0 || !nonCallPredEdge)  && !isUsefulBefore && !isSelfDependent() && 
+    if ( nonChildAncestors == 0  && !isUsefulBefore && !isSelfDependent() && 
 	( parenEType == RETURN_EDGE || parenEType == CALL_EDGE) &&
 	!mDUG->isIndependent(getProc(), getSym()) ){
 #ifdef DEBUG_DUAA
 	std::cout << " unsetUseful:"; dump(std::cout, mDUG->mIR);
 #endif  
 	unsetUseful();
-	
     }else{
+      if (!nonCallPredEdge && !isSelfDependent()) {
+	OA_ptr<EdgesIteratorInterface> succIterPtr;
+	succIterPtr = getDUGOutgoingEdgesIterator();
+	// iterate over the successors and see if there are any non return edges
+	for (; succIterPtr->isValid(); ++(*succIterPtr)) {
+	  if (succIterPtr->currentDUGEdge()->getType()!=RETURN_EDGE) { 
+#ifdef DEBUG_DUAA
+	    std::cout << "setActive(" << currId << ")" << std::endl;
+#endif 
+	    setActive();
+	    break; 
+	  }
+	} 
+#ifdef DEBUG_DUAA
+	if (!succIterPtr->isValid()) { 
+	  std::cout << "keeping passive non-self dependent dummy parameter: "; dump(std::cout, mDUG->mIR);
+	}
+#endif 
+      }
+      else { 
 #ifdef DEBUG_DUAA
 	std::cout << "setActive(" << currId << ")" << std::endl;
-#endif  
-	setActive();
+#endif 
+       setActive();
+      }
     }
 #ifdef DEBUG_DUAA
     std::cout << "<-" << std::endl;
@@ -1245,6 +1273,10 @@ Node::markUseful(std::list<CallHandle>& callStack,
 #ifdef DEBUG_PATH
     debugPathUseful.pop_back();
 #endif
+#ifdef DEBUG_DUAA
+    std::cout << " returning from markUseful for : "; dump(std::cout, mDUG->mIR);
+#endif  
+
 }
 
 //! Indicate whether the given sym is active or not

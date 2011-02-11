@@ -802,7 +802,7 @@ Node::markVaried(std::list<CallHandle>& callStack,
 #ifdef DEBUG_DUAA
   static unsigned recDepth=0;
   recDepth++;
-#ednif
+#endif
     unsigned currId = getId();
 
     EdgeType parenEType = CFLOW_EDGE;
@@ -1092,8 +1092,8 @@ Node::markVaried(std::list<CallHandle>& callStack,
 #ifdef DEBUG_DUAA
     std::cout << "<-" << std::endl;
     std::cout << "markVaried " << recDepth << " leaving for " << mDUG->mIR->toString(getSym()).c_str() << std::endl; 
-#endif
     --recDepth;  
+#endif
 #ifdef DEBUG_PATH
     debugPathVaried.pop_back();
 #endif

@@ -125,8 +125,8 @@ namespace OA {
       int uniqueId = 1;
 
       std::map<OA_ptr<Location>,LocTuple> locToLocTuple;
-
       std::map<SymHandle,LocSet>::iterator symMapIter;
+      if (debug) {std::cout << "===========DUMP LOCSETMAP================" << std::endl;}
       for (symMapIter=symToLocSetMap.begin(); symMapIter!=symToLocSetMap.end(); symMapIter++) {
 	// within each location set count the number of LocSubSets that are partial but have full accuracy,
 	// that is the number of virtual location ids that will be needed if have any partial accuracy
@@ -176,7 +176,7 @@ namespace OA {
 	if (partialFlag==true) {
 	  currentSubOffset = 2;
 	} 
-
+	if (debug) {std::cout << "------------SET locToLocTuple--------------" << std::endl;}
 	// now loop over all locations in this list and map to a LocTuple
 	for (locIter=locSet.begin(); locIter!=locSet.end(); locIter++) {
 	  OA_ptr<Location> loc = *locIter;
@@ -188,12 +188,15 @@ namespace OA {
 	  else {
 	    locToLocTuple[loc] = LocTuple(uniqueId,uniqueId+count-1,true);
 	  }
+	  if (debug) { std::cout << "locToLocTuple["; loc->dump(std::cout,mIR); std::cout << "]=" << locToLocTuple[loc].getLocRange().getStart() << " - " << locToLocTuple[loc].getLocRange().getEnd() << std::endl; }
 	}
-     
+	if (debug) {std::cout << "------------DONE locToLocTuple--------------" << std::endl;}
 	// must increase uniqueId by at least one
 	uniqueId += count;
       }
+      if (debug) {std::cout << "===========DONE WITH LOCSETMAP================" << std::endl;}
 
+      if (debug) {std::cout << "===========DUMP exprToLocSetMap================" << std::endl;}
       std::map<ExprHandle,LocSet>::iterator exprMapIter;
       for (exprMapIter=exprToLocSetMap.begin(); exprMapIter!=exprToLocSetMap.end(); exprMapIter++ ) {
 	// within each location set count the number of LocSubSets that are partial but have full accuracy,
@@ -205,6 +208,7 @@ namespace OA {
 	locSet= exprMapIter->second;
 
 	// now loop over all locations in this list and map to a LocTuple
+	if (debug) {std::cout << "------------SET locToLocTuple--------------" << std::endl;}
 	for (locIter=locSet.begin(); locIter!=locSet.end(); locIter++) {
 	  OA_ptr<Location> loc = *locIter;
 	  if (loc->isaUnnamed()) {
@@ -214,20 +218,21 @@ namespace OA {
 	  else {
 	    assert(0);
 	  }
+	  if (debug) { std::cout << "locToLocTuple["; loc->dump(std::cout,mIR); std::cout << "]=" << locToLocTuple[loc].getLocRange().getStart() << " - " << locToLocTuple[loc].getLocRange().getEnd() << std::endl; }
 	}
+	if (debug) {std::cout << "------------DONE locToLocTuple--------------" << std::endl;}
 	uniqueId += count;
       }
+      if (debug) {std::cout << "===========DONE WITH DUMP exprToLocSetMap================" << std::endl;}
 
       //---------------------------------
       // Then iterate over the aliasing information again using the newly determined LocTuples 
   
       // get all memory references that alias analysis has info for
-      if (debug) {
-	std::cout << "==== MemRefHandles that alias analysis has info for" << std::endl;
-      }
+      if (debug) {std::cout << "==== MemRefHandles that alias analysis has info for" << std::endl;}
       for (OA_ptr<MemRefHandleIterator> mrItPtr = alias->getMemRefIter(); mrItPtr->isValid(); (*mrItPtr)++) {
 	MemRefHandle memref = mrItPtr->current();
-	if (debug) { std::cout << "memref = " << mIR->toString(memref) << std::endl; } 
+	if (debug) { std::cout << "for memref = " << mIR->toString(memref) << std::endl; } 
 	// trying to determine what set we will map this memref to
 	int setId = Alias::AliasMap::SET_ID_NONE;
 
@@ -240,6 +245,7 @@ namespace OA {
 	    foundUnknown = true;
 	  }
 	  else {
+	    if (debug) { std::cout << "   inserting locToLocTuple["; loc->dump(std::cout,mIR); std::cout << "]="  << locToLocTuple[loc].getLocRange().getStart() << " - " << locToLocTuple[loc].getLocRange().getEnd() << std::endl; } 
 	    maySet->insert(locToLocTuple[loc]);
 	  }
 	} 
@@ -259,6 +265,7 @@ namespace OA {
 	    retAliasMap->mapLocTupleSet(maySet,setId); // insert all locations into this new set
 	  }
 	}
+	if (debug) { std::cout << "   mapping memref to setId=" << setId << std::endl; } 
 	retAliasMap->mapMemRefToMapSet(memref,setId);
       }
       return retAliasMap;

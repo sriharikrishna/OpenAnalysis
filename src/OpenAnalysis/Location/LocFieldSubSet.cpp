@@ -63,14 +63,10 @@ bool LocFieldSubSet::operator==(Location& other)
 
 bool LocFieldSubSet::mayOverlap(Location& other)
 {
-  // this code is incomplete/wrong.
-  // FIXME: have to handle unions
-  assert(0);
     // may overlap if underlying locations overlap
     // however, if other is also a LocFieldSubSet, 
     // the fields must also match.
     assert(!getLoc().ptrEqual(NULL));
-    bool underlyingLocsOverlap = getLoc()->mayOverlap(other);
     return getLoc()->mayOverlap(other);
 }
 

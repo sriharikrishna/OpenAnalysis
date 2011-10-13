@@ -13,8 +13,7 @@
 */
 
 #include "ManagerDUGStandard.hpp"
-
-
+#include "OpenAnalysis/IRInterface/AliasIRInterface.hpp"
 
 #if defined(DEBUG_ALL) || defined(DEBUG_ManagerDUGStandard)
 static bool debug = true;
@@ -509,6 +508,23 @@ void ManagerDUGStandard::labelUseDefEdges(
 /*!
   Creates a DUG for the program
 */
+
+SymHandle getQuickAndDirtySymHandle(OA_ptr<MemRefExpr> mre) { 
+  if(mre->isaNamed()) {
+    OA_ptr<NamedRef> namedRef = mre.convert<NamedRef>();
+    return namedRef->getSymHandle();
+  }
+  if(mre->isaRefOp()) {
+    OA_ptr<RefOp> refOp = mre.convert<RefOp>();
+    if(refOp->isaAddressOf()) {
+      return  getQuickAndDirtySymHandle(refOp->getMemRefExpr());
+    } else {    
+      return refOp->getBaseSym();
+    }   
+  }
+  assert(0);
+}
+
 OA_ptr<DUGStandard> ManagerDUGStandard::performAnalysis( 
     OA_ptr<IRProcIterator> procIter,
     OA_ptr<DataFlow::ParamBindings> paramBind,
@@ -542,7 +558,22 @@ OA_ptr<DUGStandard> ManagerDUGStandard::performAnalysis(
 	// skip unreachable procedures
 	if(mProcsOfInterest.find(proc) == mProcsOfInterest.end()) continue;
 
+
 	OA_ptr<OA::IRStmtIterator> sItPtr; 
+	sItPtr = mIR->getPtrAsgnIterator(proc);
+	for ( ; sItPtr->isValid(); (*sItPtr)++) {
+	    StmtHandle stmt = sItPtr->current();
+	    OA_ptr<OA::Alias::PtrAssignPairStmtIterator> pasIt; 
+	    pasIt=mIR->getPtrAssignStmtPairIterator(stmt); 
+	    OA_ptr<OA::MemRefExpr> source, target;
+	    source=pasIt->currentSource(); 
+	    target=pasIt->currentTarget();
+	    SymHandle sourceSym=getQuickAndDirtySymHandle(source);
+	    SymHandle targetSym=getQuickAndDirtySymHandle(target);
+	    insertEdge(sourceSym,targetSym,CFLOW_EDGE, CallHandle(0), proc, proc, proc);
+	    insertEdge(targetSym,sourceSym,CFLOW_EDGE, CallHandle(0), proc, proc, proc);
+	}
+
 	sItPtr = mIR->getStmtIterator(proc);
 	for ( ; sItPtr->isValid(); (*sItPtr)++) {
 	    StmtHandle stmt = sItPtr->current();

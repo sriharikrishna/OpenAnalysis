@@ -14,6 +14,7 @@
 
 #include "ManagerDUGStandard.hpp"
 #include "OpenAnalysis/IRInterface/AliasIRInterface.hpp"
+#include <strstream>
 
 #if defined(DEBUG_ALL) || defined(DEBUG_ManagerDUGStandard)
 static bool debug = true;
@@ -509,18 +510,26 @@ void ManagerDUGStandard::labelUseDefEdges(
   Creates a DUG for the program
 */
 
-SymHandle getQuickAndDirtySymHandle(OA_ptr<MemRefExpr> mre) { 
+SymHandle ManagerDUGStandard::getQuickAndDirtySymHandle(OA_ptr<MemRefExpr> mre) {
+  std::ostringstream s;
+  mre->dump(s);
+  std::cout << "getQuickAndDirtySymHandle::mre --- " << s.str().c_str() << std::endl;
+  SymHandle handle;
   if(mre->isaNamed()) {
     OA_ptr<NamedRef> namedRef = mre.convert<NamedRef>();
+    handle = namedRef->getSymHandle();
+    std::cout << "getQuickAndDirtySymHandle::mre --- " << mIR->toString(handle) << std::endl;
     return namedRef->getSymHandle();
   }
   if(mre->isaRefOp()) {
     OA_ptr<RefOp> refOp = mre.convert<RefOp>();
     if(refOp->isaAddressOf()) {
-      return  getQuickAndDirtySymHandle(refOp->getMemRefExpr());
-    } else {    
+      return getQuickAndDirtySymHandle(refOp->getMemRefExpr());
+    } else {
+      handle = refOp->getBaseSym();
+      std::cout << "getQuickAndDirtySymHandle::mre --- " << mIR->toString(handle) << std::endl;
       return refOp->getBaseSym();
-    }   
+    }
   }
   assert(0);
 }
@@ -570,6 +579,8 @@ OA_ptr<DUGStandard> ManagerDUGStandard::performAnalysis(
 	    target=pasIt->currentTarget();
 	    SymHandle sourceSym=getQuickAndDirtySymHandle(source);
 	    SymHandle targetSym=getQuickAndDirtySymHandle(target);
+            std::cout << "ManagerDUGStandard::performAnalysis::src pointer ---" << mIR->toString(sourceSym) << std::endl;
+            std::cout << "ManagerDUGStandard::performAnalysis::tgt pointer ---" << mIR->toString(targetSym) << std::endl;
 	    insertEdge(sourceSym,targetSym,CFLOW_EDGE, CallHandle(0), proc, proc, proc);
 	    insertEdge(targetSym,sourceSym,CFLOW_EDGE, CallHandle(0), proc, proc, proc);
 	}

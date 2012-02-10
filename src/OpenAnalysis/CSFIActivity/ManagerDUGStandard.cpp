@@ -314,7 +314,7 @@ void ManagerDUGStandard::labelUseDefEdges(
 {
 
 #ifdef DEBUG_DUAA
-    std::cout << "labelUseDefEdges: ---" << std::endl;
+  std::cout << "labelUseDefEdges: " <<  mIR->toString(stmt) << std::endl;
 #endif
     std::set<SymHandle> useSet, defSet, allSyms;
 
@@ -369,7 +369,9 @@ void ManagerDUGStandard::labelUseDefEdges(
     mrIterPtr = mIR->getUseMemRefs(stmt);
     for (; mrIterPtr->isValid(); (*mrIterPtr)++ ) {
 	MemRefHandle mref = mrIterPtr->current();
-
+#ifdef DEBUG_DUAA
+  std::cout << "labelUseDefEdges got use: " <<  mIR->toString(mref) << std::endl;
+#endif
 	// get the memory reference expressions for this handle
 	OA_ptr<MemRefExprIterator> mreIter; 
 	mreIter = mIR->getMemRefExprIterator(mref);
@@ -426,7 +428,9 @@ void ManagerDUGStandard::labelUseDefEdges(
     mrIterPtr = mIR->getDefMemRefs(stmt);
     for (; mrIterPtr->isValid(); (*mrIterPtr)++ ) {
 	MemRefHandle mref = mrIterPtr->current();
-
+#ifdef DEBUG_DUAA
+  std::cout << "labelUseDefEdges got def: " <<  mIR->toString(mref) << std::endl;
+#endif
 	// get the memory reference expressions for this handle
 	OA_ptr<MemRefExprIterator> mreIter; 
 	mreIter = mIR->getMemRefExprIterator(mref);

@@ -80,6 +80,7 @@ private: // helper functions
   bool hasEdgesToOtherProc(SymHandle, ProcHandle);
   bool hasEdgesFromOtherProc(SymHandle, ProcHandle);
   bool isLocal(SymHandle, ProcHandle);
+  SymHandle getQuickAndDirtySymHandle(OA_ptr<MemRefExpr>);
 
 private: // member variables
 

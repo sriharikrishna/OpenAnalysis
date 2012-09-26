@@ -18,7 +18,10 @@
 #ifndef DUGStandard_H
 #define DUGStandard_H
 
-//#define DEBUG_DUAA
+//--------------------------------------------------------------------
+#define CONTEXT_SENSITIVITY
+// #define DEBUG_DUAA
+// #define DEBUG_PATH // to get a path for marking 'varied' or 'useful'
 
 //--------------------------------------------------------------------
 // STL headers
@@ -53,14 +56,13 @@ class DUGStandard;
 class Node : public virtual NodeInterface {
 public:
     Node (OA_ptr<DUGStandard> pDUG, ProcHandle proc, NodeType pType)
-        : mDUG(pDUG), mProc(proc), mType(pType) { Ctor(); }
+        : mDUG(pDUG), mProc(proc), mType(pType)	{ Ctor(); }
     Node (OA_ptr<DUGStandard> pDUG, ProcHandle proc, NodeType pType,
           OA_ptr<CFG::NodeInterface> cNode)
-        : mDUG(pDUG), mProc(proc), mType(pType) { Ctor(); }
+        : mDUG(pDUG), mProc(proc), mType(pType)	{ Ctor(); }
     Node (OA_ptr<DUGStandard> pDUG, ProcHandle pProc, SymHandle pSym)
-        : mDUG(pDUG), mProc(pProc), mType(NONEFORMAL_NODE), mSym(pSym) {
-	Ctor();
-    }
+        : mDUG(pDUG), mProc(pProc), mType(NONEFORMAL_NODE), mSym(pSym) 
+	{ Ctor(); }
 
     ~Node () { }
  
@@ -69,6 +71,7 @@ public:
     //========================================================
     
     NodeType getType() const { return mType; }
+    bool isFormalParamNode() { return mType == FORMALPARAM_NODE;}
 
     ProcHandle getProc() const { return mProc; }
     OA_ptr<Location> getLoc() const { return mLoc; }
@@ -79,7 +82,8 @@ public:
                     std::set<OA_ptr<EdgeInterface> >&,
                     std::set<std::pair<unsigned,unsigned> >&,
                     ProcHandle, unsigned,
-                    OA_ptr<EdgeInterface>);
+                    OA_ptr<EdgeInterface>,
+		    bool activeWithVariedOnly);
     void markUseful(std::list<CallHandle>&, 
                     OA_ptr<Activity::ActivityIRInterface>,
                     std::set<OA_ptr<EdgeInterface> >&,
@@ -96,6 +100,10 @@ public:
 	{ 
 	    mVaried = false;
 	}
+    bool isVariedContext(CallHandle context) const { 
+	return mVariedContexts.find(context) != mVariedContexts.end(); }
+    void insertVariedContext(CallHandle context) { 
+	mVariedContexts.insert(context); }
 
     bool isUseful(){ return mUseful;}
     void setUseful(){ mUseful = true;};
@@ -225,10 +233,17 @@ private:
     bool mVaried;                    // 'true' if varied
     bool mUseful;                    // 'true' if useful
     bool mSelfDependent;             // 'true' if the variable has a self dependence.
+    // - for context sensitivity between 'varied' and 'useful' analyses
+    // - For each actual parameter node, the contexts of RETURN edges along which
+    //   'varied' analysis has propagated are stored.
+    std::set<CallHandle> mVariedContexts; 
+                                    
     friend class DUGStandard;
     friend class Edge;
 };
   
+ 
+ 
  
 //--------------------------------------------------------
 class Edge : public virtual EdgeInterface {
@@ -248,6 +263,16 @@ public:
     ProcHandle getSinkProc() const { return mNode2->getProc(); }
     CallHandle getCall() const { return mCall; }
     ProcHandle getProc() const { return mProc; }
+
+    // 090801: explore PARAM_EDGEs just once for each call context
+    bool isExplored4Varied(CallHandle context) const { 
+	return mExplored4Varied.find(context) != mExplored4Varied.end(); }
+    void setExplored4Varied(CallHandle context) { 
+	mExplored4Varied.insert(context); }
+    bool isExplored4Useful(CallHandle context) const { 
+	return mExplored4Useful.find(context) != mExplored4Useful.end(); }
+    void setExplored4Useful(CallHandle context) { 
+	mExplored4Useful.insert(context); }
 
     //========================================================
     // DGraph::Interface::Edge interface
@@ -296,13 +321,17 @@ private:
     OA_ptr<DGraph::EdgeImplement> mDGEdge;
 
     EdgeType mType;
-    CallHandle mCall;
+    CallHandle mCall; // for CALL and RETURN edges
     unsigned int mId; // 0 is reserved; first instance is 1
     ProcHandle mProc; // proc where this edge is used
 
     friend class DUGStandard;
     friend class Node;
 
+    // 090801: store visit information to remove exponential growth 
+    //         in number of PARAM_EDGEs
+    std::set<CallHandle> mExplored4Varied;  
+    std::set<CallHandle> mExplored4Useful;  
 }; 
   
 //------------------------------------------------------------------

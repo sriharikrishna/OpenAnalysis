@@ -13,8 +13,8 @@
 */
 
 #include "ManagerDUGStandard.hpp"
-
-
+#include "OpenAnalysis/IRInterface/AliasIRInterface.hpp"
+#include <strstream>
 
 #if defined(DEBUG_ALL) || defined(DEBUG_ManagerDUGStandard)
 static bool debug = true;
@@ -104,10 +104,11 @@ void ManagerDUGStandard::insertEdge(
     ProcHandle       toProc,
     ProcHandle       proc)
 {
-    if (from == to) {
-	OA_ptr<Node> fromNode = mDUG->getNode(from, fromProc);
-	fromNode->setSelfDependent();
+    OA_ptr<Node> fromNode = mDUG->getNode(from, fromProc);
+    OA_ptr<Node> toNode   = mDUG->getNode(to,   toProc);
 
+    if (from == to) {
+	fromNode->setSelfDependent();
 	return;
     }
     // duplicate edges
@@ -125,8 +126,6 @@ void ManagerDUGStandard::insertEdge(
 	      << mIR->toString(from) << "@" << mIR->toString(fromProc)
 	      << " -> " << mIR->toString(to) << "@" << mIR->toString(toProc) << std::endl;
 #endif
-    OA_ptr<Node> fromNode = mDUG->getNode(from, fromProc);
-    OA_ptr<Node> toNode   = mDUG->getNode(to, toProc);
 
     // edge between 'from' and 'to' node
     OA_ptr<Edge> dugEdge;
@@ -315,7 +314,7 @@ void ManagerDUGStandard::labelUseDefEdges(
 {
 
 #ifdef DEBUG_DUAA
-    std::cout << "labelUseDefEdges: ---" << std::endl;
+  std::cout << "labelUseDefEdges: " <<  mIR->toString(stmt) << std::endl;
 #endif
     std::set<SymHandle> useSet, defSet, allSyms;
 
@@ -370,7 +369,9 @@ void ManagerDUGStandard::labelUseDefEdges(
     mrIterPtr = mIR->getUseMemRefs(stmt);
     for (; mrIterPtr->isValid(); (*mrIterPtr)++ ) {
 	MemRefHandle mref = mrIterPtr->current();
-
+#ifdef DEBUG_DUAA
+  std::cout << "labelUseDefEdges got use: " <<  mIR->toString(mref) << std::endl;
+#endif
 	// get the memory reference expressions for this handle
 	OA_ptr<MemRefExprIterator> mreIter; 
 	mreIter = mIR->getMemRefExprIterator(mref);
@@ -427,7 +428,9 @@ void ManagerDUGStandard::labelUseDefEdges(
     mrIterPtr = mIR->getDefMemRefs(stmt);
     for (; mrIterPtr->isValid(); (*mrIterPtr)++ ) {
 	MemRefHandle mref = mrIterPtr->current();
-
+#ifdef DEBUG_DUAA
+  std::cout << "labelUseDefEdges got def: " <<  mIR->toString(mref) << std::endl;
+#endif
 	// get the memory reference expressions for this handle
 	OA_ptr<MemRefExprIterator> mreIter; 
 	mreIter = mIR->getMemRefExprIterator(mref);
@@ -510,6 +513,31 @@ void ManagerDUGStandard::labelUseDefEdges(
 /*!
   Creates a DUG for the program
 */
+
+SymHandle ManagerDUGStandard::getQuickAndDirtySymHandle(OA_ptr<MemRefExpr> mre) {
+  std::ostringstream s;
+  mre->dump(s);
+  std::cout << "getQuickAndDirtySymHandle::mre --- " << s.str().c_str() << std::endl;
+  SymHandle handle;
+  if(mre->isaNamed()) {
+    OA_ptr<NamedRef> namedRef = mre.convert<NamedRef>();
+    handle = namedRef->getSymHandle();
+    std::cout << "getQuickAndDirtySymHandle::mre --- " << mIR->toString(handle) << std::endl;
+    return namedRef->getSymHandle();
+  }
+  if(mre->isaRefOp()) {
+    OA_ptr<RefOp> refOp = mre.convert<RefOp>();
+    if(refOp->isaAddressOf()) {
+      return getQuickAndDirtySymHandle(refOp->getMemRefExpr());
+    } else {
+      handle = refOp->getBaseSym();
+      std::cout << "getQuickAndDirtySymHandle::mre --- " << mIR->toString(handle) << std::endl;
+      return refOp->getBaseSym();
+    }
+  }
+  assert(0);
+}
+
 OA_ptr<DUGStandard> ManagerDUGStandard::performAnalysis( 
     OA_ptr<IRProcIterator> procIter,
     OA_ptr<DataFlow::ParamBindings> paramBind,
@@ -543,7 +571,24 @@ OA_ptr<DUGStandard> ManagerDUGStandard::performAnalysis(
 	// skip unreachable procedures
 	if(mProcsOfInterest.find(proc) == mProcsOfInterest.end()) continue;
 
+
 	OA_ptr<OA::IRStmtIterator> sItPtr; 
+	sItPtr = mIR->getPtrAsgnIterator(proc);
+	for ( ; sItPtr->isValid(); (*sItPtr)++) {
+	    StmtHandle stmt = sItPtr->current();
+	    OA_ptr<OA::Alias::PtrAssignPairStmtIterator> pasIt; 
+	    pasIt=mIR->getPtrAssignStmtPairIterator(stmt); 
+	    OA_ptr<OA::MemRefExpr> source, target;
+	    source=pasIt->currentSource(); 
+	    target=pasIt->currentTarget();
+	    SymHandle sourceSym=getQuickAndDirtySymHandle(source);
+	    SymHandle targetSym=getQuickAndDirtySymHandle(target);
+            std::cout << "ManagerDUGStandard::performAnalysis::src pointer ---" << mIR->toString(sourceSym) << std::endl;
+            std::cout << "ManagerDUGStandard::performAnalysis::tgt pointer ---" << mIR->toString(targetSym) << std::endl;
+	    insertEdge(sourceSym,targetSym,CFLOW_EDGE, CallHandle(0), proc, proc, proc);
+	    insertEdge(targetSym,sourceSym,CFLOW_EDGE, CallHandle(0), proc, proc, proc);
+	}
+
 	sItPtr = mIR->getStmtIterator(proc);
 	for ( ; sItPtr->isValid(); (*sItPtr)++) {
 	    StmtHandle stmt = sItPtr->current();
@@ -865,7 +910,7 @@ void ManagerDUGStandard::edgesBetweenActuals(ProcHandle proc)
 	    }
 
 	    if (mProcToMatrix[proc][formal1][formal2]){
-		insertEdge(formal1, formal2, PARAM_EDGE, CallHandle(0), proc, proc, proc);
+ 		insertEdge(formal1, formal2, PARAM_EDGE, CallHandle(0), proc, proc, proc);
 
 		for (callIter = callsites.begin(); callIter!=callsites.end(); callIter++){
 		    CallHandle call = *callIter;
@@ -874,6 +919,7 @@ void ManagerDUGStandard::edgesBetweenActuals(ProcHandle proc)
 		    assert(caller != ProcHandle(0));
 		    std::set<SymHandle>& set1 = mFormalToActualMap[call][formal1];
 		    std::set<SymHandle>& set2 = mFormalToActualMap[call][formal2];
+		    assert(set2.size() <= 1); // only one actual can be assigned
 		    std::set<SymHandle>::iterator i1;
 		    std::set<SymHandle>::iterator i2;
 		    for (i1=set1.begin(); i1 != set1.end(); i1++){

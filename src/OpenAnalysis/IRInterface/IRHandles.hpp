@@ -473,6 +473,9 @@ public:
   //! Given a statement, pretty-print it to the output stream os.
   virtual void dump(StmtHandle stmt, std::ostream& os) = 0;
 
+  //! Given a statement, pretty-print it to the output stream os.
+  virtual void dump(SymHandle sym, std::ostream& os) = 0;
+
   //! Cause Open64 to change its current global state to allow
   //! processing of arbitrary procedures (i.e., not all in a row)
   //virtual void currentProc(OA::ProcHandle p) = 0;

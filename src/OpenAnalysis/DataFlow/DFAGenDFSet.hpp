@@ -34,7 +34,7 @@ class DFAGenDFSet : public virtual DataFlowSet, public std::set<T> {
     DFAGenDFSet (std::set<T> copy) {
         typename std::set<T>::iterator iter;
         for(iter = copy.begin(); iter != copy.end(); iter++) {
-            insert(*iter);
+            this->insert(*iter);
         }
     }
 

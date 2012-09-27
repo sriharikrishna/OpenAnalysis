@@ -29,7 +29,7 @@ class AffineExprIRInterface :
     AffineExprIRInterface() {}
     virtual ~AffineExprIRInterface() {}
 
-    virtual OA_ptr<Location::Location>
+    virtual OA_ptr<Location>
         getLocation(ProcHandle p, SymHandle s) = 0;
     virtual int constValIntVal(ConstValHandle h) = 0;
     virtual OpType getOpType(OpHandle h) = 0;

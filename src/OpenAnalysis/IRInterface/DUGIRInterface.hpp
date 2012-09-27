@@ -24,7 +24,7 @@
 
 #include <OpenAnalysis/Location/Locations.hpp>
 #include <OpenAnalysis/ExprTree/ExprTree.hpp>
-#include "IRHandles.hpp"
+#include "AliasIRInterface.hpp"
 //#include "ExprStmtPairIterator.hpp"
 //#include <OpenAnalysis/IRInterface/AssignPairIterator.hpp>
 
@@ -37,7 +37,7 @@ namespace OA {
  * manipulating a program.  This is the primary interface to the underlying 
  * intermediate representation.
  */
-class DUGIRInterface : public virtual IRHandlesIRInterface {
+class DUGIRInterface : public virtual Alias::AliasIRInterface {
  public:
   DUGIRInterface() { }
   virtual ~DUGIRInterface() {} 
@@ -114,6 +114,9 @@ class DUGIRInterface : public virtual IRHandlesIRInterface {
   getDefMREs(OA::StmtHandle stmt) = 0;
 
   virtual OA::SymHandle getFormalSym(OA::ProcHandle, int) = 0;
+
+  virtual OA_ptr<OA::IRStmtIterator>getPtrAsgnIterator(OA::ProcHandle) = 0;
+
 };
 
   } // end of namespace DUG

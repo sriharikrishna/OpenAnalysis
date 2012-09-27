@@ -3,7 +3,7 @@
   \brief Abstract interface that all DUG analysis results must satisfy.
 
   \authors Michelle Strout
-  \version $Id: DUGInterface.hpp,v 1.1 2005/06/21 15:20:55 mstrout Exp $
+  \version $Id: DUGInterface.hpp,v 1.3 2008/02/06 19:58:47 utke Exp $
 
   Copyright (c) 2002-2004, Rice University <br>
   Copyright (c) 2004, University of Chicago <br>  
@@ -90,7 +90,8 @@ enum NodeType { FORMALPARAM_NODE, NONEFORMAL_NODE };
                     std::set<OA_ptr<EdgeInterface> >&,
                     std::set<std::pair<unsigned,unsigned> >&,
                     ProcHandle, unsigned,
-                    OA_ptr<EdgeInterface>) = 0;
+                    OA_ptr<EdgeInterface>,
+		    bool) = 0;
 
     virtual void markUseful(std::list<CallHandle>&,
                     OA_ptr<Activity::ActivityIRInterface>,

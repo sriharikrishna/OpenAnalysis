@@ -27,6 +27,14 @@ NodeImplement::NodeImplement()
     mOutgoingEdges = new std::list<OA_ptr<EdgeInterface> >;
 }
 
+DGraphImplement::~DGraphImplement()
+{
+  OA_ptr<NodesIteratorInterface> nodesIter = getNodesIterator();
+  for (; nodesIter->isValid(); ++(*nodesIter)) {
+    OA_ptr<NodeInterface> n = nodesIter->current();
+    removeNode(n);
+  }
+}
 
 //--------------------------------------------------------------------
 /*! Remove this edge from the BaseGraph as well as from the list of

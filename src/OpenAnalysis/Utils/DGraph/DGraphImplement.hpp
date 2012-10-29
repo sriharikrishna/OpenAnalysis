@@ -206,7 +206,7 @@ namespace OA {
 
         DGraphImplement(); 
         
-        ~DGraphImplement() { } 
+        ~DGraphImplement();
 
 
         OA_ptr<NodesIteratorInterface> getNodesIterator() const;

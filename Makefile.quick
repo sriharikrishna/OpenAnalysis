@@ -117,7 +117,7 @@ configure: check clean
 	$(WD)/config/hpcautotouch
 	-mkdir -p $(BUILDDIR)
 	cd $(BUILDDIR) && \
-	../configure $(CONFIG_OPTS) --prefix="$(INSTALLDIR)"
+	../configure $(CONFIG_OPTS) --prefix="$(INSTALLDIR)" --libdir="$(INSTALLDIR)"/lib
 
 build:
 	@echo "*** Building ***"

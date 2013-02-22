@@ -7,3 +7,5 @@ build-x86_64-Linux*
 *~
 build.log
 doc/html
+.cproject
+.project
